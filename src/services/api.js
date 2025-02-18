@@ -1,19 +1,18 @@
-import axios from "axios";
-
-const API_BASE_URL = "http://127.0.0.1:8000/api";  // ✅ Asegúrate de que el backend esté corriendo en este puerto
+// src/services/api.js
+import axios from 'axios';
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: 'http://127.0.0.1:8000/api',
   headers: {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
   },
 });
 
-// ✅ Interceptor para manejar errores globalmente
+// Interceptor para manejar respuestas y errores
 api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error("Error en la API:", error.response?.data || error.message);
+  response => response,
+  error => {
+    console.error('Error en la API:', error.response ? error.response.data : error.message);
     return Promise.reject(error);
   }
 );

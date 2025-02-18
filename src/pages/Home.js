@@ -1,20 +1,34 @@
-import { useEffect, useState } from "react";
-import { getHomeMessage } from "../services/api";  // 📌 Asegúrate de que la ruta es correcta
+// src/pages/Home.js
+import React, { useEffect, useState } from 'react';
+import api from '../services/api';
 
-function Home() {
-    const [message, setMessage] = useState("");
+const Home = () => {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
 
-    useEffect(() => {
-        getHomeMessage().then((data) => {
-            if (data) setMessage(data.message);
-        });
-    }, []);
+  useEffect(() => {
+    api.get('/home/')
+      .then(response => setData(response.data))
+      .catch(error => {
+        console.error('Error al obtener datos:', error);
+        setError('Hubo un problema al cargar los datos.');
+      });
+  }, []);
 
-    return (
-        <div>
-            <h1>{message || "Cargando..."}</h1>
-        </div>
-    );
-}
+  if (error) {
+    return <div>{error}</div>;
+  }
+
+  if (!data) {
+    return <div>Cargando...</div>;
+  }
+
+  return (
+    <div>
+      <h1>Bienvenido</h1>
+      <p>{data.message}</p>
+    </div>
+  );
+};
 
 export default Home;
