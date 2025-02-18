@@ -1,23 +1,28 @@
-// src/i18n.js
-import i18n from 'i18next';
-import { initReactI18next } from 'react-i18next';
+import i18n from "i18next";
+import { initReactI18next } from "react-i18next";
 
-i18n
-  .use(initReactI18next)
-  .init({
-    resources: {
-      en: {
-        translation: {
-          // Tus traducciones aquí
-        }
+i18n.use(initReactI18next).init({
+  resources: {
+    en: {
+      translation: {
+        "welcome": "Welcome to Imbatibles Gym",
+        "login": "Login",
+        "register": "Register",
       },
-      // Otros idiomas
     },
-    lng: 'en', // Idioma por defecto
-    fallbackLng: 'en',
-    interpolation: {
-      escapeValue: false
-    }
-  });
+    es: {
+      translation: {
+        "welcome": "Bienvenido a Imbatibles Gym",
+        "login": "Iniciar sesión",
+        "register": "Registrarse",
+      },
+    },
+  },
+  lng: "es", // Idioma por defecto
+  fallbackLng: "en", // Idioma alternativo si no encuentra traducción
+  interpolation: {
+    escapeValue: false,
+  },
+});
 
 export default i18n;
