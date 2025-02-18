@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from "react";
-import { fetchData } from "./services/api";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Home from "./components/dashboard/Home";
-import Login from "./components/auth/Login";
-import Register from "./components/auth/Register";
-import Profile from "./components/dashboard/Profile";
-import WorkoutPlanner from "./components/dashboard/WorkoutPlanner";
-import ExerciseLibrary from "./components/dashboard/ExerciseLibrary";
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+
+import Home from './components/dashboard/Home';
+import Login from './components/auth/Login';
+import Register from './components/auth/Register';
+import Profile from './components/dashboard/Profile';
+import WorkoutPlanner from './components/dashboard/WorkoutPlanner';
+import ExerciseLibrary from './components/dashboard/ExerciseLibrary';
 
 function App() {
     return (
@@ -16,8 +16,8 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/profile" element={<Profile />} />
-                <Route path="/workouts" element={<WorkoutPlanner />} />
-                <Route path="/exercises" element={<ExerciseLibrary />} />
+                <Route path="/workout-planner" element={<WorkoutPlanner />} />
+                <Route path="/exercise-library" element={<ExerciseLibrary />} />
             </Routes>
         </Router>
     );
