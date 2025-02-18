@@ -1,8 +1,10 @@
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions 
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.views import ObtainAuthToken
+from django.http import JsonResponse
+from rest_framework.decorators import api_view
 from .models import CustomUser
 from .serializers import UserSerializer
 
@@ -28,3 +30,8 @@ class ProfileView(generics.RetrieveAPIView):
 
     def get(self, request, *args, **kwargs):
         return Response({"username": request.user.username})
+
+# 📌 Agregamos la función home para evitar errores en backend/urls.py
+@api_view(["GET"])
+def home(request):
+    return JsonResponse({"message": "Bienvenido a la API de Imbatibles Gym"})
