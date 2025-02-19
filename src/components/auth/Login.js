@@ -1,13 +1,11 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
 
 const Login = () => {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
-    const navigate = useNavigate();
 
-    const handleLogin = async (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setError(""); // Limpiar errores previos
 
@@ -21,23 +19,22 @@ const Login = () => {
             });
 
             const data = await response.json();
-
             if (response.ok) {
                 localStorage.setItem("token", data.token);
-                navigate("/profile"); // Redirigir al perfil después de iniciar sesión
+                window.location.href = "/profile"; // Redirigir al perfil
             } else {
                 setError(data.error || "Error al iniciar sesión");
             }
-        } catch (error) {
+        } catch (err) {
             setError("No se pudo conectar con el servidor");
         }
     };
 
     return (
         <div>
-            <h1>Login</h1>
+            <h2>Iniciar Sesión</h2>
             {error && <p style={{ color: "red" }}>{error}</p>}
-            <form onSubmit={handleLogin}>
+            <form onSubmit={handleSubmit}>
                 <input
                     type="text"
                     placeholder="Usuario"
@@ -52,7 +49,7 @@ const Login = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                 />
-                <button type="submit">Iniciar sesión</button>
+                <button type="submit">Iniciar Sesión</button>
             </form>
         </div>
     );
