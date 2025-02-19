@@ -31,6 +31,7 @@ INSTALLED_APPS = [
 
     # 📌 Apps necesarias para trabajar con React y APIs
     'rest_framework',  # Django REST Framework
+    'rest_framework.authtoken',  # 🔥 Agrega esta línea
     'corsheaders',     # Manejo de CORS (permisos para React)
     'api',             # Aplicación donde estará nuestra API
 ]

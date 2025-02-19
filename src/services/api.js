@@ -1,20 +1,30 @@
-// src/services/api.js
-import axios from 'axios';
+const API_URL = "http://127.0.0.1:8000/api/";
 
-const api = axios.create({
-  baseURL: 'http://127.0.0.1:8000/api',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+export const loginUser = async (username, password) => {
+  const response = await fetch(`${API_URL}login/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ username, password }),
+  });
 
-// Interceptor para manejar respuestas y errores
-api.interceptors.response.use(
-  response => response,
-  error => {
-    console.error('Error en la API:', error.response ? error.response.data : error.message);
-    return Promise.reject(error);
+  const data = await response.json();
+  if (response.ok) {
+    localStorage.setItem("token", data.token); // Guarda el token en localStorage
   }
-);
+  return data;
+};
 
-export default api;
+export const getProfile = async () => {
+  const token = localStorage.getItem("token");
+  const response = await fetch(`${API_URL}profile/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Token ${token}`,  // <-- Enviamos el token en la cabecera
+    },
+  });
+
+  return response.json();
+};

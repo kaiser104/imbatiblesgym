@@ -1,10 +1,9 @@
-from rest_framework import generics, permissions 
+from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.views import ObtainAuthToken
-from django.http import JsonResponse
-from rest_framework.decorators import api_view
+from rest_framework.authentication import TokenAuthentication
 from .models import CustomUser
 from .serializers import UserSerializer
 
@@ -27,11 +26,7 @@ class LoginView(ObtainAuthToken):
 class ProfileView(generics.RetrieveAPIView):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [TokenAuthentication]  # <-- Asegura que se use Token
 
-    def get(self, request, *args, **kwargs):
-        return Response({"username": request.user.username})
-
-# 📌 Agregamos la función home para evitar errores en backend/urls.py
-@api_view(["GET"])
-def home(request):
-    return JsonResponse({"message": "Bienvenido a la API de Imbatibles Gym"})
+    def get_object(self):
+        return self.request.user  # <-- Devuelve el usuario autenticado
