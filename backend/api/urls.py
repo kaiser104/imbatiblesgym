@@ -6,3 +6,10 @@ urlpatterns = [
     path("login/", LoginView.as_view(), name="login"),
     path("profile/", ProfileView.as_view(), name="profile"),
 ]
+
+from django.urls import path
+from .views import ExerciseUploadView
+
+urlpatterns = [
+    path('upload-exercise/', ExerciseUploadView.as_view(), name='upload-exercise'),
+]
