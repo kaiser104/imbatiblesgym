@@ -8,8 +8,6 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from django.http import JsonResponse
 from .models import CustomUser, Exercise
 from .serializers import UserSerializer, ExerciseSerializer
-import os
-from moviepy.editor import VideoFileClip
 
 
 # ✅ Registro de Usuarios
@@ -62,35 +60,23 @@ class UploadExerciseView(generics.CreateAPIView):
         if not file:
             return Response({"error": "No se adjuntó ningún archivo"}, status=400)
 
-        # 📌 Si es un video, convertirlo a GIF
-        if file.content_type.startswith("video/"):
-            video_path = f"media/uploads/{file.name}"
-            gif_path = video_path.rsplit(".", 1)[0] + ".gif"
-
-            # Guardar el video temporalmente
-            with open(video_path, "wb") as temp_video:
-                for chunk in file.chunks():
-                    temp_video.write(chunk)
-
-            # Convertir el video a GIF
-            try:
-                clip = VideoFileClip(video_path)
-                clip = clip.subclip(0, min(5, clip.duration))  # Limita a 5 segundos
-                clip.write_gif(gif_path)
-                os.remove(video_path)  # Eliminar el video original
-                file.name = gif_path  # Usar el GIF como archivo final
-            except Exception as e:
-                return Response({"error": f"Error al convertir a GIF: {str(e)}"}, status=500)
-
         exercise = Exercise.objects.create(
             name=request.data.get("name"),
             category=request.data.get("category"),
             equipment=request.data.get("equipment"),
             primary_muscle=request.data.get("primary_muscle"),
             secondary_muscle=request.data.get("secondary_muscle"),
-            file=file  # Guardar la imagen/GIF
+            file=file  # Guardar cualquier tipo de archivo
         )
         return Response(ExerciseSerializer(exercise).data, status=201)
+
+
+# ✅ Editar Ejercicio
+class UpdateExerciseView(generics.UpdateAPIView):
+    queryset = Exercise.objects.all()
+    serializer_class = ExerciseSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
 
 
 # ✅ Endpoint de prueba (Verifica si el servidor está corriendo)

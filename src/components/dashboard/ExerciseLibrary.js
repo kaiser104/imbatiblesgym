@@ -1,75 +1,97 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 
 const ExerciseLibrary = () => {
   const [exercises, setExercises] = useState([]);
-  const [video, setVideo] = useState(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    category: "",
-    equipment: "",
-    primary_muscle: "",
-    secondary_muscle: "",
-  });
+  const [editExercise, setEditExercise] = useState(null);
+  const [updatedData, setUpdatedData] = useState({});
 
+  // 📌 Obtener la lista de ejercicios
   useEffect(() => {
-    axios.get("http://127.0.0.1:8000/api/exercises/")
-      .then(response => setExercises(response.data))
-      .catch(error => console.error("Error al obtener ejercicios:", error));
+    axios
+      .get("http://127.0.0.1:8000/api/exercises/")
+      .then((response) => setExercises(response.data))
+      .catch((error) => console.error("Error al obtener ejercicios:", error));
   }, []);
 
-  const handleFileChange = (e) => {
-    setVideo(e.target.files[0]);
+  // 📌 Manejar los cambios en los campos del formulario de edición
+  const handleEditChange = (e) => {
+    setUpdatedData({ ...updatedData, [e.target.name]: e.target.value });
   };
 
-  const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e) => {
+  // 📌 Enviar la actualización al backend
+  const handleEditSubmit = async (e, exerciseId) => {
     e.preventDefault();
-    if (!video) return alert("Por favor selecciona un video.");
-
-    const data = new FormData();
-    Object.keys(formData).forEach(key => data.append(key, formData[key]));
-    data.append("video", video);
-
     try {
-      const response = await axios.post("http://127.0.0.1:8000/api/upload-exercise/", data, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      alert("Ejercicio subido exitosamente!");
-      setExercises([...exercises, response.data]);
+      const response = await axios.patch(
+        `http://127.0.0.1:8000/api/update-exercise/${exerciseId}/`,
+        updatedData,
+        { headers: { Authorization: `Token ${localStorage.getItem("token")}` } }
+      );
+      setExercises((prev) =>
+        prev.map((ex) => (ex.id === exerciseId ? response.data : ex))
+      );
+      setEditExercise(null);
     } catch (error) {
-      alert("Error al subir ejercicio");
+      console.error("Error al actualizar el ejercicio:", error);
     }
   };
 
   return (
     <div>
       <h1>Biblioteca de Ejercicios</h1>
-      <form onSubmit={handleSubmit}>
-        <input type="text" name="name" placeholder="Nombre del ejercicio" onChange={handleInputChange} required />
-        <input type="text" name="category" placeholder="Categoría" onChange={handleInputChange} required />
-        <input type="text" name="equipment" placeholder="Equipamiento" onChange={handleInputChange} required />
-        <input type="text" name="primary_muscle" placeholder="Músculo Principal" onChange={handleInputChange} required />
-        <input type="text" name="secondary_muscle" placeholder="Músculo Secundario (Opcional)" onChange={handleInputChange} />
-        <input type="file" accept="video/*" onChange={handleFileChange} required />
-        <button type="submit">Subir Ejercicio</button>
-      </form>
-
-      <h2>Lista de Ejercicios</h2>
-      <ul>
-        {exercises.map(exercise => (
-          <li key={exercise.id}>
-            <h3>{exercise.name}</h3>
-            <p>Categoría: {exercise.category}</p>
-            <p>Equipamiento: {exercise.equipment}</p>
-            <p>Músculo Principal: {exercise.primary_muscle}</p>
-            <img src={`http://127.0.0.1:8000/media/${exercise.gif}`} alt={exercise.name} width="200" />
-          </li>
+      <div className="exercise-grid">
+        {exercises.map((exercise) => (
+          <div key={exercise.id} className="exercise-card">
+            {editExercise === exercise.id ? (
+              <form onSubmit={(e) => handleEditSubmit(e, exercise.id)}>
+                <input
+                  type="text"
+                  name="name"
+                  defaultValue={exercise.name}
+                  onChange={handleEditChange}
+                />
+                <input
+                  type="text"
+                  name="category"
+                  defaultValue={exercise.category}
+                  onChange={handleEditChange}
+                />
+                <input
+                  type="text"
+                  name="equipment"
+                  defaultValue={exercise.equipment}
+                  onChange={handleEditChange}
+                />
+                <input
+                  type="text"
+                  name="primary_muscle"
+                  defaultValue={exercise.primary_muscle}
+                  onChange={handleEditChange}
+                />
+                <input
+                  type="text"
+                  name="secondary_muscle"
+                  defaultValue={exercise.secondary_muscle}
+                  onChange={handleEditChange}
+                />
+                <button type="submit">Guardar</button>
+                <button type="button" onClick={() => setEditExercise(null)}>Cancelar</button>
+              </form>
+            ) : (
+              <>
+                <img src={exercise.image_url} alt={exercise.name} />
+                <h3>{exercise.name}</h3>
+                <p>Categoría: {exercise.category}</p>
+                <p>Equipo: {exercise.equipment}</p>
+                <p>Músculo principal: {exercise.primary_muscle}</p>
+                <p>Músculo secundario: {exercise.secondary_muscle}</p>
+                <button onClick={() => setEditExercise(exercise.id)}>Editar</button>
+              </>
+            )}
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 };

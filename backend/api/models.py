@@ -7,7 +7,7 @@ class CustomUser(AbstractUser):
     nickname = models.CharField(max_length=100, unique=True)
     birth_date = models.DateField(null=True, blank=True)
     main_goal = models.CharField(max_length=255)  # Guardar como string separado por comas
-    focus_areas = models.CharField(max_length=255)  # Guardar como string separado por comas
+    focus_areas = models.CharField(max_length=255, default="General")
     training_frequency = models.IntegerField(default=3)  # Número de días por semana
 
     def __str__(self):
