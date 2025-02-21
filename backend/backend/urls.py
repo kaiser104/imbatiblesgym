@@ -1,21 +1,13 @@
 from django.contrib import admin
 from django.urls import path, include
-from api.views import home  # Importa correctamente la función home
-
-urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/', include('api.urls')),
-    path('', home, name="home"),  # Agrega la ruta de inicio
-]
 from django.conf import settings
 from django.conf.urls.static import static
-from django.contrib import admin
-from django.urls import path, include
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/', include('api.urls')),
+    path('admin/', admin.site.urls),  # Panel de administración de Django
+    path('api/', include('api.urls')),  # Importa las rutas de la API
 ]
 
+# Configuración para servir archivos de medios en desarrollo
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

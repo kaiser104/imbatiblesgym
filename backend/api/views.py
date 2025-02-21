@@ -1,14 +1,11 @@
 from rest_framework import generics, permissions
 from rest_framework.response import Response
-from rest_framework.authtoken.models import Token
-from django.contrib.auth import authenticate
-from rest_framework.authtoken.views import ObtainAuthToken
-from rest_framework.authentication import TokenAuthentication
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.http import JsonResponse
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.authentication import JWTAuthentication  # ✅ Usar JWT para autenticación
 from .models import CustomUser, Exercise
 from .serializers import UserSerializer, ExerciseSerializer
-
 
 # ✅ Registro de Usuarios
 class RegisterView(generics.CreateAPIView):
@@ -16,29 +13,22 @@ class RegisterView(generics.CreateAPIView):
     serializer_class = UserSerializer
     permission_classes = [permissions.AllowAny]
 
-
-# ✅ Login de Usuarios (Devuelve Token)
-class LoginView(ObtainAuthToken):
+# ✅ Login de Usuarios con JWT (Personalizado)
+class CustomUserLoginView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
-        username = request.data.get("username")
-        password = request.data.get("password")
-        user = authenticate(username=username, password=password)
+        response = super().post(request, *args, **kwargs)
+        if response.status_code == 200:
+            response.data['message'] = 'Login successful'
+        return response
 
-        if user:
-            token, created = Token.objects.get_or_create(user=user)
-            return Response({"token": token.key})
-        return Response({"error": "Credenciales incorrectas"}, status=400)
-
-
-# ✅ Perfil de Usuario (Protegido con Token)
+# ✅ Perfil de Usuario (Protegido con JWT)
 class ProfileView(generics.RetrieveAPIView):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]  # ✅ Corregido para usar JWT en lugar de TokenAuthentication
 
     def get_object(self):
         return self.request.user
-
 
 # ✅ Listar Ejercicios
 class ExerciseListView(generics.ListAPIView):
@@ -46,13 +36,12 @@ class ExerciseListView(generics.ListAPIView):
     serializer_class = ExerciseSerializer
     permission_classes = [permissions.AllowAny]
 
-
 # ✅ Subir Ejercicio (Imagen, GIF o Video)
 class UploadExerciseView(generics.CreateAPIView):
     queryset = Exercise.objects.all()
     serializer_class = ExerciseSerializer
     permission_classes = [permissions.IsAuthenticated]
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]  # ✅ Corregido para usar JWT
     parser_classes = [MultiPartParser, FormParser]
 
     def post(self, request, *args, **kwargs):
@@ -70,14 +59,12 @@ class UploadExerciseView(generics.CreateAPIView):
         )
         return Response(ExerciseSerializer(exercise).data, status=201)
 
-
 # ✅ Editar Ejercicio
 class UpdateExerciseView(generics.UpdateAPIView):
     queryset = Exercise.objects.all()
     serializer_class = ExerciseSerializer
     permission_classes = [permissions.IsAuthenticated]
-    authentication_classes = [TokenAuthentication]
-
+    authentication_classes = [JWTAuthentication]  # ✅ Corregido para usar JWT
 
 # ✅ Endpoint de prueba (Verifica si el servidor está corriendo)
 def home(request):

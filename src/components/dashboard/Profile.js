@@ -16,7 +16,7 @@ const Profile = () => {
             try {
                 const response = await fetch("http://127.0.0.1:8000/api/profile/", {
                     headers: {
-                        Authorization: `Token ${token}`,
+                        'Authorization': `Bearer ${token}`,  // Cambiado de Token a Bearer
                     },
                 });
 
@@ -25,9 +25,12 @@ const Profile = () => {
                 if (response.ok) {
                     setUser(data);
                 } else {
+                    // Si el token ha expirado o es inválido
+                    localStorage.removeItem("token");
                     navigate("/login");
                 }
             } catch (error) {
+                console.error("Error fetching profile:", error);
                 navigate("/login");
             }
         };
