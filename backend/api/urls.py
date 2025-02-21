@@ -32,3 +32,9 @@ urlpatterns = [
     path('exercises/', ExerciseListView.as_view(), name='exercise-list'),
     path('update-exercise/<int:pk>/', UpdateExerciseView.as_view(), name='update-exercise'),
 ]
+from django.urls import path
+from api.views import CustomUserLoginView  # Asegúrate de importar la vista de login
+
+urlpatterns = [
+    path('login/', CustomUserLoginView.as_view(), name='login'),
+]

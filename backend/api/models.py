@@ -1,20 +1,19 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-# ✅ Modelo de Usuario Personalizado
+# Modelo de Usuario Personalizado
 class CustomUser(AbstractUser):
-    full_name = models.CharField(max_length=255)
-    nickname = models.CharField(max_length=100, unique=True)
+    full_name = models.CharField(max_length=255, default="Unknown")  # Valor predeterminado
+    nickname = models.CharField(max_length=100, unique=True, default="user")  # Valor predeterminado
     birth_date = models.DateField(null=True, blank=True)
-    main_goal = models.CharField(max_length=255)  # Guardar como string separado por comas
+    main_goal = models.CharField(max_length=255, default="General")  # Valor predeterminado
     focus_areas = models.CharField(max_length=255, default="General")
     training_frequency = models.IntegerField(default=3)  # Número de días por semana
 
     def __str__(self):
         return self.username
 
-
-# ✅ Modelo de Ejercicio
+# Modelo de Ejercicio
 class Exercise(models.Model):
     name = models.CharField(max_length=255)
     category = models.CharField(max_length=255)
@@ -25,3 +24,4 @@ class Exercise(models.Model):
 
     def __str__(self):
         return self.name
+    
