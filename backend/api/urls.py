@@ -1,17 +1,14 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .views import (
-    RegisterView, ProfileView, ExerciseListView,
-    UploadExerciseView, UpdateExerciseView, home, CustomUserLoginView
-)
+from .views import RegisterView, CustomUserLoginView, ProfileView, ExerciseListView, UploadExerciseView, UpdateExerciseView, home
 
 urlpatterns = [
-    path('', home, name='home'),  # Endpoint de prueba
-    path('register/', RegisterView.as_view(), name='register'),  # Registro de usuario
-    path('login/', CustomUserLoginView.as_view(), name='login'),  # Login basado en JWT
-    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),  # Para refrescar el token
-    path('profile/', ProfileView.as_view(), name='profile'),  # Perfil de usuario
-    path('exercises/', ExerciseListView.as_view(), name='exercise-list'),  # Listado de ejercicios
-    path('upload-exercise/', UploadExerciseView.as_view(), name='upload-exercise'),  # Subir ejercicios
-    path('update-exercise/<int:pk>/', UpdateExerciseView.as_view(), name='update-exercise'),  # Editar ejercicios
+    path('', home, name='home'),
+    path('register/', RegisterView.as_view(), name='register'),
+    path('login/', CustomUserLoginView.as_view(), name='login'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('profile/', ProfileView.as_view(), name='profile'),
+    path('exercises/', ExerciseListView.as_view(), name='exercise_list'),
+    path('upload-exercise/', UploadExerciseView.as_view(), name='upload_exercise'),
+    path('update-exercise/<int:pk>/', UpdateExerciseView.as_view(), name='update_exercise'),
 ]
