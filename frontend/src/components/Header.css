@@ -1,0 +1,22 @@
+/* src/components/Header.css */
+.App-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    background-color: #282c34;
+    color: white;
+  }
+  
+  .logo-container img {
+    height: 50px;
+  }
+  
+  nav ul {
+    list-style: none;
+    display: flex;
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+  }
+  
