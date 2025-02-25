@@ -1,8 +1,8 @@
 // src/App.js
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import Header from './components/Header'; // Se importa el Header.
-import Footer from './components/Footer';   // Se importa el Footer.
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Header from './components/Header';
+import Footer from './components/Footer';
 import Home from './pages/Home';
 import Gimnasios from './pages/Gimnasios';
 import Entrenadores from './pages/Entrenadores';
@@ -13,7 +13,7 @@ function App() {
   return (
     <Router>
       <div className="App">
-        <Header /> {/* Se muestra el header con el logo y la navegación */}
+        <Header />
         <main>
           <Routes>
             <Route path="/" element={<Home />} />
@@ -22,7 +22,7 @@ function App() {
             <Route path="/trainees" element={<Trainees />} />
           </Routes>
         </main>
-        <Footer /> {/* Se muestra el footer */}
+        <Footer />
       </div>
     </Router>
   );
