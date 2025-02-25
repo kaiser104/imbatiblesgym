@@ -1,13 +1,13 @@
 // src/pages/Gimnasios.js
 import React, { useEffect, useState } from 'react';
-import api from '../services/api'; // Se importa el servicio de API.
+import api from '../services/api';
 
+// Componente Gimnasios: obtiene la lista de gimnasios desde la API y los muestra.
 const Gimnasios = () => {
   const [gimnasios, setGimnasios] = useState([]);
 
   useEffect(() => {
-    // Se realiza una llamada a la API para obtener la lista de gimnasios.
-    // Se asume que el endpoint es '/gimnasios/'.
+    // Se realiza una solicitud GET al endpoint '/gimnasios/'
     api.get('/gimnasios/')
       .then(response => {
         setGimnasios(response.data);
