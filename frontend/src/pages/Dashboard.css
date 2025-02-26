@@ -1,0 +1,28 @@
+/* src/pages/Dashboard.css */
+.dashboard {
+    padding: 1rem;
+  }
+  
+  .cards-container {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+  }
+  
+  .card {
+    background: #ffffff;
+    padding: 1rem;
+    border-radius: 8px;
+    width: 200px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .chart-container {
+    background: #fff;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  

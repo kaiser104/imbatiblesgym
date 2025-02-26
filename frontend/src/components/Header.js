@@ -1,33 +1,22 @@
 // src/components/Header.js
 import React from 'react';
 import { Link } from 'react-router-dom';
-import logo from '../logo simbolo marcad e agua.png';
+import logo from '../logo simbolo marcad e agua.png'; // Asegúrate de que el nombre y la ubicación sean exactos
 import './Header.css';
 
-function Header() {
+const Header = () => {
   return (
-    <header className="App-header">
+    <header className="app-header">
       <div className="logo-container">
-        <img src={logo} alt="Logo principal" className="App-logo" />
+        <Link to="/">
+          <img src={logo} alt="Logo principal" className="app-logo" />
+        </Link>
       </div>
-      <nav>
-        <ul>
-          <li>
-            <Link to="/">Inicio</Link>
-          </li>
-          <li>
-            <Link to="/gimnasios">Gimnasios</Link>
-          </li>
-          <li>
-            <Link to="/entrenadores">Entrenadores</Link>
-          </li>
-          <li>
-            <Link to="/trainees">Trainees</Link>
-          </li>
-        </ul>
-      </nav>
+      <div className="header-actions">
+        {/* Aquí puedes agregar botones o menús de usuario */}
+      </div>
     </header>
   );
-}
+};
 
 export default Header;

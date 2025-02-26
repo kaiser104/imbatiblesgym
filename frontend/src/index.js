@@ -1,5 +1,5 @@
-import process from 'process/browser';
-window.process = process;
+// src/index.js
+import './polyfills'; // Asegúrate de que esta sea la primera línea sin espacios ni comentarios previos
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
