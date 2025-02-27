@@ -1,4 +1,5 @@
-// src/index.js
+window.process = window.process || { env: {} };
+
 import './polyfills'; // Asegúrate de que esta sea la primera línea sin espacios ni comentarios previos
 
 import React from 'react';

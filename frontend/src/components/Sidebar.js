@@ -28,7 +28,16 @@ const Sidebar = () => {
               Trainees
             </NavLink>
           </li>
-          {/* Puedes agregar más enlaces según sea necesario */}
+          <li>
+            <NavLink to="/library" activeclassname="active">
+              Biblioteca
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/upload" activeclassname="active">
+              Subir Ejercicio
+            </NavLink>
+          </li>
         </ul>
       </nav>
     </aside>

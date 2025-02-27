@@ -1,7 +1,11 @@
-// src/components/UploadExercise.js
+// src/pages/UploadExercise.js
 import React, { useState } from 'react';
-import { storage } from '../firebase'; // Asegúrate de que firebase.js esté correctamente configurado
+import { storage } from '../firebase'; // Asegúrate de que firebase.js exporte la instancia 'storage' y 'app'
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { getFirestore, collection, addDoc } from "firebase/firestore";
+import { app } from '../firebase';
+
+const db = getFirestore(app);
 
 const UploadExercise = () => {
   const [exerciseData, setExerciseData] = useState({
@@ -15,6 +19,7 @@ const UploadExercise = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [downloadURL, setDownloadURL] = useState('');
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
 
   const handleChange = (e) => {
     setExerciseData({
@@ -32,16 +37,17 @@ const UploadExercise = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     setError('');
+    setMessage('');
     if(!file) {
       setError("Debes seleccionar un archivo GIF");
       return;
     }
     
-    // Define una referencia en Firebase Storage. Organiza por categoría.
+    // Define la referencia en Firebase Storage, organizando por categoría
     const storageRef = ref(storage, `exercises/${exerciseData.movementCategory}/${file.name}`);
     const uploadTask = uploadBytesResumable(storageRef, file);
 
-    // Monitorea el estado de la subida
+    // Monitorea la subida
     uploadTask.on("state_changed",
       snapshot => {
         const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
@@ -52,26 +58,33 @@ const UploadExercise = () => {
         setError(error.message);
       },
       () => {
-        // Una vez completada la subida, obtiene la URL pública del archivo
-        getDownloadURL(uploadTask.snapshot.ref).then((url) => {
+        // Cuando la subida se completa, obtiene la URL pública
+        getDownloadURL(uploadTask.snapshot.ref).then(async (url) => {
           setDownloadURL(url);
-          // Combina la URL con los metadatos del ejercicio.
-          // Aquí podrías hacer una solicitud POST a tu backend o guardar en Firestore.
+          // Prepara el objeto ejercicio con los metadatos y la URL del archivo
           const exercise = {
             ...exerciseData,
-            fileURL: url
+            fileURL: url,
+            createdAt: new Date()
           };
-          console.log("Ejercicio subido:", exercise);
-          // Reinicia el formulario si lo deseas
-          setExerciseData({
-            name: '',
-            mainMuscle: '',
-            secondaryMuscle: '',
-            movementCategory: '',
-            equipment: ''
-          });
-          setFile(null);
-          setUploadProgress(0);
+          try {
+            // Guarda el documento en Firestore, en la colección "exercises"
+            await addDoc(collection(db, "exercises"), exercise);
+            setMessage("Ejercicio subido y guardado correctamente.");
+            // Reinicia el formulario
+            setExerciseData({
+              name: '',
+              mainMuscle: '',
+              secondaryMuscle: '',
+              movementCategory: '',
+              equipment: ''
+            });
+            setFile(null);
+            setUploadProgress(0);
+          } catch (err) {
+            console.error("Error al guardar en Firestore:", err);
+            setError("Error al guardar el ejercicio: " + err.message);
+          }
         });
       }
     );
@@ -113,6 +126,7 @@ const UploadExercise = () => {
           Archivo subido: <a href={downloadURL} target="_blank" rel="noopener noreferrer">Ver GIF</a>
         </p>
       )}
+      {message && <p style={{color: "green"}}>{message}</p>}
       {error && <p style={{color: "red"}}>{error}</p>}
     </div>
   );

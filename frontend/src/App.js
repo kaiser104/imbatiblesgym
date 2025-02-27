@@ -8,6 +8,9 @@ import Dashboard from './pages/Dashboard';
 import Gimnasios from './pages/Gimnasios';
 import Entrenadores from './pages/Entrenadores';
 import Trainees from './pages/Trainees';
+import ExerciseLibrary from './pages/ExerciseLibrary';
+import UploadExercise from './pages/UploadExercise';
+import EditExercise from './pages/EditExercise';
 import './App.css';
 
 function App() {
@@ -23,6 +26,9 @@ function App() {
               <Route path="/gimnasios" element={<Gimnasios />} />
               <Route path="/entrenadores" element={<Entrenadores />} />
               <Route path="/trainees" element={<Trainees />} />
+              <Route path="/library" element={<ExerciseLibrary />} />
+              <Route path="/upload" element={<UploadExercise />} />
+              <Route path="/edit/:id" element={<EditExercise />} />
             </Routes>
           </main>
         </div>
