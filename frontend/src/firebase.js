@@ -1,6 +1,8 @@
+// frontend/src/firebase.js
 import { initializeApp } from "firebase/app";
-import { getStorage } from "firebase/storage";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
+import { getAnalytics } from "firebase/analytics";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCHLCYjP74kM2X4v0HvlRyyCafcW3GH-eI",
@@ -12,6 +14,9 @@ const firebaseConfig = {
   measurementId: "G-25BH3E9FEW"
 };
 
-export const app = initializeApp(firebaseConfig);
-export const storage = getStorage(app);
-export const db = getFirestore(app);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const storage = getStorage(app);
+const analytics = getAnalytics(app);
+
+export { app, db, storage, analytics };

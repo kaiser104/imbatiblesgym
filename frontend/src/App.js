@@ -1,5 +1,4 @@
 // frontend/src/App.js
-// frontend/src/App.js
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
@@ -12,6 +11,7 @@ import Trainees from './pages/Trainees';
 import ExerciseLibrary from './pages/ExerciseLibrary';
 import UploadExercise from './pages/UploadExercise';
 import EditExercise from './pages/EditExercise';
+import ImportExercises from './pages/ImportExercises';
 import './App.css';
 
 function App() {
@@ -29,6 +29,7 @@ function App() {
             <Route path="/library" element={<ExerciseLibrary />} />
             <Route path="/upload" element={<UploadExercise />} />
             <Route path="/edit/:id" element={<EditExercise />} />
+            <Route path="/import" element={<ImportExercises />} />
           </Routes>
         </main>
       </div>
