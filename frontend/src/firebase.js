@@ -1,11 +1,7 @@
-// src/firebase.js
-
-// Importa las funciones necesarias desde el SDK de Firebase
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-import { getStorage } from "firebase/storage";  // Si deseas usar Storage
+import { getStorage } from "firebase/storage";
+import { getFirestore } from "firebase/firestore";
 
-// Tu configuración de Firebase que obtuviste de la consola:
 const firebaseConfig = {
   apiKey: "AIzaSyCHLCYjP74kM2X4v0HvlRyyCafcW3GH-eI",
   authDomain: "imbatiblesgym-7976f.firebaseapp.com",
@@ -16,14 +12,6 @@ const firebaseConfig = {
   measurementId: "G-25BH3E9FEW"
 };
 
-// Inicializa la aplicación Firebase
-const app = initializeApp(firebaseConfig);
-
-// Inicializa Analytics (opcional, si lo usas)
-const analytics = getAnalytics(app);
-
-// Inicializa Storage para subir y gestionar archivos (si lo vas a usar)
-const storage = getStorage(app);
-
-// Exporta las instancias para usarlas en otros componentes
-export { app, analytics, storage };
+export const app = initializeApp(firebaseConfig);
+export const storage = getStorage(app);
+export const db = getFirestore(app);

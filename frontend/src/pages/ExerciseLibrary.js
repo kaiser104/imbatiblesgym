@@ -1,11 +1,9 @@
-// src/pages/ExerciseLibrary.js
+// frontend/src/pages/ExerciseLibrary.js
 import React, { useEffect, useState } from 'react';
-import { getFirestore, collection, getDocs } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { Link } from 'react-router-dom';
-import { app } from '../firebase';
+import { db } from '../firebase'; // Importar db directamente
 import './ExerciseLibrary.css';
-
-const db = getFirestore(app);
 
 const ExerciseLibrary = () => {
   const [exercises, setExercises] = useState([]);
@@ -22,17 +20,24 @@ const ExerciseLibrary = () => {
   useEffect(() => {
     const fetchExercises = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, "exercises"));
+        console.log("Intentando obtener ejercicios de Firestore...");
+        const exercisesCollection = collection(db, "exercises");
+        const querySnapshot = await getDocs(exercisesCollection);
+        
+        console.log("Documentos obtenidos:", querySnapshot.size);
+        
         const exerciseList = [];
         querySnapshot.forEach((doc) => {
+          console.log("Documento ID:", doc.id, "Data:", doc.data());
           exerciseList.push({ id: doc.id, ...doc.data() });
         });
+        
         setExercises(exerciseList);
         setFilteredExercises(exerciseList);
         setLoading(false);
       } catch (err) {
         console.error("Error fetching exercises:", err);
-        setError("Error fetching exercises.");
+        setError("Error obteniendo ejercicios: " + err.message);
         setLoading(false);
       }
     };
@@ -40,6 +45,7 @@ const ExerciseLibrary = () => {
     fetchExercises();
   }, []);
 
+  // El resto de tu código permanece igual
   const handleFilterChange = (e) => {
     setFilters({
       ...filters,
@@ -69,7 +75,8 @@ const ExerciseLibrary = () => {
   };
 
   if (loading) return <p>Cargando ejercicios...</p>;
-  if (error) return <p>{error}</p>;
+  if (error) return <p style={{color: "red"}}>{error}</p>;
+  if (filteredExercises.length === 0) return <p>No se encontraron ejercicios. ¿Has subido alguno?</p>;
 
   return (
     <div className="exercise-library">
@@ -111,13 +118,17 @@ const ExerciseLibrary = () => {
       <div className="exercise-grid">
         {filteredExercises.map(ex => (
           <div key={ex.id} className="exercise-card">
-            <img src={ex.fileURL} alt={ex.name} className="exercise-image" />
+            {ex.fileURL ? (
+              <img src={ex.fileURL} alt={ex.name} className="exercise-image" />
+            ) : (
+              <div className="no-image">No hay imagen disponible</div>
+            )}
             <h3>{ex.name}</h3>
             <p><strong>Músculo principal:</strong> {ex.mainMuscle}</p>
             {ex.secondaryMuscle && <p><strong>Músculo secundario:</strong> {ex.secondaryMuscle}</p>}
             <p><strong>Categoría:</strong> {ex.movementCategory}</p>
             <p><strong>Equipamiento:</strong> {ex.equipment}</p>
-            <Link to={`/edit/${ex.id}`}>Editar</Link>
+            <Link to={`/edit/${ex.id}`} className="edit-button">Editar</Link>
           </div>
         ))}
       </div>

@@ -1,6 +1,6 @@
-// src/pages/UploadExercise.js
+// frontend/src/pages/UploadExercise.js
 import React, { useState } from 'react';
-import { storage } from '../firebase'; // Asegúrate de que firebase.js exporte la instancia 'storage' y 'app'
+import { storage } from '../firebase';
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { getFirestore, collection, addDoc } from "firebase/firestore";
 import { app } from '../firebase';
@@ -43,11 +43,10 @@ const UploadExercise = () => {
       return;
     }
     
-    // Define la referencia en Firebase Storage, organizando por categoría
+    // Referencia en Storage (organizada por categoría)
     const storageRef = ref(storage, `exercises/${exerciseData.movementCategory}/${file.name}`);
     const uploadTask = uploadBytesResumable(storageRef, file);
 
-    // Monitorea la subida
     uploadTask.on("state_changed",
       snapshot => {
         const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
@@ -58,20 +57,16 @@ const UploadExercise = () => {
         setError(error.message);
       },
       () => {
-        // Cuando la subida se completa, obtiene la URL pública
         getDownloadURL(uploadTask.snapshot.ref).then(async (url) => {
           setDownloadURL(url);
-          // Prepara el objeto ejercicio con los metadatos y la URL del archivo
           const exercise = {
             ...exerciseData,
             fileURL: url,
             createdAt: new Date()
           };
           try {
-            // Guarda el documento en Firestore, en la colección "exercises"
             await addDoc(collection(db, "exercises"), exercise);
             setMessage("Ejercicio subido y guardado correctamente.");
-            // Reinicia el formulario
             setExerciseData({
               name: '',
               mainMuscle: '',
