@@ -1,5 +1,6 @@
 /* frontend/src/pages/EditExercise.css */
 .edit-exercise {
     padding: 1rem;
-  }
-  
+    background-color: #121212; /* Fondo negro profundo */
+    color: #F5F5F5; /* Texto en blanco suave */
+}

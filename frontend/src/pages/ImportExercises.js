@@ -8,10 +8,10 @@ import './ImportExercises.css';
 const ImportExercises = () => {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
-  const [files, setFiles] = useState([]);
+  const [files, setFiles] = useState([]); // Ahora almacenaremos objetos { fileRef, url }
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [loadingFiles, setLoadingFiles] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null); // Será un objeto { fileRef, url }
   const [metadata, setMetadata] = useState({
     name: '',
     mainMuscle: '',
@@ -30,7 +30,6 @@ const ImportExercises = () => {
         console.log("Listando categorías (subcarpetas) en 'exercises'...");
         const exercisesRef = ref(storage, 'exercises');
         const result = await listAll(exercisesRef);
-        
         console.log("Subcarpetas encontradas:", result.prefixes.length);
         setCategories(result.prefixes);
         setLoadingCategories(false);
@@ -44,7 +43,7 @@ const ImportExercises = () => {
     listCategories();
   }, []);
 
-  // Listar archivos cuando se selecciona una categoría
+  // Listar archivos cuando se selecciona una categoría, obteniendo sus URLs para la vista previa
   const handleSelectCategory = async (categoryRef) => {
     setSelectedCategory(categoryRef);
     setLoadingFiles(true);
@@ -52,7 +51,14 @@ const ImportExercises = () => {
     try {
       const result = await listAll(categoryRef);
       console.log("Archivos encontrados en la categoría:", result.items.length);
-      setFiles(result.items);
+      // Obtener la URL de cada archivo
+      const fileObjects = await Promise.all(
+        result.items.map(async (fileRef) => {
+          const url = await getDownloadURL(fileRef);
+          return { fileRef, url };
+        })
+      );
+      setFiles(fileObjects);
       setLoadingFiles(false);
     } catch (err) {
       console.error("Error al listar archivos de la categoría:", err);
@@ -65,38 +71,34 @@ const ImportExercises = () => {
   const handleBackToCategories = () => {
     setSelectedCategory(null);
     setSelectedFile(null);
+    setError('');
+    setMessage('');
   };
 
-  // Cuando se selecciona un archivo para importar
-  const handleSelectFile = async (fileRef) => {
-    setSelectedFile(fileRef);
-    
+  // Al seleccionar un archivo para importar (recibe el objeto con fileRef y url)
+  const handleSelectFile = async (fileObj) => {
+    setSelectedFile(fileObj);
     try {
-      // Intentar obtener la URL para verificar que el archivo es accesible
-      const url = await getDownloadURL(fileRef);
-      console.log("URL del archivo obtenida:", url);
-      
-      // Obtener la categoría del path
-      const parts = fileRef.fullPath.split('/');
+      console.log("URL del archivo obtenida:", fileObj.url);
+      // Obtener la categoría del path: se espera que el path sea "exercises/Categoria/archivo.gif"
+      const parts = fileObj.fileRef.fullPath.split('/');
       let category = '';
       if (parts.length >= 2) {
-        category = parts[1]; // La segunda parte del path debería ser la categoría
+        category = parts[1];
       }
-      
-      // Limpiar el nombre del archivo para que sea más legible
-      const fileName = fileRef.name.replace(/\.[^/.]+$/, ""); // Quitar extensión
+      // Limpiar el nombre del archivo para que sea legible
+      const fileName = fileObj.fileRef.name.replace(/\.[^/.]+$/, "");
       const formattedName = fileName
         .replace(/_/g, ' ')
         .replace(/-/g, ' ')
         .split(' ')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ');
-      
       setMetadata({
         name: formattedName,
         mainMuscle: '',
         secondaryMuscle: '',
-        movementCategory: category, // Usamos la categoría del path
+        movementCategory: category,
         equipment: ''
       });
     } catch (err) {
@@ -124,18 +126,16 @@ const ImportExercises = () => {
       return;
     }
     try {
-      const url = await getDownloadURL(selectedFile);
+      // Ya tenemos la URL en selectedFile.url
       const exerciseData = {
         ...metadata,
-        fileURL: url,
+        fileURL: selectedFile.url,
         createdAt: new Date()
       };
-      
       await addDoc(collection(db, "exercises"), exerciseData);
       setMessage("Ejercicio importado y guardado correctamente.");
-      
-      // Actualizar la lista de archivos (quitar el importado)
-      setFiles(files.filter(f => f.fullPath !== selectedFile.fullPath));
+      // Actualizar la lista de archivos (opcional: quitar el archivo importado)
+      setFiles(files.filter(obj => obj.fileRef.fullPath !== selectedFile.fileRef.fullPath));
       setSelectedFile(null);
       setImporting(false);
     } catch (err) {
@@ -160,7 +160,6 @@ const ImportExercises = () => {
       <div className="category-list">
         <h3>Selecciona una categoría de movimiento:</h3>
         {categories.map(categoryRef => {
-          // Extraer el nombre de la categoría del path
           const categoryName = categoryRef.name || categoryRef.fullPath.split('/').pop();
           return (
             <div key={categoryRef.fullPath} className="category-item">
@@ -174,7 +173,7 @@ const ImportExercises = () => {
     );
   };
 
-  // Vista de archivos dentro de una categoría
+  // Vista de archivos dentro de una categoría (incluyendo previsualización)
   const renderFiles = () => {
     if (files.length === 0) {
       return (
@@ -195,12 +194,12 @@ const ImportExercises = () => {
         <button onClick={handleBackToCategories} className="back-button">
           Volver a las categorías
         </button>
-        
         <div className="files-grid">
-          {files.map(fileRef => (
+          {files.map(({ fileRef, url }) => (
             <div key={fileRef.fullPath} className="file-item">
+              <img src={url} alt={fileRef.name} style={{ maxWidth: '100px' }} />
               <p>{fileRef.name}</p>
-              <button onClick={() => handleSelectFile(fileRef)} className="import-button">
+              <button onClick={() => handleSelectFile({ fileRef, url })} className="import-button">
                 Importar este ejercicio
               </button>
             </div>
@@ -214,11 +213,10 @@ const ImportExercises = () => {
   const renderImportForm = () => {
     return (
       <div className="import-form">
-        <h3>Importar: {selectedFile.name}</h3>
+        <h3>Importar: {selectedFile.fileRef.name}</h3>
         <button onClick={() => setSelectedFile(null)} className="back-button">
           Volver a la lista de archivos
         </button>
-        
         <form onSubmit={handleImportSubmit}>
           <div>
             <label>Nombre del ejercicio:</label>
@@ -273,7 +271,6 @@ const ImportExercises = () => {
             {importing ? "Importando..." : "Guardar Ejercicio"}
           </button>
         </form>
-        
         {message && <p style={{ color: "green" }}>{message}</p>}
         {error && <p style={{ color: "red" }}>{error}</p>}
       </div>
@@ -283,7 +280,6 @@ const ImportExercises = () => {
   return (
     <div className="import-exercises">
       <h2>Importar Ejercicios desde Storage</h2>
-      
       {loadingCategories ? (
         <p>Cargando categorías desde Storage...</p>
       ) : error && !selectedCategory && !selectedFile ? (

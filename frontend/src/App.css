@@ -14,5 +14,5 @@
   flex: 1;
   margin-left: 220px; /* Debe coincidir con el ancho de la sidebar */
   padding: 1rem;
-  background-color: #f9f9f9;
+  background-color: #1E1E1E; /* Cambio de fondo a gris oscuro */
 }

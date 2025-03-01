@@ -2,7 +2,7 @@
 .app-footer {
   text-align: center;
   padding: 1rem;
-  background-color: #f1f1f1;
-  color: #333;
+  background-color: #1E1E1E; /* Gris oscuro */
+  color: #F5F5F5; /* Blanco suave */
   margin-top: 1rem;
 }

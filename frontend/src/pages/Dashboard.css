@@ -1,28 +1,31 @@
 /* src/pages/Dashboard.css */
 .dashboard {
-    padding: 1rem;
-  }
-  
-  .cards-container {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-    margin-bottom: 2rem;
-  }
-  
-  .card {
-    background: #ffffff;
-    padding: 1rem;
-    border-radius: 8px;
-    width: 200px;
-    text-align: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  }
-  
-  .chart-container {
-    background: #fff;
-    padding: 1rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  }
-  
+  padding: 1rem;
+  background-color: #121212; /* Fondo negro profundo */
+  color: #F5F5F5; /* Texto en blanco suave */
+}
+
+.cards-container {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.card {
+  background: #242424; /* Gris oscuro */
+  padding: 1rem;
+  border-radius: 8px;
+  width: 200px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1); /* Ajuste de sombra para modo oscuro */
+  color: #F5F5F5; /* Texto en blanco suave */
+}
+
+.chart-container {
+  background: #242424; /* Gris oscuro */
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1); /* Ajuste de sombra para modo oscuro */
+  color: #F5F5F5; /* Texto en blanco suave */
+}
