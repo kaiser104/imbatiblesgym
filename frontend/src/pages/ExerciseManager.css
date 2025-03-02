@@ -1,0 +1,179 @@
+/* frontend/src/pages/ExerciseManager.css */
+.exercise-manager {
+    padding: 1rem;
+    background-color: #121212; /* Fondo negro profundo */
+    color: #F5F5F5; /* Texto en blanco suave */
+}
+  
+.tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+  
+.tabs button {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    border: none;
+    background-color: #1E1E1E; /* Gris oscuro */
+    border-radius: 4px;
+    color: #F5F5F5; /* Blanco suave */
+    transition: background-color 0.3s ease;
+}
+  
+.tabs button.active {
+    background-color: #145214; /* Verde oscuro */
+    font-weight: bold;
+}
+  
+.tabs button:hover {
+    background-color: #28A745; /* Verde más brillante */
+}
+
+/* Biblioteca */
+.library-section {
+    margin-bottom: 2rem;
+}
+  
+.filter-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+  
+.filter-container input {
+    padding: 0.4rem;
+    border: 1px solid #3A3A3A; /* Gris medio */
+    border-radius: 4px;
+    background-color: #1E1E1E; /* Fondo oscuro */
+    color: #F5F5F5; /* Texto en blanco suave */
+}
+  
+.filter-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+  
+.filter-buttons button {
+    padding: 0.4rem 0.8rem;
+    cursor: pointer;
+    background-color: #145214; /* Verde oscuro */
+    color: #F5F5F5; /* Texto en blanco */
+    border: none;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+}
+  
+.filter-buttons button:hover {
+    background-color: #28A745; /* Verde más brillante */
+}
+  
+.exercise-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+}
+  
+.exercise-card {
+    border: 1px solid #3A3A3A; /* Gris medio */
+    border-radius: 8px;
+    padding: 0.8rem;
+    text-align: center;
+    background-color: #1E1E1E; /* Fondo oscuro */
+    box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1); /* Sombra sutil */
+    color: #F5F5F5; /* Texto en blanco suave */
+}
+  
+.exercise-image {
+    max-width: 100%;
+    border-radius: 4px;
+}
+  
+.edit-button {
+    display: inline-block;
+    margin-top: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    background-color: #145214; /* Verde oscuro */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+  
+.edit-button:hover {
+    background-color: #28A745; /* Verde más brillante */
+}
+
+/* Importación */
+.import-section {
+    margin-top: 1rem;
+}
+  
+.category-list,
+.file-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+  
+.category-item,
+.file-item {
+    border: 1px solid #3A3A3A; /* Gris medio */
+    padding: 0.5rem;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background-color: #1E1E1E; /* Fondo oscuro */
+    color: #F5F5F5; /* Texto en blanco suave */
+}
+  
+.category-button,
+.import-button,
+.back-button,
+.submit-button {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    border: none;
+    border-radius: 4px;
+    background-color: #145214; /* Verde oscuro */
+    color: white;
+    transition: background-color 0.3s ease;
+}
+  
+.category-button:hover,
+.import-button:hover,
+.back-button:hover,
+.submit-button:hover {
+    background-color: #28A745; /* Verde más brillante */
+}
+
+.import-form {
+    border: 1px solid #3A3A3A; /* Gris medio */
+    padding: 1rem;
+    border-radius: 8px;
+    max-width: 400px;
+    background-color: #242424; /* Gris oscuro */
+}
+  
+.import-form form div {
+    margin-bottom: 0.5rem;
+}
+  
+.import-form label {
+    display: block;
+    margin-bottom: 0.2rem;
+    color: #F5F5F5; /* Texto en blanco suave */
+}
+  
+.import-form input {
+    width: 100%;
+    padding: 0.3rem;
+    box-sizing: border-box;
+    background-color: #1E1E1E; /* Fondo oscuro */
+    border: 1px solid #3A3A3A; /* Gris medio */
+    color: #F5F5F5; /* Texto en blanco suave */
+}
