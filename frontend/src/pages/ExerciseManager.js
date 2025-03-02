@@ -6,9 +6,15 @@ import { Link } from 'react-router-dom';
 import { db, storage } from '../firebase';
 import './ExerciseManager.css';
 
+// Función para normalizar nombres (quita extensión, pasa a minúsculas y reemplaza _ y - por espacios)
+const normalizeName = (name) => {
+  return name.replace(/\.[^/.]+$/, "").toLowerCase().replace(/[_-]/g, ' ').trim();
+};
+
 const ExerciseManager = () => {
-  // Estado para la biblioteca
+  // Estados para la Biblioteca (Firestore)
   const [exercises, setExercises] = useState([]);
+  // Inicialmente, la lista filtrada se deja vacía hasta que se aplique un filtro.
   const [filteredExercises, setFilteredExercises] = useState([]);
   const [loadingExercises, setLoadingExercises] = useState(true);
   const [libraryError, setLibraryError] = useState('');
@@ -19,13 +25,13 @@ const ExerciseManager = () => {
     equipment: ''
   });
 
-  // Estado para la importación
+  // Estados para la Importación (Storage)
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
-  const [files, setFiles] = useState([]); // Almacena objetos: { fileRef, url }
+  const [files, setFiles] = useState([]); // Arreglo de objetos { fileRef, url }
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [loadingFiles, setLoadingFiles] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null); // Objeto: { fileRef, url }
+  const [selectedFile, setSelectedFile] = useState(null); // Objeto { fileRef, url }
   const [importMetadata, setImportMetadata] = useState({
     name: '',
     mainMuscle: '',
@@ -37,10 +43,10 @@ const ExerciseManager = () => {
   const [importMessage, setImportMessage] = useState('');
   const [importError, setImportError] = useState('');
 
-  // Control de pestañas
-  const [activeTab, setActiveTab] = useState('library'); // "library" o "import"
+  // Control de pestañas: "library" o "import"
+  const [activeTab, setActiveTab] = useState('library');
 
-  // Obtener ejercicios desde Firestore para la biblioteca
+  // Obtener ejercicios desde Firestore (para la Biblioteca)
   useEffect(() => {
     const fetchExercises = async () => {
       try {
@@ -50,7 +56,8 @@ const ExerciseManager = () => {
           exerciseList.push({ id: doc.id, ...doc.data() });
         });
         setExercises(exerciseList);
-        setFilteredExercises(exerciseList);
+        // Inicialmente, no se muestran ejercicios hasta que se apliquen filtros
+        setFilteredExercises([]);
         setLoadingExercises(false);
       } catch (err) {
         console.error("Error fetching exercises:", err);
@@ -58,7 +65,6 @@ const ExerciseManager = () => {
         setLoadingExercises(false);
       }
     };
-
     fetchExercises();
   }, []);
 
@@ -80,6 +86,7 @@ const ExerciseManager = () => {
     setFilteredExercises(filtered);
   };
 
+  // Al reiniciar, vaciar filtros y la lista (para no mostrar ejercicios por defecto)
   const resetFilters = () => {
     setFilters({
       name: '',
@@ -87,10 +94,10 @@ const ExerciseManager = () => {
       mainMuscle: '',
       equipment: ''
     });
-    setFilteredExercises(exercises);
+    setFilteredExercises([]);
   };
 
-  // Funcionalidad de importación: listar categorías (subcarpetas) en "exercises"
+  // Listar categorías (subcarpetas) en Storage, dentro de "exercises"
   useEffect(() => {
     const listCategories = async () => {
       try {
@@ -104,11 +111,10 @@ const ExerciseManager = () => {
         setLoadingCategories(false);
       }
     };
-
     listCategories();
   }, []);
 
-  // Cuando se selecciona una categoría, listar archivos (con previsualización)
+  // Listar archivos en una categoría seleccionada y filtrar los ya importados
   const handleSelectCategory = async (categoryRef) => {
     setSelectedCategory(categoryRef);
     setLoadingFiles(true);
@@ -121,11 +127,17 @@ const ExerciseManager = () => {
           return { fileRef, url };
         })
       );
-      setFiles(fileObjects);
+      // Filtrar archivos: excluir aquellos cuyo nombre (normalizado) ya existe en Firestore
+      const importedNames = exercises.map(ex => normalizeName(ex.name || ''));
+      const filteredFiles = fileObjects.filter(obj => {
+        const normalizedFileName = normalizeName(obj.fileRef.name);
+        return !importedNames.includes(normalizedFileName);
+      });
+      setFiles(filteredFiles);
       setLoadingFiles(false);
     } catch (err) {
       console.error("Error al listar archivos de la categoría:", err);
-      setImportError("Error al listar archivos: " + err.message);
+      setImportError("Error al listar archivos de la categoría: " + err.message);
       setLoadingFiles(false);
     }
   };
@@ -137,7 +149,7 @@ const ExerciseManager = () => {
     setImportMessage('');
   };
 
-  // Al seleccionar un archivo, prellenar metadatos
+  // Al seleccionar un archivo, prellenar metadatos usando el nombre y la ruta
   const handleSelectFile = (fileObj) => {
     setSelectedFile(fileObj);
     const parts = fileObj.fileRef.fullPath.split('/');
@@ -145,7 +157,6 @@ const ExerciseManager = () => {
     if (parts.length >= 2) {
       category = parts[1];
     }
-    // Prepara un nombre formateado
     const fileName = fileObj.fileRef.name.replace(/\.[^/.]+$/, "");
     const formattedName = fileName
       .replace(/[_-]/g, ' ')
@@ -188,7 +199,7 @@ const ExerciseManager = () => {
       };
       await addDoc(collection(db, "exercises"), exerciseData);
       setImportMessage("Ejercicio importado y guardado correctamente.");
-      // Opcional: eliminar el archivo importado de la lista
+      // Opcional: quitar de la lista el archivo importado
       setFiles(files.filter(obj => obj.fileRef.fullPath !== selectedFile.fileRef.fullPath));
       setSelectedFile(null);
       setImporting(false);
@@ -199,7 +210,7 @@ const ExerciseManager = () => {
     }
   };
 
-  // Renderizar la sección de la biblioteca
+  // Renderizar la sección de Biblioteca (mostrando ejercicios solo cuando se apliquen filtros)
   const renderLibrary = () => (
     <div className="library-section">
       <h2>Biblioteca de Ejercicios</h2>
@@ -242,7 +253,7 @@ const ExerciseManager = () => {
       ) : libraryError ? (
         <p style={{ color: "red" }}>{libraryError}</p>
       ) : filteredExercises.length === 0 ? (
-        <p>No se encontraron ejercicios. ¿Has subido alguno?</p>
+        <p>No se han aplicado filtros.</p>
       ) : (
         <div className="exercise-grid">
           {filteredExercises.map(ex => (
@@ -265,7 +276,7 @@ const ExerciseManager = () => {
     </div>
   );
 
-  // Renderizar la sección de importación
+  // Renderizar la sección de Importación (como en la versión anterior)
   const renderImport = () => (
     <div className="import-section">
       <h2>Importar Ejercicios desde Storage</h2>
