@@ -19,6 +19,11 @@ const Sidebar = () => {
             </NavLink>
           </li>
           <li>
+            <NavLink to="/training-plan" activeclassname="active">
+              Diseño planes
+            </NavLink>
+          </li>
+          <li>
             <NavLink to="/entrenadores" activeclassname="active">
               Entrenadores
             </NavLink>

@@ -6,15 +6,90 @@ import { Link } from 'react-router-dom';
 import { db, storage } from '../firebase';
 import './ExerciseManager.css';
 
-// Función para normalizar nombres (quita extensión, pasa a minúsculas y reemplaza _ y - por espacios)
-const normalizeName = (name) => {
-  return name.replace(/\.[^/.]+$/, "").toLowerCase().replace(/[_-]/g, ' ').trim();
+// --- UTILIDADES ---
+
+// Diccionario de palabras clave para equipamiento
+const equipmentKeywords = {
+  "Bolsa de arena": ["\\bsandbag\\b", "\\bbag\\b"],
+  "Trineo": ["\\bsled\\b"],
+  "Cuerda de batida": ["\\bconditioning rope\\b", "\\brope\\b"],
+  "Mancuernas": ["\\bdb\\b", "\\bdumbbell\\b"],
+  "Bola de lacrosse": ["\\blacrosse\\b"],
+  "Power band": ["\\bband\\b", "\\bresistance\\b"],
+  "Rodillo de espuma": ["\\bfoam roll\\b"],
+  "Barra": ["\\bbb\\b", "\\bbar\\b"],
+  "Cuerda para saltar": ["\\bjump rope\\b"],
+  "Suspensión": ["\\bsuspension\\b", "\\btrx\\b"],
+  "Chaleco con peso": ["\\bweighted vest\\b", "\\bweighted pull\\b", "\\bweight vest\\b"],
+  "Kettlebell": ["\\bkb\\b", "\\bkettlebell\\b"],
+  "Disco": ["\\bplate\\b(?!ral)"],
+  "Balón medicinal": ["\\bmb\\b", "\\bmedicine ball\\b"],
+  "Pelota suiza": ["\\bsb\\b", "\\bswiss ball\\b"],
 };
+
+// Función para normalizar nombres (quita extensión, pasa a minúsculas y quita espacios extra)
+const normalizeName = (name) => {
+  return name.replace(/\.[^/.]+$/, "").toLowerCase().trim();
+};
+
+// Función para asignar equipamiento automáticamente según el nombre del archivo
+const assignEquipment = (fileName) => {
+  const lowerName = fileName.toLowerCase();
+  for (const [equipment, patterns] of Object.entries(equipmentKeywords)) {
+    for (const pattern of patterns) {
+      const regex = new RegExp(pattern);
+      if (regex.test(lowerName)) {
+        return equipment;
+      }
+    }
+  }
+  return "";
+};
+
+// Opciones para el menú desplegable de categoría de movimiento
+const movementCategoryOptions = [
+  "", // opción vacía (Todas)
+  "Bent Leg Hip Extension",
+  "Cardio",
+  "Double Leg Push",
+  "Core Stability",
+  "Auxiliary",
+  "Mobility",
+  "Explosive",
+  "Horizontal Push",
+  "Straight Leg Hip Extension",
+  "Downward Pull",
+  "Upward Pull",
+  "Upward Push",
+  "Single Leg Push",
+  "Horizontal Pull"
+];
+
+// Opciones para el menú desplegable de músculos
+const muscleOptions = [
+  "",
+  "Pectorales",
+  "Espalda",
+  "Bíceps",
+  "Tríceps",
+  "Deltoides",
+  "Deltoides posterior",
+  "Glúteos",
+  "Abdominales",
+  "Lumbares",
+  "Cuádriceps",
+  "Isquiotibiales",
+  "Pantorrilla",
+  "Aductores",
+  "Abductores",
+  "Antebrazos"
+];
+
+// --- FIN DE UTILIDADES ---
 
 const ExerciseManager = () => {
   // Estados para la Biblioteca (Firestore)
   const [exercises, setExercises] = useState([]);
-  // Inicialmente, la lista filtrada se deja vacía hasta que se aplique un filtro.
   const [filteredExercises, setFilteredExercises] = useState([]);
   const [loadingExercises, setLoadingExercises] = useState(true);
   const [libraryError, setLibraryError] = useState('');
@@ -56,7 +131,7 @@ const ExerciseManager = () => {
           exerciseList.push({ id: doc.id, ...doc.data() });
         });
         setExercises(exerciseList);
-        // Inicialmente, no se muestran ejercicios hasta que se apliquen filtros
+        // Inicialmente no se muestran ejercicios hasta aplicar filtros
         setFilteredExercises([]);
         setLoadingExercises(false);
       } catch (err) {
@@ -86,7 +161,6 @@ const ExerciseManager = () => {
     setFilteredExercises(filtered);
   };
 
-  // Al reiniciar, vaciar filtros y la lista (para no mostrar ejercicios por defecto)
   const resetFilters = () => {
     setFilters({
       name: '',
@@ -114,7 +188,7 @@ const ExerciseManager = () => {
     listCategories();
   }, []);
 
-  // Listar archivos en una categoría seleccionada y filtrar los ya importados
+  // Listar archivos en la categoría seleccionada y filtrar los ya importados
   const handleSelectCategory = async (categoryRef) => {
     setSelectedCategory(categoryRef);
     setLoadingFiles(true);
@@ -127,7 +201,7 @@ const ExerciseManager = () => {
           return { fileRef, url };
         })
       );
-      // Filtrar archivos: excluir aquellos cuyo nombre (normalizado) ya existe en Firestore
+      // Filtrar archivos: excluir aquellos cuyo nombre normalizado ya existe en Firestore
       const importedNames = exercises.map(ex => normalizeName(ex.name || ''));
       const filteredFiles = fileObjects.filter(obj => {
         const normalizedFileName = normalizeName(obj.fileRef.name);
@@ -149,16 +223,14 @@ const ExerciseManager = () => {
     setImportMessage('');
   };
 
-  // Al seleccionar un archivo, prellenar metadatos usando el nombre y la ruta
+  // Al seleccionar un archivo individual para importar (abre el formulario)
   const handleSelectFile = (fileObj) => {
     setSelectedFile(fileObj);
     const parts = fileObj.fileRef.fullPath.split('/');
-    let category = '';
-    if (parts.length >= 2) {
-      category = parts[1];
-    }
-    const fileName = fileObj.fileRef.name.replace(/\.[^/.]+$/, "");
+    const category = parts[1] || '';
+    const fileName = fileObj.fileRef.name;
     const formattedName = fileName
+      .replace(/\.[^/.]+$/, "")
       .replace(/[_-]/g, ' ')
       .split(' ')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
@@ -179,7 +251,7 @@ const ExerciseManager = () => {
     });
   };
 
-  // Guardar ejercicio importado en Firestore
+  // Guardar un ejercicio importado individualmente
   const handleImportSubmit = async (e) => {
     e.preventDefault();
     setImporting(true);
@@ -199,7 +271,7 @@ const ExerciseManager = () => {
       };
       await addDoc(collection(db, "exercises"), exerciseData);
       setImportMessage("Ejercicio importado y guardado correctamente.");
-      // Opcional: quitar de la lista el archivo importado
+      // Quitar de la lista el archivo importado
       setFiles(files.filter(obj => obj.fileRef.fullPath !== selectedFile.fileRef.fullPath));
       setSelectedFile(null);
       setImporting(false);
@@ -210,7 +282,48 @@ const ExerciseManager = () => {
     }
   };
 
-  // Renderizar la sección de Biblioteca (mostrando ejercicios solo cuando se apliquen filtros)
+  // --- NUEVA FUNCIÓN: Auto-importar TODOS los archivos de la categoría seleccionada ---
+  const handleAutoImportCategory = async () => {
+    setImporting(true);
+    setImportError('');
+    setImportMessage('');
+    let importedCount = 0;
+    for (const fileObj of files) {
+      try {
+        const url = await getDownloadURL(fileObj.fileRef);
+        const parts = fileObj.fileRef.fullPath.split('/');
+        const category = parts[1] || '';
+        const fileName = fileObj.fileRef.name;
+        const formattedName = fileName
+          .replace(/\.[^/.]+$/, "")
+          .replace(/[_-]/g, ' ')
+          .split(' ')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ');
+        const equipment = assignEquipment(fileName);
+        const exerciseData = {
+          name: formattedName,
+          mainMuscle: '',
+          secondaryMuscle: '',
+          movementCategory: category,
+          equipment: equipment,
+          fileURL: url,
+          createdAt: new Date()
+        };
+        await addDoc(collection(db, "exercises"), exerciseData);
+        importedCount++;
+      } catch (innerErr) {
+        console.error("Error auto-importando " + fileObj.fileRef.name + ": " + innerErr.message);
+      }
+    }
+    setImportMessage(`Auto-importación completada: ${importedCount} ejercicios importados.`);
+    // Opcional: limpiar la lista de archivos tras la autoimportación
+    setFiles([]);
+    setImporting(false);
+  };
+  // --- FIN NUEVA FUNCIÓN ---
+
+  // Renderizar la sección de Biblioteca (FireStore)
   const renderLibrary = () => (
     <div className="library-section">
       <h2>Biblioteca de Ejercicios</h2>
@@ -222,20 +335,24 @@ const ExerciseManager = () => {
           value={filters.name}
           onChange={handleFilterChange}
         />
-        <input
-          type="text"
-          placeholder="Filtrar por categoría..."
+        <select
           name="movementCategory"
           value={filters.movementCategory}
           onChange={handleFilterChange}
-        />
-        <input
-          type="text"
-          placeholder="Filtrar por músculo principal..."
+        >
+          {movementCategoryOptions.map(option => (
+            <option key={option} value={option}>{option || "Todas"}</option>
+          ))}
+        </select>
+        <select
           name="mainMuscle"
           value={filters.mainMuscle}
           onChange={handleFilterChange}
-        />
+        >
+          {muscleOptions.map(option => (
+            <option key={option} value={option}>{option || "Todos"}</option>
+          ))}
+        </select>
         <input
           type="text"
           placeholder="Filtrar por equipamiento..."
@@ -276,7 +393,7 @@ const ExerciseManager = () => {
     </div>
   );
 
-  // Renderizar la sección de Importación (como en la versión anterior)
+  // Renderizar la sección de Importación (Storage)
   const renderImport = () => (
     <div className="import-section">
       <h2>Importar Ejercicios desde Storage</h2>
@@ -306,22 +423,28 @@ const ExerciseManager = () => {
             </div>
             <div>
               <label>Músculo principal:</label>
-              <input
-                type="text"
+              <select
                 name="mainMuscle"
                 value={importMetadata.mainMuscle}
                 onChange={handleImportMetadataChange}
                 required
-              />
+              >
+                {muscleOptions.map(option => (
+                  <option key={option} value={option}>{option || "Selecciona"}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label>Músculo secundario (opcional):</label>
-              <input
-                type="text"
+              <select
                 name="secondaryMuscle"
                 value={importMetadata.secondaryMuscle}
                 onChange={handleImportMetadataChange}
-              />
+              >
+                {muscleOptions.map(option => (
+                  <option key={option} value={option}>{option || "Ninguno"}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label>Categoría de movimiento:</label>
@@ -361,6 +484,12 @@ const ExerciseManager = () => {
             <button onClick={handleBackToCategories} className="back-button">
               Volver a las categorías
             </button>
+            {/* Botón para auto-importar todos los archivos de la categoría */}
+            {files.length > 0 && (
+              <button onClick={handleAutoImportCategory} disabled={importing} className="auto-import-button">
+                {importing ? "Importando..." : "Auto-importar todos"}
+              </button>
+            )}
             <div className="files-grid">
               {files.map(({ fileRef, url }) => (
                 <div key={fileRef.fullPath} className="file-item">

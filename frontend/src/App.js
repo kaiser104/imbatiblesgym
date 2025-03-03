@@ -11,6 +11,7 @@ import Trainees from './pages/Trainees';
 import ExerciseManager from './pages/ExerciseManager';
 import UploadExercise from './pages/UploadExercise';
 import EditExercise from './pages/EditExercise';
+import TrainingPlanDesigner from './pages/TrainingPlanDesigner';
 import './App.css';
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
             <Route path="/library" element={<ExerciseManager />} />
             <Route path="/upload" element={<UploadExercise />} />
             <Route path="/edit/:id" element={<EditExercise />} />
+            <Route path="/training-plan" element={<TrainingPlanDesigner />} />
           </Routes>
         </main>
       </div>
