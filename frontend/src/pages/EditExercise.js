@@ -1,8 +1,7 @@
-// frontend/src/pages/EditExercise.js
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { db } from '../firebase'; // Importar db directamente 
+import { db } from '../firebase';
 import './EditExercise.css';
 
 const EditExercise = () => {
@@ -20,18 +19,34 @@ const EditExercise = () => {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
+  // Opciones para los menús desplegables de músculos
+  const muscleOptions = [
+    'Pectorales',
+    'Espalda',
+    'Bíceps',
+    'Tríceps',
+    'Deltoides',
+    'Deltoides posterior',
+    'Glúteos',
+    'Abdominales',
+    'Lumbares',
+    'Cuádriceps',
+    'Isquiotibiales',
+    'Pantorrilla',
+    'Aductores',
+    'Abductores',
+    'Antebrazos'
+  ];
+
   useEffect(() => {
     const fetchExercise = async () => {
       try {
-        console.log("Intentando obtener ejercicio con ID:", id);
         const docRef = doc(db, "exercises", id);
         const docSnap = await getDoc(docRef);
         
         if (docSnap.exists()) {
-          console.log("Datos del documento:", docSnap.data());
           setExerciseData(docSnap.data());
         } else {
-          console.log("No se encontró el documento con ID:", id);
           setError("Ejercicio no encontrado.");
         }
       } catch (err) {
@@ -61,7 +76,6 @@ const EditExercise = () => {
         secondaryMuscle: exerciseData.secondaryMuscle,
         movementCategory: exerciseData.movementCategory,
         equipment: exerciseData.equipment
-        // No actualizamos fileURL para no perder referencia al archivo
       });
       setMessage("Ejercicio actualizado correctamente.");
       setTimeout(() => {
@@ -97,22 +111,34 @@ const EditExercise = () => {
         </div>
         <div>
           <label>Músculo principal:</label>
-          <input
-            type="text"
+          <select
             name="mainMuscle"
             value={exerciseData.mainMuscle}
             onChange={handleChange}
             required
-          />
+          >
+            <option value="">Selecciona un músculo</option>
+            {muscleOptions.map((muscle, index) => (
+              <option key={index} value={muscle}>
+                {muscle}
+              </option>
+            ))}
+          </select>
         </div>
         <div>
           <label>Músculo secundario (opcional):</label>
-          <input
-            type="text"
+          <select
             name="secondaryMuscle"
             value={exerciseData.secondaryMuscle}
             onChange={handleChange}
-          />
+          >
+            <option value="">Ninguno</option>
+            {muscleOptions.map((muscle, index) => (
+              <option key={index} value={muscle}>
+                {muscle}
+              </option>
+            ))}
+          </select>
         </div>
         <div>
           <label>Categoría de movimiento:</label>
