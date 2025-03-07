@@ -4,121 +4,92 @@ import { collection, addDoc, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import './TrainingPlanDesigner.css';
 
+// Mapeo de la selección muscular a patrones de movimiento (ejemplo)
+const movementPatternMapping = {
+  "Empuje": ["Horizontal Push", "Upward Push"],
+  "Jalar": ["Horizontal Pull", "Upward Pull", "Downward Pull"],
+  "Piernas": ["Double Leg Push", "Single Leg Push", "Bent Leg Hip Extension", "Straight Leg Hip Extension"]
+};
+
+const enfoqueOptions = [
+  "Multi-Generic Exercise",
+  "Isolation-Generic Exercise"
+];
+
+const equipmentOptions = [
+  'Trineo', 'Suspensión', 'Rodillo de espuma', 'Polea', 'Peso Corporal',
+  'Fit ball', 'Mancuernas', 'Landmine', 'Kettlebell', 'Disco',
+  'Cuerda de batida', 'Chaleco con peso', 'Bolsa de arena', 'Bola de lacrosse',
+  'Barra', 'Power band', 'Balón medicinal'
+];
+
+const muscleOptions = [
+  'Personalizado',
+  'Empuje, Jalar, Piernas',
+  'Empujar, Jalar, Piernas, Cuerpo completo',
+  'Empujar, Jalar, Piernas, Superior, Inferior',
+  'Superior, Inferior, Cuerpo completo',
+  'Cuerpo Completo',
+  'Bro Split'
+];
+
+const customMuscleOptions = [
+  'Pectorales', 'Espalda', 'Bíceps', 'Tríceps', 'Deltoides',
+  'Deltoides posterior', 'Glúteos', 'Abdominales', 'Lumbares',
+  'Cuádriceps', 'Isquiotibiales', 'Pantorrilla', 'Aductores',
+  'Abductores', 'Antebrazos', 'Trapecio'
+];
+
 const TrainingPlanDesigner = () => {
-  // 1. Objetivo Fitness (radio)
-  const [fitnessObjective, setFitnessObjective] = useState('muscleMass'); 
-  // "muscleMass" (Hipertrofia), "conditioning" (Acondicionamiento), "strength" (Fuerza)
-
-  // 2. Duración del Programa (1 a 6 meses)
+  // Estados de selección
+  const [fitnessObjective, setFitnessObjective] = useState('muscleMass'); // muscleMass, conditioning, strength
   const [duration, setDuration] = useState('1');
-
-  // 3. Frecuencia Semanal (1 a 7 días)
   const [frequency, setFrequency] = useState('3');
-
-  // 4. Tiempo disponible por sesión (30, 45, 60, 90)
   const [timeAvailable, setTimeAvailable] = useState('30');
-
-  // Selección de musculatura a entrenar
-  const muscleOptions = [
-    'Personalizado',
-    'Empuje, Jalar, Piernas',
-    'Empujar, Jalar, Piernas, Cuerpo completo',
-    'Empujar, Jalar, Piernas, Superior, Inferior',
-    'Superior, Inferior, Cuerpo completo',
-    'Cuerpo Completo',
-    'Bro Split'
-  ];
   const [muscleSelection, setMuscleSelection] = useState('');
-
-  // Grupos musculares personalizados
-  const customMuscleOptions = [
-    'Pectorales', 'Espalda', 'Bíceps', 'Tríceps', 'Deltoides',
-    'Deltoides posterior', 'Glúteos', 'Abdominales', 'Lumbares',
-    'Cuádriceps', 'Isquiotibiales', 'Pantorrilla', 'Aductores',
-    'Abductores', 'Antebrazos', 'Trapecio'
-  ];
   const [customMuscles, setCustomMuscles] = useState([]);
-
-  // Equipamiento
-  const equipmentOptions = [
-    'Trineo', 'Suspensión', 'Rodillo de espuma', 'Polea', 'Peso Corporal',
-    'Fit ball', 'Mancuernas', 'Landmine', 'Kettlebell', 'Disco',
-    'Cuerda de batida', 'Chaleco con peso', 'Bolsa de arena',
-    'Bola de lacrosse', 'Barra', 'Power band', 'Balón medicinal'
-  ];
   const [equipment, setEquipment] = useState([]);
-
-  // Botón para seleccionar todos los equipos
-  const selectAllEquipment = () => {
-    setEquipment(equipmentOptions);
-  };
-
-  // Nuevo: Opciones para el enfoque (columna "Enfoque")
-  const enfoqueOptions = [
-    "Multi-Generic Exercise",
-    "Isolation-Generic Exercise"
-  ];
-
-  // Mapeo para separar la "Selección muscular" en grupos (cuando no es Personalizado)
-  const muscleGroupMapping = {
-    "Empuje, Jalar, Piernas": ["Empuje", "Jalar", "Piernas"],
-    "Empujar, Jalar, Piernas, Cuerpo completo": ["Empujar", "Jalar", "Piernas", "Cuerpo completo"],
-    "Empujar, Jalar, Piernas, Superior, Inferior": ["Empujar", "Jalar", "Piernas", "Superior", "Inferior"],
-    "Superior, Inferior, Cuerpo completo": ["Superior", "Inferior", "Cuerpo completo"],
-    "Cuerpo Completo": ["Cuerpo Completo"],
-    "Bro Split": ["Bro Split"]
-  };
-
-  // Mapeo de cada grupo muscular a categorías de ejercicio (ejemplo)
-  const muscleGroupToCategories = {
-    "Empuje": ["Horizontal Push", "Upward Push"],
-    "Empujar": ["Horizontal Push", "Upward Push"],
-    "Jalar": ["Horizontal Pull", "Upward Pull", "Downward Pull"],
-    "Piernas": ["Double Leg Push", "Single Leg Push", "Bent Leg Hip Extension", "Straight Leg Hip Extension", "Explosive"],
-    "Cuerpo completo": ["Explosive", "Core Stability", "Cardio"],
-    "Superior": ["Horizontal Push", "Upward Push", "Horizontal Pull", "Upward Pull", "Downward Pull"],
-    "Inferior": ["Double Leg Push", "Single Leg Push", "Bent Leg Hip Extension", "Straight Leg Hip Extension", "Explosive"],
-    "Bro Split": [] // Para Bro Split se usará todo (o se pueden definir según convenga)
-  };
-
-  // Estado para almacenar el plan generado (arreglo de objetos)
   const [trainingPlan, setTrainingPlan] = useState([]);
-
-  // Mensajes
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  /* HANDLERS */
-  const handleFitnessObjectiveChange = (e) => { setFitnessObjective(e.target.value); };
-  const handleDurationChange = (e) => { setDuration(e.target.value); };
+  // HANDLERS
+  const handleFitnessObjectiveChange = (e) => setFitnessObjective(e.target.value);
+  const handleDurationChange = (e) => setDuration(e.target.value);
+  
   const handleFrequencyChange = (e) => {
     const newFreq = parseInt(e.target.value, 10);
     setFrequency(e.target.value);
-    if(newFreq <= 2) { setMuscleSelection("Cuerpo Completo"); }
-    else if(newFreq === 3) { setMuscleSelection("Empuje, Jalar, Piernas"); }
-    else if(newFreq === 4) { setMuscleSelection("Empujar, Jalar, Piernas, Cuerpo completo"); }
-    else if(newFreq === 5) { setMuscleSelection("Empujar, Jalar, Piernas, Superior, Inferior"); }
-    else if(newFreq >= 6) { setMuscleSelection("Bro Split"); }
+    if(newFreq <= 2) setMuscleSelection("Cuerpo Completo");
+    else if(newFreq === 3) setMuscleSelection("Empuje, Jalar, Piernas");
+    else if(newFreq === 4) setMuscleSelection("Empujar, Jalar, Piernas, Cuerpo completo");
+    else if(newFreq === 5) setMuscleSelection("Empujar, Jalar, Piernas, Superior, Inferior");
+    else if(newFreq >= 6) setMuscleSelection("Bro Split");
   };
-  const handleTimeAvailableChange = (e) => { setTimeAvailable(e.target.value); };
+
+  const handleTimeAvailableChange = (e) => setTimeAvailable(e.target.value);
   const handleMuscleSelectionChange = (e) => {
     setMuscleSelection(e.target.value);
     if(e.target.value !== 'Personalizado'){
       setCustomMuscles([]);
     }
   };
+
   const handleCustomMuscleChange = (e) => {
     const { value, checked } = e.target;
-    if(checked) { setCustomMuscles(prev => [...prev, value]); }
-    else { setCustomMuscles(prev => prev.filter(m => m !== value)); }
-  };
-  const handleEquipmentChange = (e) => {
-    const { value, checked } = e.target;
-    if(checked) { setEquipment(prev => [...prev, value]); }
-    else { setEquipment(prev => prev.filter(eq => eq !== value)); }
+    if(checked) setCustomMuscles(prev => [...prev, value]);
+    else setCustomMuscles(prev => prev.filter(m => m !== value));
   };
 
-  /* REGLAS HEURÍSTICAS */
+  const handleEquipmentChange = (e) => {
+    const { value, checked } = e.target;
+    if(checked) setEquipment(prev => [...prev, value]);
+    else setEquipment(prev => prev.filter(eq => eq !== value));
+  };
+
+  const selectAllEquipment = () => setEquipment(equipmentOptions);
+
+  // Heurística: determinar cantidad de ejercicios según objetivo y tiempo disponible
   const getExercisesCountByObjectiveTime = (obj, t) => {
     const timeNum = parseInt(t, 10);
     let total = 0, multi = 0, iso = 0;
@@ -142,21 +113,39 @@ const TrainingPlanDesigner = () => {
   };
 
   const getRecommendedRest = () => {
-    let rest = 60;
-    if(fitnessObjective === 'muscleMass') rest = 90;
-    else if(fitnessObjective === 'conditioning') rest = 60;
-    else if(fitnessObjective === 'strength') rest = 180;
-    return rest;
+    if(fitnessObjective === 'muscleMass') return 90;
+    else if(fitnessObjective === 'conditioning') return 60;
+    else if(fitnessObjective === 'strength') return 180;
+    return 60;
   };
 
+  // Función para obtener ejercicios desde Firebase (se espera que en cada documento existan:
+  // nombre, movementCategory, equipo (o sus variantes) y fileURL)
   const fetchExercises = async () => {
     try {
       const snapshot = await getDocs(collection(db, "exercises"));
-      const allExercises = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const allExercises = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          nombre: data.nombre || data.name || "",
+          movementCategory: data.movementCategory || data.patron || data["patrón"] || "",
+          equipo: data.equipo || data.equipment || data.equipamiento || "",
+          previewURL: data.fileURL || data.previewURL || ""
+        };
+      });
+      // Filtrar según equipamiento disponible
       const filtered = allExercises.filter(ex => {
         if(equipment.length === 0) return true;
-        if(!ex.equipo) return false;
-        return equipment.some(eq => ex.equipo.includes(eq));
+        // Si el campo 'equipo' es una cadena, comprobamos que incluya alguno de los equipamientos
+        if (typeof ex.equipo === 'string') {
+          return equipment.some(eq => ex.equipo.includes(eq));
+        }
+        // Si es un array
+        if (Array.isArray(ex.equipo)) {
+          return equipment.some(eq => ex.equipo.includes(eq));
+        }
+        return false;
       });
       return filtered;
     } catch (err) {
@@ -170,7 +159,7 @@ const TrainingPlanDesigner = () => {
     setError('');
     const freq = parseInt(frequency, 10);
     const months = parseInt(duration, 10);
-    const totalWeeks = months * 4;
+    const totalWeeks = months * 4; 
     const totalSessions = freq * totalWeeks;
 
     const { total, multi, iso } = getExercisesCountByObjectiveTime(fitnessObjective, timeAvailable);
@@ -182,137 +171,110 @@ const TrainingPlanDesigner = () => {
     const restDefault = getRecommendedRest();
     const defaultSeries = 4;
     const exercisesList = await fetchExercises();
+
+    // Fallback en caso de que no se obtengan ejercicios desde Firebase
     let fallbackExercises = [{
       id: "placeholder1",
       nombre: "Multi-Generic Exercise",
+      movementCategory: "",
       equipo: "Sin equipo",
-      categoria: "Horizontal Push"
+      previewURL: ""
     },{
       id: "placeholder2",
       nombre: "Isolation-Generic Exercise",
+      movementCategory: "",
       equipo: "Sin equipo",
-      categoria: "Isolation"
+      previewURL: ""
     }];
 
     const finalList = exercisesList.length > 0 ? exercisesList : fallbackExercises;
 
-    // Determinar los grupos musculares a usar según la selección
-    let muscleGroups = [];
-    if(muscleSelection === "Personalizado") {
-      muscleGroups = customMuscles.length > 0 ? customMuscles : ["Cuerpo Completo"];
+    // Dividir la lista en dos grupos: uno para compuestos (multi) y otro para aislamiento (iso)
+    let multiExercises = [];
+    let isoExercises = [];
+    if(finalList.length === 1) {
+      multiExercises = [finalList[0]];
+      isoExercises = [finalList[0]];
     } else {
-      // Se asume que la opción contiene comas para separar grupos
-      muscleGroups = muscleSelection.split(',').map(s => s.trim());
+      const half = Math.floor(finalList.length / 2);
+      multiExercises = finalList.slice(0, half);
+      isoExercises = finalList.slice(half);
     }
 
-    // Construir el plan sesión a sesión
-    let plan = [];
-    for(let s = 1; s <= totalSessions; s++){
-      // Determinar el grupo muscular de la sesión
-      const currentMuscleGroup = muscleGroups[(s-1) % muscleGroups.length];
-
-      // Filtrar ejercicios de finalList por categoría relacionada a currentMuscleGroup
-      let filteredExercises = finalList.filter(ex => {
-        // Si no tiene 'categoria', se descarta
-        if(!ex.categoria) return false;
-        // Si currentMuscleGroup está en nuestro mapping, usarlo para filtrar
-        if(muscleGroupToCategories[currentMuscleGroup] && muscleGroupToCategories[currentMuscleGroup].length > 0) {
-          return muscleGroupToCategories[currentMuscleGroup].includes(ex.categoria);
-        }
-        // Si no está definido en el mapping, permitimos cualquier ejercicio
-        return true;
-      });
-      
-      // Simulación de separación entre ejercicios multi y de aislamiento:
-      let multiExercises = [];
-      let isoExercises = [];
-      if(filteredExercises.length === 1) {
-        multiExercises = [filteredExercises[0]];
-        isoExercises = [filteredExercises[0]];
+    // Determinar el ciclo de selección muscular
+    let muscleCycle = [];
+    if (muscleSelection) {
+      if(muscleSelection === 'Personalizado'){
+        muscleCycle = customMuscles;
       } else {
-        const half = Math.floor(filteredExercises.length / 2);
-        multiExercises = filteredExercises.slice(0, half);
-        isoExercises = filteredExercises.slice(half);
+        muscleCycle = muscleSelection.split(',').map(g => g.trim());
       }
+    }
+
+    let plan = [];
+    for (let s = 1; s <= totalSessions; s++) {
+      // Asignar de forma cíclica la selección muscular
+      const seleccionMuscular = muscleCycle.length > 0 ? muscleCycle[(s - 1) % muscleCycle.length] : "";
+      // Obtener patrones permitidos según la selección muscular
+      const allowedPatterns = movementPatternMapping[seleccionMuscular] || [];
       
-      // Para cada sesión, generar 'total' ejercicios
       let sessionExercises = [];
-      // Por defecto, alternamos: para los primeros 'multi' ejercicios, usamos la opción seleccionada por defecto en "Enfoque"
-      for(let m = 0; m < multi; m++){
-        // Default enfoque: "Multi-Generic Exercise"
-        // Escogemos al azar de multiExercises
-        const randIndex = Math.floor(Math.random() * multiExercises.length);
+      // Generar ejercicios compuestos (multi)
+      for (let m = 0; m < multi; m++) {
+        let filteredMulti = multiExercises;
+        if (allowedPatterns.length > 0) {
+          filteredMulti = multiExercises.filter(ex => allowedPatterns.includes(ex.movementCategory));
+          if(filteredMulti.length === 0) filteredMulti = multiExercises;
+        }
+        const randIndex = Math.floor(Math.random() * filteredMulti.length);
         sessionExercises.push({
-          sessionNumber: s,
-          exerciseNumber: m + 1, // se asignará luego
-          preview: multiExercises[randIndex].previewURL || "",
-          // Enfoque: menú desplegable (default: "Multi-Generic Exercise")
-          enfoque: "Multi-Generic Exercise",
-          // Selección muscular: el grupo actual
-          seleccionMuscular: currentMuscleGroup,
-          // Nombre de Ejercicio: valor por defecto del ejercicio seleccionado
-          nombreEjercicio: multiExercises[randIndex].nombre,
-          equipmentUsed: multiExercises[randIndex].equipo || "Sin equipo",
-          series: defaultSeries,
-          rest: restDefault,
+          isMulti: true,
+          suggestedExercise: filteredMulti[randIndex]
         });
       }
-      for(let i = 0; i < iso; i++){
-        const randIndex = Math.floor(Math.random() * isoExercises.length);
+      // Generar ejercicios de aislamiento
+      for (let i = 0; i < iso; i++) {
+        let filteredIso = isoExercises;
+        if (allowedPatterns.length > 0) {
+          filteredIso = isoExercises.filter(ex => allowedPatterns.includes(ex.movementCategory));
+          if(filteredIso.length === 0) filteredIso = isoExercises;
+        }
+        const randIndex = Math.floor(Math.random() * filteredIso.length);
         sessionExercises.push({
-          sessionNumber: s,
-          exerciseNumber: multi + i + 1,
-          preview: isoExercises[randIndex].previewURL || "",
-          enfoque: "Isolation-Generic Exercise",
-          seleccionMuscular: currentMuscleGroup,
-          nombreEjercicio: isoExercises[randIndex].nombre,
-          equipmentUsed: isoExercises[randIndex].equipo || "Sin equipo",
-          series: defaultSeries,
-          rest: restDefault,
+          isMulti: false,
+          suggestedExercise: filteredIso[randIndex]
         });
       }
-      // Si por alguna razón tenemos más ejercicios de los necesarios, recortamos
-      if(sessionExercises.length > total) {
+      // Recortar si se generan más ejercicios de los requeridos
+      if (sessionExercises.length > total) {
         sessionExercises = sessionExercises.slice(0, total);
       }
-      // Agregar a plan
-      plan = plan.concat(sessionExercises);
+      sessionExercises.forEach((exObj, idx) => {
+        plan.push({
+          sessionNumber: s,
+          exerciseNumber: idx + 1,
+          preview: exObj.suggestedExercise.previewURL || "",
+          exerciseId: exObj.suggestedExercise.id,
+          enfoque: exObj.isMulti ? "Multi-Generic Exercise" : "Isolation-Generic Exercise",
+          seleccionMuscular: seleccionMuscular,
+          nombreEjercicio: exObj.suggestedExercise.nombre || (exObj.isMulti ? "Multi-Generic Exercise" : "Isolation-Generic Exercise"),
+          // Aquí se asigna el movimiento desde movementCategory
+          patronMovimiento: exObj.suggestedExercise.movementCategory || "",
+          equipmentUsed: exObj.suggestedExercise.equipo || "Sin equipo",
+          series: defaultSeries,
+          rest: restDefault
+        });
+      });
     }
+
     setTrainingPlan(plan);
     setMessage("Plan generado exitosamente. Puedes editarlo en la tabla.");
-  };
-
-  // Handlers para edición en la tabla
-  const handleEnfoqueChange = (e, index) => {
-    const newPlan = [...trainingPlan];
-    newPlan[index].enfoque = e.target.value;
-    // Al cambiar el enfoque, se podría actualizar "nombreEjercicio" para sugerir
-    // uno de la lista correspondiente, pero en este ejemplo solo actualizamos el valor.
-    setTrainingPlan(newPlan);
-  };
-
-  const handleNombreEjercicioChange = (e, index) => {
-    const newPlan = [...trainingPlan];
-    newPlan[index].nombreEjercicio = e.target.value;
-    setTrainingPlan(newPlan);
-  };
-
-  const handleSeriesChange = (e, index) => {
-    const newPlan = [...trainingPlan];
-    newPlan[index].series = e.target.value;
-    setTrainingPlan(newPlan);
-  };
-
-  const handleRestChange = (e, index) => {
-    const newPlan = [...trainingPlan];
-    newPlan[index].rest = e.target.value;
-    setTrainingPlan(newPlan);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Ejemplo de guardado en Firestore:
+      // Ejemplo: guardar el plan en Firestore
       // await addDoc(collection(db, "trainingPlans"), { plan: trainingPlan });
       setMessage("Plan de entrenamiento guardado correctamente.");
     } catch (err) {
@@ -321,11 +283,146 @@ const TrainingPlanDesigner = () => {
     }
   };
 
+  // Handlers para editar la tabla
+  const handleExerciseChange = (e, index) => {
+    const newPlan = [...trainingPlan];
+    newPlan[index].enfoque = e.target.value;
+    setTrainingPlan(newPlan);
+  };
+  const handleSeriesChange = (e, index) => {
+    const newPlan = [...trainingPlan];
+    newPlan[index].series = e.target.value;
+    setTrainingPlan(newPlan);
+  };
+  const handleRestChange = (e, index) => {
+    const newPlan = [...trainingPlan];
+    newPlan[index].rest = e.target.value;
+    setTrainingPlan(newPlan);
+  };
+
   return (
     <div className="training-plan-designer">
       <h2>Diseñador de Entrenamientos</h2>
       <form onSubmit={handleSubmit}>
-        {/* ... campos de Objetivo, Duración, Frecuencia, Tiempo, Musculatura y Equipamiento ... */}
+        {/* Objetivo Fitness */}
+        <fieldset>
+          <legend>Objetivo Fitness</legend>
+          <label>
+            <input
+              type="radio"
+              name="fitnessObjective"
+              value="muscleMass"
+              checked={fitnessObjective === 'muscleMass'}
+              onChange={handleFitnessObjectiveChange}
+            />
+            Incrementar masa muscular
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="fitnessObjective"
+              value="conditioning"
+              checked={fitnessObjective === 'conditioning'}
+              onChange={handleFitnessObjectiveChange}
+            />
+            Acondicionamiento físico y definición
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="fitnessObjective"
+              value="strength"
+              checked={fitnessObjective === 'strength'}
+              onChange={handleFitnessObjectiveChange}
+            />
+            Incremento de fuerza
+          </label>
+        </fieldset>
+
+        {/* Duración del Programa */}
+        <fieldset>
+          <legend>Duración del Programa (meses)</legend>
+          <select value={duration} onChange={handleDurationChange}>
+            {[...Array(6)].map((_, i) => (
+              <option key={i} value={i+1}>
+                {i+1} {(i+1) === 1 ? 'mes' : 'meses'}
+              </option>
+            ))}
+          </select>
+        </fieldset>
+
+        {/* Frecuencia Semanal */}
+        <fieldset>
+          <legend>Frecuencia Semanal de Entrenamiento</legend>
+          <select value={frequency} onChange={handleFrequencyChange}>
+            {[...Array(7)].map((_, i) => (
+              <option key={i} value={i+1}>
+                {i+1} {(i+1) > 1 ? 'días' : 'día'}
+              </option>
+            ))}
+          </select>
+        </fieldset>
+
+        {/* Tiempo disponible */}
+        <fieldset>
+          <legend>Tiempo disponible por sesión</legend>
+          <select value={timeAvailable} onChange={handleTimeAvailableChange}>
+            <option value="30">30 min</option>
+            <option value="45">45 min</option>
+            <option value="60">60 min</option>
+            <option value="90">90 min</option>
+          </select>
+        </fieldset>
+
+        {/* Selección de Musculatura */}
+        <fieldset>
+          <legend>Selección de Musculatura a Entrenar</legend>
+          <select value={muscleSelection} onChange={handleMuscleSelectionChange}>
+            <option value="">-- Selecciona una opción --</option>
+            {muscleOptions.map(option => (
+              <option key={option} value={option}>{option}</option>
+            ))}
+          </select>
+          {muscleSelection === 'Personalizado' && (
+            <div className="custom-muscles">
+              <p>Selecciona los grupos musculares:</p>
+              {customMuscleOptions.map(muscle => (
+                <label key={muscle}>
+                  <input
+                    type="checkbox"
+                    value={muscle}
+                    checked={customMuscles.includes(muscle)}
+                    onChange={handleCustomMuscleChange}
+                  />
+                  {muscle}
+                </label>
+              ))}
+            </div>
+          )}
+        </fieldset>
+
+        {/* Equipamiento Disponible */}
+        <fieldset>
+          <legend>Equipamiento Disponible</legend>
+          <div className="equipment-options">
+            {equipmentOptions.map(eq => (
+              <label key={eq}>
+                <input
+                  type="checkbox"
+                  value={eq}
+                  checked={equipment.includes(eq)}
+                  onChange={handleEquipmentChange}
+                />
+                {eq}
+              </label>
+            ))}
+          </div>
+          <button type="button" onClick={selectAllEquipment}>
+            Seleccionar todos
+          </button>
+        </fieldset>
+
+        {/* Botones */}
         <div className="plan-buttons">
           <button type="button" onClick={generatePlan}>
             Generar Plan
@@ -337,6 +434,7 @@ const TrainingPlanDesigner = () => {
       {message && <p className="message">{message}</p>}
       {error && <p className="error">{error}</p>}
 
+      {/* Tabla de resultados */}
       {trainingPlan.length > 0 && (
         <div className="plan-table">
           <h3>Plan de Entrenamiento Generado</h3>
@@ -349,6 +447,7 @@ const TrainingPlanDesigner = () => {
                 <th>Enfoque</th>
                 <th>Selección muscular</th>
                 <th>Nombre de Ejercicio</th>
+                <th>Patrón de movimiento</th>
                 <th>Equipamiento</th>
                 <th>Series</th>
                 <th>Descanso (seg)</th>
@@ -370,41 +469,19 @@ const TrainingPlanDesigner = () => {
                       "No disponible"
                     )}
                   </td>
-                  {/* Columna Enfoque */}
                   <td>
                     <select
                       value={session.enfoque}
-                      onChange={(e) => handleEnfoqueChange(e, index)}
+                      onChange={(e) => handleExerciseChange(e, index)}
                     >
                       {enfoqueOptions.map(option => (
                         <option key={option} value={option}>{option}</option>
                       ))}
                     </select>
                   </td>
-                  {/* Columna Selección muscular (read-only, basada en el grupo asignado) */}
                   <td>{session.seleccionMuscular}</td>
-                  {/* Columna Nombre de Ejercicio (dropdown dinámico) */}
-                  <td>
-                    <select
-                      value={session.nombreEjercicio}
-                      onChange={(e) => handleNombreEjercicioChange(e, index)}
-                    >
-                      {(() => {
-                        // Determinar la lista de opciones según el enfoque de la fila
-                        const currentGroup = session.seleccionMuscular;
-                        const pool = session.enfoque === "Multi-Generic Exercise" 
-                          ? finalList.filter(e => e.categoria && muscleGroupToCategories[currentGroup] && muscleGroupToCategories[currentGroup].includes(e.categoria)).slice(0, Math.floor(finalList.length/2))
-                          : finalList.filter(e => e.categoria && muscleGroupToCategories[currentGroup] && muscleGroupToCategories[currentGroup].includes(e.categoria)).slice(Math.floor(finalList.length/2));
-                        // Si no hay opciones, mostrar una opción de respaldo
-                        if(pool.length === 0) {
-                          return <option value="N/A">No hay ejercicios</option>;
-                        }
-                        return pool.map(ej => (
-                          <option key={ej.id} value={ej.nombre}>{ej.nombre}</option>
-                        ));
-                      })()}
-                    </select>
-                  </td>
+                  <td>{session.nombreEjercicio}</td>
+                  <td>{session.patronMovimiento}</td>
                   <td>{session.equipmentUsed}</td>
                   <td>
                     <select
