@@ -1,22 +1,23 @@
-// src/components/Header.js
 import React from 'react';
-import { Link } from 'react-router-dom';
-import logo from '../logo simbolo marcad e agua.png'; // Asegúrate de que el nombre y la ubicación sean exactos
-import './Header.css';
+import { AppBar, Toolbar, Typography, Box } from '@mui/material';
 
-const Header = () => {
+function Header() {
   return (
-    <header className="app-header">
-      <div className="logo-container">
-        <Link to="/">
-          <img src={logo} alt="Logo principal" className="app-logo" />
-        </Link>
-      </div>
-      <div className="header-actions">
-        {/* Aquí puedes agregar botones o menús de usuario */}
-      </div>
-    </header>
+    <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+      <Toolbar>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <img 
+            src={`${process.env.PUBLIC_URL}/logo.png`} 
+            alt="Imbatibles Gym Logo" 
+            style={{ height: '50px', marginRight: '10px' }} 
+          />
+          <Typography variant="h6" noWrap component="div">
+            Imbatibles Gym
+          </Typography>
+        </Box>
+      </Toolbar>
+    </AppBar>
   );
-};
+}
 
 export default Header;

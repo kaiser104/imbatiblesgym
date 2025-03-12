@@ -1,3 +1,8 @@
+/* Basic styling for ExerciseManager */
+.exercise-manager-container {
+  padding: 20px;
+}
+
 /* frontend/src/pages/ExerciseManager.css */
 .exercise-manager {
     padding: 1rem;
@@ -177,3 +182,4 @@
     border: 1px solid #3A3A3A; /* Gris medio */
     color: #F5F5F5; /* Texto en blanco suave */
 }
+    

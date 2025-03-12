@@ -2,7 +2,39 @@
 import React, { useState } from 'react';
 import { collection, addDoc, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
-import './TrainingPlanDesigner.css';
+import { 
+  Typography, 
+  Paper, 
+  Grid, 
+  Radio, 
+  RadioGroup, 
+  FormControlLabel, 
+  FormControl, 
+  FormLabel, 
+  Select, 
+  MenuItem, 
+  Checkbox, 
+  Button, 
+  Box, 
+  Alert, 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableContainer, 
+  TableHead, 
+  TableRow,
+  CircularProgress,
+  Divider,
+  FormGroup,
+  Container,
+  Popover,
+  Card,
+  CardContent,
+  CardMedia,
+  IconButton,
+  Tooltip
+} from '@mui/material';
+import InfoIcon from '@mui/icons-material/Info';
 
 // Mapeo de la selección muscular a patrones de movimiento (ejemplo)
 const movementPatternMapping = {
@@ -40,6 +72,61 @@ const customMuscleOptions = [
   'Abductores', 'Antebrazos', 'Trapecio'
 ];
 
+// Añadir esta constante con todos los patrones de movimiento disponibles
+const allMovementPatterns = [
+  "Bent Leg Hip Extension",
+  "Cardio",
+  "Double Leg Push",
+  "Core Stability",
+  "Auxiliary",
+  "Mobility",
+  "Explosive",
+  "Horizontal Push",
+  "Straight Leg Hip Extension",
+  "Downward Pull",
+  "Upward Pull",
+  "Upward Push",
+  "Single Leg Push",
+  "Horizontal Pull"
+];
+
+// DELETE THE DUPLICATE IMPORT BLOCK BELOW
+// Primero, importa los componentes necesarios en la parte superior del archivo
+// import { 
+//   Typography, 
+//   Paper, 
+//   Grid, 
+//   Radio, 
+//   RadioGroup, 
+//   FormControlLabel, 
+//   FormControl, 
+//   FormLabel, 
+//   Select, 
+//   MenuItem, 
+//   Checkbox, 
+//   Button, 
+//   Box, 
+//   Alert, 
+//   Table, 
+//   TableBody, 
+//   TableCell, 
+//   TableContainer, 
+//   TableHead, 
+//   TableRow,
+//   CircularProgress,
+//   Divider,
+//   FormGroup,
+//   Container,
+//   Popover,
+//   Card,
+//   CardContent,
+//   CardMedia,
+//   IconButton,
+//   Tooltip
+// } from '@mui/material';
+// import InfoIcon from '@mui/icons-material/Info';
+
+// Add the Popover state variables and handlers
 const TrainingPlanDesigner = () => {
   // Estados de selección
   const [fitnessObjective, setFitnessObjective] = useState('muscleMass'); // muscleMass, conditioning, strength
@@ -52,6 +139,23 @@ const TrainingPlanDesigner = () => {
   const [trainingPlan, setTrainingPlan] = useState([]);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  
+  // Add Popover state variables
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [popoverExercise, setPopoverExercise] = useState(null);
+  
+  // Add Popover handler functions
+  const handlePopoverOpen = (event, exercise) => {
+    setAnchorEl(event.currentTarget);
+    setPopoverExercise(exercise);
+  };
+  
+  const handlePopoverClose = () => {
+    setAnchorEl(null);
+    setPopoverExercise(null);
+  };
+  
+  const open = Boolean(anchorEl);
 
   // HANDLERS
   const handleFitnessObjectiveChange = (e) => setFitnessObjective(e.target.value);
@@ -121,6 +225,10 @@ const TrainingPlanDesigner = () => {
 
   // Función para obtener ejercicios desde Firebase (se espera que en cada documento existan:
   // nombre, movementCategory, equipo (o sus variantes) y fileURL)
+  // Añadir un nuevo estado para almacenar todos los ejercicios disponibles
+  const [allAvailableExercises, setAllAvailableExercises] = useState({});
+  
+  // Modificar fetchExercises para guardar los ejercicios por patrón de movimiento
   const fetchExercises = async () => {
     try {
       const snapshot = await getDocs(collection(db, "exercises"));
@@ -134,6 +242,7 @@ const TrainingPlanDesigner = () => {
           previewURL: data.fileURL || data.previewURL || ""
         };
       });
+      
       // Filtrar según equipamiento disponible
       const filtered = allExercises.filter(ex => {
         if(equipment.length === 0) return true;
@@ -147,59 +256,67 @@ const TrainingPlanDesigner = () => {
         }
         return false;
       });
+  
+      // Organizar ejercicios por patrón de movimiento
+      const exercisesByPattern = {};
+      filtered.forEach(ex => {
+        const pattern = ex.movementCategory || "Unknown";
+        if (!exercisesByPattern[pattern]) {
+          exercisesByPattern[pattern] = [];
+        }
+        exercisesByPattern[pattern].push(ex);
+      });
+  
+      // Guardar en el estado
+      setAllAvailableExercises(exercisesByPattern);
+      
       return filtered;
     } catch (err) {
       console.error("Error fetching exercises:", err);
       return [];
     }
   };
-
+  
+  // Modificar el componente para cargar los ejercicios al inicio
+  React.useEffect(() => {
+    fetchExercises();
+  }, [equipment]); // Recargar cuando cambie el equipamiento
+  
+  // Añadir la función generatePlan que falta
   const generatePlan = async () => {
     setMessage('');
     setError('');
-    const freq = parseInt(frequency, 10);
-    const months = parseInt(duration, 10);
-    const totalWeeks = months * 4; 
-    const totalSessions = freq * totalWeeks;
-
-    const { total, multi, iso } = getExercisesCountByObjectiveTime(fitnessObjective, timeAvailable);
-    if(total === 0) {
-      setError("No se pudo determinar el número de ejercicios. Verifica tus selecciones.");
+    
+    // Validar que se haya seleccionado al menos un grupo muscular
+    if (muscleSelection === 'Personalizado' && customMuscles.length === 0) {
+      setError('Por favor selecciona al menos un grupo muscular');
       return;
     }
-
+    
+    // Obtener ejercicios desde Firebase
+    const exercises = await fetchExercises();
+    
+    // Separar ejercicios en multi-articulares y de aislamiento
+    const multiExercises = exercises.filter(ex => 
+      ["Horizontal Push", "Upward Push", "Horizontal Pull", "Upward Pull", "Downward Pull", 
+       "Double Leg Push", "Single Leg Push", "Bent Leg Hip Extension", "Straight Leg Hip Extension"].includes(ex.movementCategory)
+    );
+    
+    const isoExercises = exercises.filter(ex => 
+      ["Auxiliary", "Core Stability", "Mobility", "Explosive", "Cardio"].includes(ex.movementCategory)
+    );
+    
+    // Calcular número de sesiones totales
+    const durationMonths = parseInt(duration, 10);
+    const frequencyPerWeek = parseInt(frequency, 10);
+    const totalSessions = durationMonths * 4 * frequencyPerWeek; // 4 semanas por mes
+    
+    // Determinar cantidad de ejercicios por sesión según objetivo y tiempo
+    const { total, multi, iso } = getExercisesCountByObjectiveTime(fitnessObjective, timeAvailable);
+    
+    // Determinar series y descanso según objetivo
+    const defaultSeries = fitnessObjective === 'strength' ? 5 : (fitnessObjective === 'muscleMass' ? 4 : 3);
     const restDefault = getRecommendedRest();
-    const defaultSeries = 4;
-    const exercisesList = await fetchExercises();
-
-    // Fallback en caso de que no se obtengan ejercicios desde Firebase
-    let fallbackExercises = [{
-      id: "placeholder1",
-      nombre: "Multi-Generic Exercise",
-      movementCategory: "",
-      equipo: "Sin equipo",
-      previewURL: ""
-    },{
-      id: "placeholder2",
-      nombre: "Isolation-Generic Exercise",
-      movementCategory: "",
-      equipo: "Sin equipo",
-      previewURL: ""
-    }];
-
-    const finalList = exercisesList.length > 0 ? exercisesList : fallbackExercises;
-
-    // Dividir la lista en dos grupos: uno para compuestos (multi) y otro para aislamiento (iso)
-    let multiExercises = [];
-    let isoExercises = [];
-    if(finalList.length === 1) {
-      multiExercises = [finalList[0]];
-      isoExercises = [finalList[0]];
-    } else {
-      const half = Math.floor(finalList.length / 2);
-      multiExercises = finalList.slice(0, half);
-      isoExercises = finalList.slice(half);
-    }
 
     // Determinar el ciclo de selección muscular
     let muscleCycle = [];
@@ -271,11 +388,22 @@ const TrainingPlanDesigner = () => {
     setMessage("Plan generado exitosamente. Puedes editarlo en la tabla.");
   };
 
+  // Añadir la función handleSubmit que falta
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       // Ejemplo: guardar el plan en Firestore
-      // await addDoc(collection(db, "trainingPlans"), { plan: trainingPlan });
+      await addDoc(collection(db, "trainingPlans"), { 
+        plan: trainingPlan,
+        fitnessObjective,
+        duration,
+        frequency,
+        timeAvailable,
+        muscleSelection,
+        customMuscles,
+        equipment,
+        createdAt: new Date()
+      });
       setMessage("Plan de entrenamiento guardado correctamente.");
     } catch (err) {
       console.error("Error al guardar plan de entrenamiento:", err);
@@ -289,227 +417,532 @@ const TrainingPlanDesigner = () => {
     newPlan[index].enfoque = e.target.value;
     setTrainingPlan(newPlan);
   };
+  
   const handleSeriesChange = (e, index) => {
     const newPlan = [...trainingPlan];
     newPlan[index].series = e.target.value;
     setTrainingPlan(newPlan);
   };
+  
   const handleRestChange = (e, index) => {
     const newPlan = [...trainingPlan];
     newPlan[index].rest = e.target.value;
     setTrainingPlan(newPlan);
   };
 
+  // Modificar el handler para el patrón de movimiento
+  const handlePatternMovementChange = (e, index) => {
+    const newPlan = [...trainingPlan];
+    const newPattern = e.target.value;
+    newPlan[index].patronMovimiento = newPattern;
+    
+    // Si tenemos ejercicios disponibles para este patrón, seleccionamos uno al azar
+    if (allAvailableExercises[newPattern] && allAvailableExercises[newPattern].length > 0) {
+      const randomIndex = Math.floor(Math.random() * allAvailableExercises[newPattern].length);
+      const newExercise = allAvailableExercises[newPattern][randomIndex];
+      
+      newPlan[index].nombreEjercicio = newExercise.nombre || "";
+      newPlan[index].preview = newExercise.previewURL || "";
+      newPlan[index].equipmentUsed = newExercise.equipo || "Sin equipo";
+      newPlan[index].exerciseId = newExercise.id;
+    }
+    
+    setTrainingPlan(newPlan);
+  };
+
+  // Handler para cambiar el nombre del ejercicio
+  const handleExerciseNameChange = (e, index) => {
+    const newPlan = [...trainingPlan];
+    newPlan[index].nombreEjercicio = e.target.value;
+    setTrainingPlan(newPlan);
+  };
+
+  // Handler para cambiar el grupo muscular
+  const handleMuscleGroupChange = (e, index) => {
+    const newPlan = [...trainingPlan];
+    newPlan[index].seleccionMuscular = e.target.value;
+    setTrainingPlan(newPlan);
+  };
+
   return (
-    <div className="training-plan-designer">
-      <h2>Diseñador de Entrenamientos</h2>
-      <form onSubmit={handleSubmit}>
-        {/* Objetivo Fitness */}
-        <fieldset>
-          <legend>Objetivo Fitness</legend>
-          <label>
-            <input
-              type="radio"
-              name="fitnessObjective"
-              value="muscleMass"
-              checked={fitnessObjective === 'muscleMass'}
-              onChange={handleFitnessObjectiveChange}
-            />
-            Incrementar masa muscular
-          </label>
-          <label>
-            <input
-              type="radio"
-              name="fitnessObjective"
-              value="conditioning"
-              checked={fitnessObjective === 'conditioning'}
-              onChange={handleFitnessObjectiveChange}
-            />
-            Acondicionamiento físico y definición
-          </label>
-          <label>
-            <input
-              type="radio"
-              name="fitnessObjective"
-              value="strength"
-              checked={fitnessObjective === 'strength'}
-              onChange={handleFitnessObjectiveChange}
-            />
-            Incremento de fuerza
-          </label>
-        </fieldset>
+    <Container maxWidth="lg">
+      <Box sx={{ py: 4 }}>
+        <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 4, color: 'primary.main' }}>
+          Diseñador de Entrenamientos
+        </Typography>
+        
+        <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
+          <form onSubmit={handleSubmit}>
+            <Grid container spacing={4}>
+              {/* Objetivo Fitness */}
+              <Grid item xs={12} md={6}>
+                <FormControl component="fieldset" fullWidth>
+                  <FormLabel component="legend" sx={{ color: 'primary.main', mb: 1 }}>
+                    Objetivo Fitness
+                  </FormLabel>
+                  <RadioGroup
+                    name="fitnessObjective"
+                    value={fitnessObjective}
+                    onChange={handleFitnessObjectiveChange}
+                  >
+                    <FormControlLabel 
+                      value="muscleMass" 
+                      control={<Radio color="primary" />} 
+                      label="Incrementar masa muscular" 
+                    />
+                    <FormControlLabel 
+                      value="conditioning" 
+                      control={<Radio color="primary" />} 
+                      label="Acondicionamiento físico y definición" 
+                    />
+                    <FormControlLabel 
+                      value="strength" 
+                      control={<Radio color="primary" />} 
+                      label="Incremento de fuerza" 
+                    />
+                  </RadioGroup>
+                </FormControl>
+              </Grid>
 
-        {/* Duración del Programa */}
-        <fieldset>
-          <legend>Duración del Programa (meses)</legend>
-          <select value={duration} onChange={handleDurationChange}>
-            {[...Array(6)].map((_, i) => (
-              <option key={i} value={i+1}>
-                {i+1} {(i+1) === 1 ? 'mes' : 'meses'}
-              </option>
-            ))}
-          </select>
-        </fieldset>
+              {/* Duración y Frecuencia */}
+              <Grid item xs={12} md={6}>
+                <Grid container spacing={3}>
+                  <Grid item xs={12}>
+                    <FormControl fullWidth>
+                      <FormLabel sx={{ color: 'primary.main', mb: 1 }}>
+                        Duración del Programa (meses)
+                      </FormLabel>
+                      <Select
+                        value={duration}
+                        onChange={handleDurationChange}
+                        variant="outlined"
+                      >
+                        {[...Array(6)].map((_, i) => (
+                          <MenuItem key={i} value={i+1}>
+                            {i+1} {(i+1) === 1 ? 'mes' : 'meses'}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  
+                  <Grid item xs={12}>
+                    <FormControl fullWidth>
+                      <FormLabel sx={{ color: 'primary.main', mb: 1 }}>
+                        Frecuencia Semanal de Entrenamiento
+                      </FormLabel>
+                      <Select
+                        value={frequency}
+                        onChange={handleFrequencyChange}
+                        variant="outlined"
+                      >
+                        {[...Array(7)].map((_, i) => (
+                          <MenuItem key={i} value={i+1}>
+                            {i+1} {(i+1) === 1 ? 'día' : 'días'} por semana
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  
+                  <Grid item xs={12}>
+                    <FormControl fullWidth>
+                      <FormLabel sx={{ color: 'primary.main', mb: 1 }}>
+                        Tiempo disponible por sesión
+                      </FormLabel>
+                      <Select
+                        value={timeAvailable}
+                        onChange={handleTimeAvailableChange}
+                        variant="outlined"
+                      >
+                        <MenuItem value="30">30 minutos</MenuItem>
+                        <MenuItem value="45">45 minutos</MenuItem>
+                        <MenuItem value="60">60 minutos</MenuItem>
+                        <MenuItem value="90">90 minutos</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                </Grid>
+              </Grid>
 
-        {/* Frecuencia Semanal */}
-        <fieldset>
-          <legend>Frecuencia Semanal de Entrenamiento</legend>
-          <select value={frequency} onChange={handleFrequencyChange}>
-            {[...Array(7)].map((_, i) => (
-              <option key={i} value={i+1}>
-                {i+1} {(i+1) > 1 ? 'días' : 'día'}
-              </option>
-            ))}
-          </select>
-        </fieldset>
+              {/* Selección Muscular */}
+              <Grid item xs={12}>
+                <FormControl fullWidth>
+                  <FormLabel sx={{ color: 'primary.main', mb: 1 }}>
+                    Selección Muscular
+                  </FormLabel>
+                  <Select
+                    value={muscleSelection}
+                    onChange={handleMuscleSelectionChange}
+                    variant="outlined"
+                  >
+                    {muscleOptions.map((option, idx) => (
+                      <MenuItem key={idx} value={option}>{option}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
 
-        {/* Tiempo disponible */}
-        <fieldset>
-          <legend>Tiempo disponible por sesión</legend>
-          <select value={timeAvailable} onChange={handleTimeAvailableChange}>
-            <option value="30">30 min</option>
-            <option value="45">45 min</option>
-            <option value="60">60 min</option>
-            <option value="90">90 min</option>
-          </select>
-        </fieldset>
-
-        {/* Selección de Musculatura */}
-        <fieldset>
-          <legend>Selección de Musculatura a Entrenar</legend>
-          <select value={muscleSelection} onChange={handleMuscleSelectionChange}>
-            <option value="">-- Selecciona una opción --</option>
-            {muscleOptions.map(option => (
-              <option key={option} value={option}>{option}</option>
-            ))}
-          </select>
-          {muscleSelection === 'Personalizado' && (
-            <div className="custom-muscles">
-              <p>Selecciona los grupos musculares:</p>
-              {customMuscleOptions.map(muscle => (
-                <label key={muscle}>
-                  <input
-                    type="checkbox"
-                    value={muscle}
-                    checked={customMuscles.includes(muscle)}
-                    onChange={handleCustomMuscleChange}
-                  />
-                  {muscle}
-                </label>
-              ))}
-            </div>
-          )}
-        </fieldset>
-
-        {/* Equipamiento Disponible */}
-        <fieldset>
-          <legend>Equipamiento Disponible</legend>
-          <div className="equipment-options">
-            {equipmentOptions.map(eq => (
-              <label key={eq}>
-                <input
-                  type="checkbox"
-                  value={eq}
-                  checked={equipment.includes(eq)}
-                  onChange={handleEquipmentChange}
-                />
-                {eq}
-              </label>
-            ))}
-          </div>
-          <button type="button" onClick={selectAllEquipment}>
-            Seleccionar todos
-          </button>
-        </fieldset>
-
-        {/* Botones */}
-        <div className="plan-buttons">
-          <button type="button" onClick={generatePlan}>
-            Generar Plan
-          </button>
-          <button type="submit">Guardar Plan de Entrenamiento</button>
-        </div>
-      </form>
-
-      {message && <p className="message">{message}</p>}
-      {error && <p className="error">{error}</p>}
-
-      {/* Tabla de resultados */}
-      {trainingPlan.length > 0 && (
-        <div className="plan-table">
-          <h3>Plan de Entrenamiento Generado</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Sesión</th>
-                <th>Ejercicio #</th>
-                <th>Vista Previa</th>
-                <th>Enfoque</th>
-                <th>Selección muscular</th>
-                <th>Nombre de Ejercicio</th>
-                <th>Patrón de movimiento</th>
-                <th>Equipamiento</th>
-                <th>Series</th>
-                <th>Descanso (seg)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {trainingPlan.map((session, index) => (
-                <tr key={index}>
-                  <td>{session.sessionNumber}</td>
-                  <td>{session.exerciseNumber}</td>
-                  <td>
-                    {session.preview ? (
-                      <img
-                        src={session.preview}
-                        alt={`Vista de sesión ${session.sessionNumber}`}
-                        style={{ maxWidth: '80px' }}
+              {/* Músculos Personalizados (condicional) */}
+              {muscleSelection === 'Personalizado' && (
+                <Grid item xs={12}>
+                  <FormLabel sx={{ color: 'primary.main', mb: 1, display: 'block' }}>
+                    Selecciona los grupos musculares
+                  </FormLabel>
+                  <FormGroup row>
+                    {customMuscleOptions.map((muscle, idx) => (
+                      <FormControlLabel
+                        key={idx}
+                        control={
+                          <Checkbox 
+                            checked={customMuscles.includes(muscle)}
+                            onChange={handleCustomMuscleChange}
+                            value={muscle}
+                            color="primary"
+                          />
+                        }
+                        label={muscle}
+                        sx={{ width: { xs: '50%', md: '33%', lg: '25%' } }}
                       />
-                    ) : (
-                      "No disponible"
-                    )}
-                  </td>
-                  <td>
-                    <select
-                      value={session.enfoque}
-                      onChange={(e) => handleExerciseChange(e, index)}
+                    ))}
+                  </FormGroup>
+                </Grid>
+              )}
+
+              {/* Equipamiento Disponible */}
+              <Grid item xs={12}>
+                <FormLabel sx={{ color: 'primary.main', mb: 1, display: 'block' }}>
+                  Equipamiento Disponible
+                </FormLabel>
+                <Button 
+                  variant="outlined" 
+                  size="small" 
+                  onClick={selectAllEquipment}
+                  sx={{ mb: 2 }}
+                >
+                  Seleccionar Todo
+                </Button>
+                <FormGroup row>
+                  {equipmentOptions.map((eq, idx) => (
+                    <FormControlLabel
+                      key={idx}
+                      control={
+                        <Checkbox 
+                          checked={equipment.includes(eq)}
+                          onChange={handleEquipmentChange}
+                          value={eq}
+                          color="primary"
+                        />
+                      }
+                      label={eq}
+                      sx={{ width: { xs: '50%', md: '33%', lg: '25%' } }}
+                    />
+                  ))}
+                </FormGroup>
+              </Grid>
+
+              {/* Botones de Acción */}
+              <Grid item xs={12}>
+                <Divider sx={{ my: 2 }} />
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+                  <Button 
+                    variant="contained" 
+                    color="primary" 
+                    onClick={generatePlan}
+                  >
+                    Generar Plan
+                  </Button>
+                  <Button 
+                    variant="contained" 
+                    color="secondary" 
+                    type="submit"
+                    disabled={trainingPlan.length === 0}
+                  >
+                    Guardar Plan
+                  </Button>
+                </Box>
+              </Grid>
+            </Grid>
+          </form>
+        </Paper>
+        
+        {/* Mensajes de estado */}
+        {message && (
+          <Alert severity="success" sx={{ mb: 2 }}>{message}</Alert>
+        )}
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
+        )}
+        
+        {/* Tabla de resultados */}
+        {trainingPlan.length > 0 && (
+          <Paper elevation={3} sx={{ mt: 4, p: 2 }}>
+            <Typography variant="h5" gutterBottom>
+              Plan de Entrenamiento Generado
+            </Typography>
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ 
+                      fontWeight: 'bold', 
+                      backgroundColor: 'primary.main', 
+                      color: 'white',
+                      fontSize: '0.9rem'
+                    }}>Sesión</TableCell>
+                    <TableCell sx={{ 
+                      fontWeight: 'bold', 
+                      backgroundColor: 'primary.main', 
+                      color: 'white',
+                      fontSize: '0.9rem'
+                    }}>Ejercicio #</TableCell>
+                    <TableCell sx={{ 
+                      fontWeight: 'bold', 
+                      backgroundColor: 'primary.main', 
+                      color: 'white',
+                      fontSize: '0.9rem'
+                    }}>Grupo Muscular</TableCell>
+                    <TableCell sx={{ 
+                      fontWeight: 'bold', 
+                      backgroundColor: 'primary.main', 
+                      color: 'white',
+                      fontSize: '0.9rem'
+                    }}>Nombre Ejercicio</TableCell>
+                    <TableCell sx={{ 
+                      fontWeight: 'bold', 
+                      backgroundColor: 'primary.main', 
+                      color: 'white',
+                      fontSize: '0.9rem'
+                    }}>Patrón Movimiento</TableCell>
+                    <TableCell sx={{ 
+                      fontWeight: 'bold', 
+                      backgroundColor: 'primary.main', 
+                      color: 'white',
+                      fontSize: '0.9rem'
+                    }}>Enfoque</TableCell>
+                    <TableCell sx={{ 
+                      fontWeight: 'bold', 
+                      backgroundColor: 'primary.main', 
+                      color: 'white',
+                      fontSize: '0.9rem'
+                    }}>Series</TableCell>
+                    <TableCell sx={{ 
+                      fontWeight: 'bold', 
+                      backgroundColor: 'primary.main', 
+                      color: 'white',
+                      fontSize: '0.9rem'
+                    }}>Descanso (seg)</TableCell>
+                    <TableCell sx={{ 
+                      fontWeight: 'bold', 
+                      backgroundColor: 'primary.main', 
+                      color: 'white',
+                      fontSize: '0.9rem'
+                    }}>Equipamiento</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {trainingPlan.map((exercise, index) => {
+                    // Determinar el color de fondo basado en el número de sesión
+                    const isEvenSession = exercise.sessionNumber % 2 === 0;
+                    const rowBgColor = isEvenSession ? 'rgba(232, 244, 253, 0.6)' : 'rgba(255, 243, 224, 0.4)';
+                    
+                    // Verificar si es el primer ejercicio de una nueva sesión
+                    const isFirstOfSession = index === 0 || trainingPlan[index - 1].sessionNumber !== exercise.sessionNumber;
+                    
+                    // Aplicar un borde superior más grueso si es el primer ejercicio de la sesión
+                    const borderTop = isFirstOfSession ? '2px solid #1976d2' : 'none';
+                    
+                    return (
+                    <TableRow 
+                      key={index} 
+                      hover
+                      sx={{ 
+                        backgroundColor: rowBgColor,
+                        borderTop: borderTop,
+                        '&:hover': {
+                          backgroundColor: isEvenSession ? 'rgba(232, 244, 253, 0.9)' : 'rgba(255, 243, 224, 0.7)',
+                        }
+                      }}
                     >
-                      {enfoqueOptions.map(option => (
-                        <option key={option} value={option}>{option}</option>
-                      ))}
-                    </select>
-                  </td>
-                  <td>{session.seleccionMuscular}</td>
-                  <td>{session.nombreEjercicio}</td>
-                  <td>{session.patronMovimiento}</td>
-                  <td>{session.equipmentUsed}</td>
-                  <td>
-                    <select
-                      value={session.series}
-                      onChange={(e) => handleSeriesChange(e, index)}
-                    >
-                      {[1,2,3,4,5,6,7,8].map(n => (
-                        <option key={n} value={n}>{n}</option>
-                      ))}
-                    </select>
-                  </td>
-                  <td>
-                    <select
-                      value={session.rest}
-                      onChange={(e) => handleRestChange(e, index)}
-                    >
-                      {[30,45,60,90,120,180].map(r => (
-                        <option key={r} value={r}>{r}</option>
-                      ))}
-                    </select>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
+                      <TableCell>{exercise.sessionNumber}</TableCell>
+                      <TableCell>{exercise.exerciseNumber}</TableCell>
+                      <TableCell>
+                        <Select
+                          value={exercise.seleccionMuscular || ""}
+                          onChange={(e) => handleMuscleGroupChange(e, index)}
+                          size="small"
+                          fullWidth
+                        >
+                          {muscleOptions.flatMap(option => 
+                            option === 'Personalizado' 
+                              ? customMuscleOptions.map(muscle => (
+                                  <MenuItem key={muscle} value={muscle}>{muscle}</MenuItem>
+                                ))
+                              : option.split(',').map(g => (
+                                  <MenuItem key={g.trim()} value={g.trim()}>{g.trim()}</MenuItem>
+                                ))
+                          )}
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Tooltip title="Ver detalles">
+                            <IconButton 
+                              size="small" 
+                              color="primary"
+                              onClick={(e) => handlePopoverOpen(e, exercise)}
+                            >
+                              <InfoIcon />
+                            </IconButton>
+                          </Tooltip>
+                          <Select
+                            value={exercise.nombreEjercicio || ""}
+                            onChange={(e) => handleExerciseNameChange(e, index)}
+                            size="small"
+                            fullWidth
+                          >
+                            {allAvailableExercises[exercise.patronMovimiento] ? 
+                              allAvailableExercises[exercise.patronMovimiento].map((ex, idx) => (
+                                <MenuItem 
+                                  key={idx} 
+                                  value={ex.nombre}
+                                  sx={{ display: 'flex', alignItems: 'center' }}
+                                  onClick={() => {
+                                    const newPlan = [...trainingPlan];
+                                    newPlan[index].nombreEjercicio = ex.nombre;
+                                    newPlan[index].preview = ex.previewURL;
+                                    newPlan[index].equipmentUsed = ex.equipo;
+                                    newPlan[index].exerciseId = ex.id;
+                                    setTrainingPlan(newPlan);
+                                  }}
+                                >
+                                  {ex.previewURL && (
+                                    <img 
+                                      src={ex.previewURL} 
+                                      alt={ex.nombre} 
+                                      style={{ width: '30px', marginRight: '10px' }} 
+                                    />
+                                  )}
+                                  {ex.nombre}
+                                </MenuItem>
+                              )) : (
+                                <MenuItem value={exercise.nombreEjercicio}>{exercise.nombreEjercicio}</MenuItem>
+                              )
+                            }
+                          </Select>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={exercise.patronMovimiento || ""}
+                          onChange={(e) => handlePatternMovementChange(e, index)}
+                          size="small"
+                          fullWidth
+                        >
+                          {allMovementPatterns.map((pattern, idx) => (
+                            <MenuItem key={idx} value={pattern}>{pattern}</MenuItem>
+                          ))}
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={exercise.enfoque}
+                          onChange={(e) => handleExerciseChange(e, index)}
+                          size="small"
+                          fullWidth
+                        >
+                          {enfoqueOptions.map((opt, idx) => (
+                            <MenuItem key={idx} value={opt}>{opt}</MenuItem>
+                          ))}
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={exercise.series}
+                          onChange={(e) => handleSeriesChange(e, index)}
+                          size="small"
+                          fullWidth
+                        >
+                          {[...Array(8)].map((_, i) => (
+                            <MenuItem key={i} value={i+1}>{i+1}</MenuItem>
+                          ))}
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={exercise.rest}
+                          onChange={(e) => handleRestChange(e, index)}
+                          size="small"
+                          fullWidth
+                        >
+                          <MenuItem value={30}>30</MenuItem>
+                          <MenuItem value={60}>60</MenuItem>
+                          <MenuItem value={90}>90</MenuItem>
+                          <MenuItem value={120}>120</MenuItem>
+                          <MenuItem value={180}>180</MenuItem>
+                        </Select>
+                      </TableCell>
+                      <TableCell>{exercise.equipmentUsed}</TableCell>
+                    </TableRow>
+                  )})}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            
+            {/* Popover para mostrar detalles del ejercicio */}
+            <Popover
+              open={open}
+              anchorEl={anchorEl}
+              onClose={handlePopoverClose}
+              anchorOrigin={{
+                vertical: 'center',
+                horizontal: 'center',
+              }}
+              transformOrigin={{
+                vertical: 'center',
+                horizontal: 'center',
+              }}
+            >
+              {popoverExercise && (
+                <Card sx={{ maxWidth: 400, m: 0 }}>
+                  {popoverExercise.preview && (
+                    <CardMedia
+                      component="img"
+                      height="200"
+                      image={popoverExercise.preview}
+                      alt={popoverExercise.nombreEjercicio}
+                    />
+                  )}
+                  <CardContent>
+                    <Typography variant="h6" component="div">
+                      {popoverExercise.nombreEjercicio}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                      <strong>Grupo Muscular:</strong> {popoverExercise.seleccionMuscular}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      <strong>Patrón de Movimiento:</strong> {popoverExercise.patronMovimiento}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      <strong>Equipamiento:</strong> {popoverExercise.equipmentUsed}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      <strong>Enfoque:</strong> {popoverExercise.enfoque}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      <strong>Series:</strong> {popoverExercise.series}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      <strong>Descanso:</strong> {popoverExercise.rest} segundos
+                    </Typography>
+                  </CardContent>
+                </Card>
+              )}
+            </Popover>
+          </Paper>
+        )}
+      </Box>
+    </Container>
   );
 };
 

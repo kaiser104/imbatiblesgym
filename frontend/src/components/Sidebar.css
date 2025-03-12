@@ -31,3 +31,49 @@
   background-color: #145214; /* Verde oscuro */
   border-radius: 4px;
 }
+
+.sidebar-open {
+  transition: width 0.3s ease;
+}
+
+.sidebar-closed {
+  /* Estilos para la barra lateral */
+  .sidebar-drawer {
+    transition: width 0.3s ease;
+  }
+  
+  /* Ajustes para el contenido principal cuando la barra lateral está abierta/cerrada */
+  @media (max-width: 768px) {
+    .MuiDrawer-root.sidebar-drawer {
+      z-index: 1300;
+    }
+    
+    /* Añadir sombra para destacar sobre el contenido */
+    .MuiDrawer-paper {
+      box-shadow: 4px 0 10px rgba(0, 0, 0, 0.2);
+    }
+  }
+  
+  /* Animación suave para la apertura/cierre */
+  .MuiDrawer-paper {
+    transition: transform 0.3s ease !important;
+  }
+}
+
+/* Ajustes para dispositivos móviles */
+@media (max-width: 768px) {
+  .sidebar-closed .MuiDrawer-paper {
+    width: 65px !important;
+  }
+}
+
+/* Mejora la apariencia de los íconos cuando la barra está colapsada */
+.sidebar-closed .MuiListItemIcon-root {
+  min-width: 0;
+  margin: 0 auto;
+}
+
+/* Ajusta el contenido principal cuando la barra cambia de tamaño */
+.content-shift {
+  transition: margin-left 0.3s ease;
+}

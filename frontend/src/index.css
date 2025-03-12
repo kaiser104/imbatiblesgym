@@ -5,12 +5,9 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #121212; /* Fondo negro profundo */
-  color: #F5F5F5; /* Texto en blanco suave */
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
-  color: #28A745; /* Verde neón para resaltar el código */
 }

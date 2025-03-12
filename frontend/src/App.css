@@ -1,18 +1,2 @@
-/* src/App.css */
-.App {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
-.main-container {
-  display: flex;
-  flex: 1;
-}
-
-.content {
-  flex: 1;
-  margin-left: 220px; /* Debe coincidir con el ancho de la sidebar */
-  padding: 1rem;
-  background-color: #1E1E1E; /* Cambio de fondo a gris oscuro */
-}
+/* Estilos básicos para la aplicación */
+/* La mayoría del estilo ahora vendrá de Material-UI */

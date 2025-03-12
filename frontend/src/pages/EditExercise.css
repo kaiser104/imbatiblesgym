@@ -1,4 +1,8 @@
-/* frontend/src/pages/EditExercise.css */
+/* Basic styling for EditExercise */
+.edit-exercise-container {
+  padding: 20px;
+}
+
 .edit-exercise {
     padding: 1rem;
     background-color: #121212; /* Fondo negro profundo */

@@ -4,6 +4,13 @@ import { storage } from '../firebase';
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { getFirestore, collection, addDoc } from "firebase/firestore";
 import { app } from '../firebase';
+import { 
+  Container, Typography, Box, TextField, Button, 
+  FormControl, InputLabel, Select, MenuItem,
+  LinearProgress, Card, CardContent, Grid, 
+  Alert, Snackbar, Paper
+} from '@mui/material';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
 const db = getFirestore(app);
 
@@ -13,13 +20,41 @@ const UploadExercise = () => {
     mainMuscle: '',
     secondaryMuscle: '',
     movementCategory: '',
-    equipment: ''
+    equipment: '',
+    otherEquipment: '', // Nuevo campo para equipamiento personalizado
+    focus: ''
   });
   const [file, setFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [downloadURL, setDownloadURL] = useState('');
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+
+  // Opciones para los menús desplegables
+  const muscleOptions = [
+    'Pectorales', 'Espalda', 'Bíceps', 'Tríceps', 'Deltoides', 
+    'Deltoides posterior', 'Glúteos', 'Abdominales', 'Lumbares', 
+    'Cuádriceps', 'Isquiotibiales', 'Pantorrilla', 'Aductores', 
+    'Abductores', 'Antebrazos', 'Trapecio'
+  ];
+
+  const focusOptions = ['Aislamiento', 'Multiarticular', 'Cuerpo completo'];
+  
+  const equipmentOptions = [
+    'Trineo', 'Suspensión', 'Rodillo de espuma', 'Polea', 'Peso Corporal',
+    'Fit ball', 'Mancuernas', 'Landmine', 'Kettlebell', 'Disco',
+    'Cuerda de batida', 'Chaleco con peso', 'Bolsa de arena', 'Bola de lacrosse',
+    'Barra', 'Power band', 'Balón medicinal', 'Otro'
+  ];
+  
+  const movementCategoryOptions = [
+    'Bent Leg Hip Extension', 'Cardio', 'Double Leg Push', 'Core Stability',
+    'Auxiliary', 'Mobility', 'Explosive', 'Horizontal Push',
+    'Straight Leg Hip Extension', 'Downward Pull', 'Upward Pull',
+    'Upward Push', 'Single Leg Push', 'Horizontal Pull'
+  ];
 
   const handleChange = (e) => {
     setExerciseData({
@@ -30,7 +65,17 @@ const UploadExercise = () => {
 
   const handleFileChange = (e) => {
     if(e.target.files[0]){
-      setFile(e.target.files[0]);
+      const selectedFile = e.target.files[0];
+      setFile(selectedFile);
+      
+      // Crear una vista previa del archivo
+      if (selectedFile.type.includes('image')) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          setPreviewUrl(reader.result);
+        };
+        reader.readAsDataURL(selectedFile);
+      }
     }
   };
 
@@ -42,6 +87,17 @@ const UploadExercise = () => {
       setError("Debes seleccionar un archivo GIF");
       return;
     }
+    
+    // Preparar los datos del ejercicio
+    let finalExerciseData = { ...exerciseData };
+    
+    // Si el equipamiento es "Otro", usar el valor personalizado
+    if (exerciseData.equipment === 'Otro' && exerciseData.otherEquipment) {
+      finalExerciseData.equipment = exerciseData.otherEquipment;
+    }
+    
+    // Eliminar el campo otherEquipment antes de guardar
+    const { otherEquipment, ...dataToSave } = finalExerciseData;
     
     // Referencia en Storage (organizada por categoría)
     const storageRef = ref(storage, `exercises/${exerciseData.movementCategory}/${file.name}`);
@@ -60,21 +116,25 @@ const UploadExercise = () => {
         getDownloadURL(uploadTask.snapshot.ref).then(async (url) => {
           setDownloadURL(url);
           const exercise = {
-            ...exerciseData,
+            ...dataToSave, // Usar los datos preparados
             fileURL: url,
             createdAt: new Date()
           };
           try {
             await addDoc(collection(db, "exercises"), exercise);
             setMessage("Ejercicio subido y guardado correctamente.");
+            setOpenSnackbar(true);
             setExerciseData({
               name: '',
               mainMuscle: '',
               secondaryMuscle: '',
               movementCategory: '',
-              equipment: ''
+              equipment: '',
+              otherEquipment: '', // Resetear también este campo
+              focus: ''
             });
             setFile(null);
+            setPreviewUrl(null);
             setUploadProgress(0);
           } catch (err) {
             console.error("Error al guardar en Firestore:", err);
@@ -86,44 +146,236 @@ const UploadExercise = () => {
   };
 
   return (
-    <div>
-      <h2>Subir Ejercicio</h2>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Nombre del ejercicio:</label>
-          <input type="text" name="name" value={exerciseData.name} onChange={handleChange} required />
-        </div>
-        <div>
-          <label>Músculo principal:</label>
-          <input type="text" name="mainMuscle" value={exerciseData.mainMuscle} onChange={handleChange} required />
-        </div>
-        <div>
-          <label>Músculo secundario (opcional):</label>
-          <input type="text" name="secondaryMuscle" value={exerciseData.secondaryMuscle} onChange={handleChange} />
-        </div>
-        <div>
-          <label>Categoría de movimiento:</label>
-          <input type="text" name="movementCategory" value={exerciseData.movementCategory} onChange={handleChange} required />
-        </div>
-        <div>
-          <label>Equipamiento:</label>
-          <input type="text" name="equipment" value={exerciseData.equipment} onChange={handleChange} required />
-        </div>
-        <div>
-          <label>Archivo GIF:</label>
-          <input type="file" accept="image/gif" onChange={handleFileChange} required />
-        </div>
-        <button type="submit">Subir Ejercicio</button>
-      </form>
-      {uploadProgress > 0 && <p>Progreso: {uploadProgress}%</p>}
-      {downloadURL && (
-        <p>
-          Archivo subido: <a href={downloadURL} target="_blank" rel="noopener noreferrer">Ver GIF</a>
-        </p>
-      )}
-      {message && <p style={{color: "green"}}>{message}</p>}
-      {error && <p style={{color: "red"}}>{error}</p>}
-    </div>
+    <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
+      <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
+        <Typography variant="h4" component="h1" gutterBottom align="center" color="primary">
+          Subir Nuevo Ejercicio
+        </Typography>
+        
+        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Nombre del ejercicio"
+                name="name"
+                value={exerciseData.name}
+                onChange={handleChange}
+                required
+                variant="outlined"
+              />
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth required>
+                <InputLabel>Músculo principal</InputLabel>
+                <Select
+                  name="mainMuscle"
+                  value={exerciseData.mainMuscle}
+                  onChange={handleChange}
+                  label="Músculo principal"
+                >
+                  {muscleOptions.map((muscle) => (
+                    <MenuItem key={muscle} value={muscle}>
+                      {muscle}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Músculo secundario (opcional)</InputLabel>
+                <Select
+                  name="secondaryMuscle"
+                  value={exerciseData.secondaryMuscle}
+                  onChange={handleChange}
+                  label="Músculo secundario (opcional)"
+                >
+                  <MenuItem value="">Ninguno</MenuItem>
+                  {muscleOptions.map((muscle) => (
+                    <MenuItem key={muscle} value={muscle}>
+                      {muscle}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth required>
+                <InputLabel>Categoría de movimiento</InputLabel>
+                <Select
+                  name="movementCategory"
+                  value={exerciseData.movementCategory}
+                  onChange={handleChange}
+                  label="Categoría de movimiento"
+                >
+                  {movementCategoryOptions.map((category) => (
+                    <MenuItem key={category} value={category}>
+                      {category}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth required>
+                <InputLabel>Enfoque</InputLabel>
+                <Select
+                  name="focus"
+                  value={exerciseData.focus}
+                  onChange={handleChange}
+                  label="Enfoque"
+                >
+                  {focusOptions.map((focus) => (
+                    <MenuItem key={focus} value={focus}>
+                      {focus}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            
+            <Grid item xs={12}>
+              <FormControl fullWidth required>
+                <InputLabel>Equipamiento</InputLabel>
+                <Select
+                  name="equipment"
+                  value={exerciseData.equipment}
+                  onChange={handleChange}
+                  label="Equipamiento"
+                >
+                  {equipmentOptions.map((equipment) => (
+                    <MenuItem key={equipment} value={equipment}>
+                      {equipment}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            
+            {exerciseData.equipment === 'Otro' && (
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Especificar equipamiento"
+                  name="otherEquipment"
+                  value={exerciseData.otherEquipment}
+                  onChange={handleChange}
+                  required
+                  variant="outlined"
+                  placeholder="Describe el equipamiento utilizado"
+                />
+              </Grid>
+            )}
+            <Grid item xs={12}>
+              <Button
+                variant="outlined"
+                component="label"
+                startIcon={<CloudUploadIcon />}
+                sx={{ mb: 2 }}
+              >
+                Seleccionar archivo GIF
+                <input
+                  type="file"
+                  accept="image/gif,image/*"
+                  onChange={handleFileChange}
+                  hidden
+                />
+              </Button>
+              {file && (
+                <Typography variant="body2" sx={{ ml: 2 }}>
+                  Archivo seleccionado: {file.name}
+                </Typography>
+              )}
+            </Grid>
+            
+            {previewUrl && (
+              <Grid item xs={12} sx={{ textAlign: 'center' }}>
+                <Card sx={{ maxWidth: 300, mx: 'auto' }}>
+                  <CardContent>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Vista previa:
+                    </Typography>
+                    <img 
+                      src={previewUrl} 
+                      alt="Vista previa" 
+                      style={{ maxWidth: '100%', maxHeight: '200px' }} 
+                    />
+                  </CardContent>
+                </Card>
+              </Grid>
+            )}
+            
+            {uploadProgress > 0 && (
+              <Grid item xs={12}>
+                <Typography variant="body2" gutterBottom>
+                  Progreso de carga: {uploadProgress}%
+                </Typography>
+                <LinearProgress 
+                  variant="determinate" 
+                  value={uploadProgress} 
+                  sx={{ height: 10, borderRadius: 5 }}
+                />
+              </Grid>
+            )}
+            
+            <Grid item xs={12}>
+              <Button 
+                type="submit" 
+                variant="contained" 
+                color="primary" 
+                fullWidth
+                size="large"
+                disabled={uploadProgress > 0 && uploadProgress < 100}
+              >
+                Subir Ejercicio
+              </Button>
+            </Grid>
+          </Grid>
+        </Box>
+        
+        {error && (
+          <Alert severity="error" sx={{ mt: 3 }}>
+            {error}
+          </Alert>
+        )}
+        
+        {downloadURL && (
+          <Box sx={{ mt: 3, textAlign: 'center' }}>
+            <Alert severity="success">
+              Archivo subido correctamente
+            </Alert>
+            <Button 
+              href={downloadURL} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              variant="outlined"
+              sx={{ mt: 2 }}
+            >
+              Ver GIF
+            </Button>
+          </Box>
+        )}
+      </Paper>
+      
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={6000}
+        onClose={() => setOpenSnackbar(false)}
+      >
+        <Alert 
+          onClose={() => setOpenSnackbar(false)} 
+          severity="success" 
+          sx={{ width: '100%' }}
+        >
+          {message}
+        </Alert>
+      </Snackbar>
+    </Container>
   );
 };
 
