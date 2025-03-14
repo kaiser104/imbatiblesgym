@@ -5,31 +5,32 @@ import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import GroupIcon from '@mui/icons-material/Group';
 import EventIcon from '@mui/icons-material/Event';
+import './Dashboard.css'; // Importamos el CSS
 
 function Dashboard() {
   return (
-    <Box>
-      <Typography variant="h5" component="h2" gutterBottom>
+    <Box className="dashboard">
+      <Typography variant="h5" component="h2" gutterBottom className="dashboard-title">
         Panel de Control
       </Typography>
       
       <Grid container spacing={3}>
         {/* Stats Cards */}
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ height: '100%', backgroundColor: 'background.paper' }}>
+          <Card className="stat-card">
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography color="text.secondary" gutterBottom>
+                <Typography className="card-title" gutterBottom>
                   Miembros Activos
                 </Typography>
-                <Avatar sx={{ bgcolor: 'primary.main' }}>
-                  <GroupIcon />
+                <Avatar sx={{ bgcolor: '#BBFF00' }}>
+                  <GroupIcon sx={{ color: '#000000' }} />
                 </Avatar>
               </Box>
-              <Typography variant="h4" component="div">
+              <Typography className="card-value">
                 128
               </Typography>
-              <Typography variant="body2" color="success.main">
+              <Typography className="card-subtitle" sx={{ color: '#33AAFF' }}>
                 +12% este mes
               </Typography>
             </CardContent>
@@ -37,20 +38,20 @@ function Dashboard() {
         </Grid>
         
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ height: '100%', backgroundColor: 'background.paper' }}>
+          <Card className="stat-card">
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography color="text.secondary" gutterBottom>
+                <Typography className="card-title" gutterBottom>
                   Clases Programadas
                 </Typography>
-                <Avatar sx={{ bgcolor: 'secondary.main' }}>
-                  <EventIcon />
+                <Avatar sx={{ bgcolor: '#33AAFF' }}>
+                  <EventIcon sx={{ color: '#000000' }} />
                 </Avatar>
               </Box>
-              <Typography variant="h4" component="div">
+              <Typography className="card-value">
                 42
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography className="card-subtitle">
                 Esta semana
               </Typography>
             </CardContent>
@@ -58,20 +59,20 @@ function Dashboard() {
         </Grid>
         
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ height: '100%', backgroundColor: 'background.paper' }}>
+          <Card className="stat-card">
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography color="text.secondary" gutterBottom>
+                <Typography className="card-title" gutterBottom>
                   Entrenadores
                 </Typography>
-                <Avatar sx={{ bgcolor: 'warning.main' }}>
-                  <FitnessCenterIcon />
+                <Avatar sx={{ bgcolor: '#BBFF00' }}>
+                  <FitnessCenterIcon sx={{ color: '#000000' }} />
                 </Avatar>
               </Box>
-              <Typography variant="h4" component="div">
+              <Typography className="card-value">
                 15
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography className="card-subtitle">
                 Disponibles
               </Typography>
             </CardContent>
@@ -79,20 +80,20 @@ function Dashboard() {
         </Grid>
         
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ height: '100%', backgroundColor: 'background.paper' }}>
+          <Card className="stat-card">
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography color="text.secondary" gutterBottom>
+                <Typography className="card-title" gutterBottom>
                   Ejercicios Realizados
                 </Typography>
-                <Avatar sx={{ bgcolor: 'error.main' }}>
-                  <DirectionsRunIcon />
+                <Avatar sx={{ bgcolor: '#FF5533' }}>
+                  <DirectionsRunIcon sx={{ color: '#000000' }} />
                 </Avatar>
               </Box>
-              <Typography variant="h4" component="div">
+              <Typography className="card-value">
                 1,248
               </Typography>
-              <Typography variant="body2" color="success.main">
+              <Typography className="card-subtitle" sx={{ color: '#33AAFF' }}>
                 +8% esta semana
               </Typography>
             </CardContent>
@@ -101,67 +102,75 @@ function Dashboard() {
         
         {/* Featured Class */}
         <Grid item xs={12} md={6}>
-          <Card sx={{ backgroundColor: 'background.paper' }}>
+          <Card className="featured-card">
             <CardHeader
+              className="card-header"
               avatar={
-                <Avatar sx={{ bgcolor: 'primary.main' }}>
-                  <FitnessCenterIcon />
+                <Avatar sx={{ bgcolor: '#BBFF00' }}>
+                  <FitnessCenterIcon sx={{ color: '#000000' }} />
                 </Avatar>
               }
               action={
-                <IconButton aria-label="settings">
+                <IconButton aria-label="settings" sx={{ color: '#BBFF00' }}>
                   <MoreVertIcon />
                 </IconButton>
               }
-              title="Clase Destacada"
-              subheader="CrossFit Avanzado"
+              title={<Typography className="card-title">Clase Destacada</Typography>}
+              subheader={<Typography className="card-subtitle">CrossFit Avanzado</Typography>}
             />
             <CardContent>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{ color: '#FFFFFF' }}>
                 Entrenamiento de alta intensidad que combina levantamiento de pesas, 
                 ejercicios pliométricos y movimientos funcionales. Ideal para mejorar 
                 fuerza, resistencia y agilidad.
               </Typography>
             </CardContent>
             <CardActions>
-              <Button size="small" color="primary">Ver Detalles</Button>
-              <Button size="small" variant="contained" color="primary">Inscribirse</Button>
+              <Button className="neon-button">Ver Detalles</Button>
+              <Button className="neon-button neon-button-filled">Inscribirse</Button>
             </CardActions>
           </Card>
         </Grid>
         
         {/* Recent Activities */}
         <Grid item xs={12} md={6}>
-          <Card sx={{ backgroundColor: 'background.paper' }}>
+          <Card className="featured-card">
             <CardHeader
-              title="Actividades Recientes"
-              subheader="Últimas actualizaciones"
+              className="card-header"
+              title={<Typography className="card-title">Actividades Recientes</Typography>}
+              subheader={<Typography className="card-subtitle">Últimas actualizaciones</Typography>}
             />
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Avatar sx={{ bgcolor: 'primary.main', mr: 2 }}>JD</Avatar>
-                <Box>
-                  <Typography variant="body1">Juan Díaz completó su entrenamiento</Typography>
-                  <Typography variant="body2" color="text.secondary">Hace 2 horas</Typography>
+              <Box className="activity-item">
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Avatar sx={{ bgcolor: '#BBFF00', mr: 2 }}>JD</Avatar>
+                  <Box>
+                    <Typography variant="body1" sx={{ color: '#FFFFFF' }}>Juan Díaz completó su entrenamiento</Typography>
+                    <Typography className="activity-time">Hace 2 horas</Typography>
+                  </Box>
                 </Box>
               </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Avatar sx={{ bgcolor: 'secondary.main', mr: 2 }}>MR</Avatar>
-                <Box>
-                  <Typography variant="body1">María Rodríguez se unió a la clase de Yoga</Typography>
-                  <Typography variant="body2" color="text.secondary">Hace 3 horas</Typography>
+              <Box className="activity-item">
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Avatar sx={{ bgcolor: '#33AAFF', mr: 2 }}>MR</Avatar>
+                  <Box>
+                    <Typography variant="body1" sx={{ color: '#FFFFFF' }}>María Rodríguez se unió a la clase de Yoga</Typography>
+                    <Typography className="activity-time">Hace 3 horas</Typography>
+                  </Box>
                 </Box>
               </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <Avatar sx={{ bgcolor: 'warning.main', mr: 2 }}>CL</Avatar>
-                <Box>
-                  <Typography variant="body1">Carlos López actualizó su plan de nutrición</Typography>
-                  <Typography variant="body2" color="text.secondary">Hace 5 horas</Typography>
+              <Box className="activity-item">
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Avatar sx={{ bgcolor: '#FF5533', mr: 2 }}>CL</Avatar>
+                  <Box>
+                    <Typography variant="body1" sx={{ color: '#FFFFFF' }}>Carlos López actualizó su plan de nutrición</Typography>
+                    <Typography className="activity-time">Hace 5 horas</Typography>
+                  </Box>
                 </Box>
               </Box>
             </CardContent>
             <CardActions>
-              <Button size="small" color="primary">Ver Todas</Button>
+              <Button className="neon-button">Ver Todas</Button>
             </CardActions>
           </Card>
         </Grid>

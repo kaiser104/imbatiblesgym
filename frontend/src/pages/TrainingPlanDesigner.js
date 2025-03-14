@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { collection, addDoc, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
+import './TrainingPlanDesigner.css'; // Importar el archivo CSS
 import { 
   Typography, 
   Paper, 
@@ -464,20 +465,25 @@ const TrainingPlanDesigner = () => {
     setTrainingPlan(newPlan);
   };
 
+  // Eliminar el texto "t es" que está causando el error
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth="lg" className="training-plan-container">
       <Box sx={{ py: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 4, color: 'primary.main' }}>
+        <Typography 
+          variant="h4" 
+          component="h1"           gutterBottom 
+          className="training-plan-title"
+        >
           Diseñador de Entrenamientos
         </Typography>
         
-        <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
+        <Paper elevation={3} className="form-paper">
           <form onSubmit={handleSubmit}>
             <Grid container spacing={4}>
               {/* Objetivo Fitness */}
               <Grid item xs={12} md={6}>
-                <FormControl component="fieldset" fullWidth>
-                  <FormLabel component="legend" sx={{ color: 'primary.main', mb: 1 }}>
+                <FormControl component="fieldset" fullWidth className="form-control-group">
+                  <FormLabel component="legend" className="form-section-label">
                     Objetivo Fitness
                   </FormLabel>
                   <RadioGroup
@@ -487,17 +493,17 @@ const TrainingPlanDesigner = () => {
                   >
                     <FormControlLabel 
                       value="muscleMass" 
-                      control={<Radio color="primary" />} 
+                      control={<Radio />} 
                       label="Incrementar masa muscular" 
                     />
                     <FormControlLabel 
                       value="conditioning" 
-                      control={<Radio color="primary" />} 
+                      control={<Radio />} 
                       label="Acondicionamiento físico y definición" 
                     />
                     <FormControlLabel 
                       value="strength" 
-                      control={<Radio color="primary" />} 
+                      control={<Radio />} 
                       label="Incremento de fuerza" 
                     />
                   </RadioGroup>
@@ -508,14 +514,15 @@ const TrainingPlanDesigner = () => {
               <Grid item xs={12} md={6}>
                 <Grid container spacing={3}>
                   <Grid item xs={12}>
-                    <FormControl fullWidth>
-                      <FormLabel sx={{ color: 'primary.main', mb: 1 }}>
+                    <FormControl fullWidth className="form-control-group">
+                      <FormLabel className="form-section-label">
                         Duración del Programa (meses)
                       </FormLabel>
                       <Select
                         value={duration}
                         onChange={handleDurationChange}
                         variant="outlined"
+                        className="form-select"
                       >
                         {[...Array(6)].map((_, i) => (
                           <MenuItem key={i} value={i+1}>
@@ -527,14 +534,15 @@ const TrainingPlanDesigner = () => {
                   </Grid>
                   
                   <Grid item xs={12}>
-                    <FormControl fullWidth>
-                      <FormLabel sx={{ color: 'primary.main', mb: 1 }}>
+                    <FormControl fullWidth className="form-control-group">
+                      <FormLabel className="form-section-label">
                         Frecuencia Semanal de Entrenamiento
                       </FormLabel>
                       <Select
                         value={frequency}
                         onChange={handleFrequencyChange}
                         variant="outlined"
+                        className="form-select"
                       >
                         {[...Array(7)].map((_, i) => (
                           <MenuItem key={i} value={i+1}>
@@ -546,14 +554,15 @@ const TrainingPlanDesigner = () => {
                   </Grid>
                   
                   <Grid item xs={12}>
-                    <FormControl fullWidth>
-                      <FormLabel sx={{ color: 'primary.main', mb: 1 }}>
+                    <FormControl fullWidth className="form-control-group">
+                      <FormLabel className="form-section-label">
                         Tiempo disponible por sesión
                       </FormLabel>
                       <Select
                         value={timeAvailable}
                         onChange={handleTimeAvailableChange}
                         variant="outlined"
+                        className="form-select"
                       >
                         <MenuItem value="30">30 minutos</MenuItem>
                         <MenuItem value="45">45 minutos</MenuItem>
@@ -567,14 +576,15 @@ const TrainingPlanDesigner = () => {
 
               {/* Selección Muscular */}
               <Grid item xs={12}>
-                <FormControl fullWidth>
-                  <FormLabel sx={{ color: 'primary.main', mb: 1 }}>
+                <FormControl fullWidth className="form-control-group">
+                  <FormLabel className="form-section-label">
                     Selección Muscular
                   </FormLabel>
                   <Select
                     value={muscleSelection}
                     onChange={handleMuscleSelectionChange}
                     variant="outlined"
+                    className="form-select"
                   >
                     {muscleOptions.map((option, idx) => (
                       <MenuItem key={idx} value={option}>{option}</MenuItem>
@@ -586,7 +596,7 @@ const TrainingPlanDesigner = () => {
               {/* Músculos Personalizados (condicional) */}
               {muscleSelection === 'Personalizado' && (
                 <Grid item xs={12}>
-                  <FormLabel sx={{ color: 'primary.main', mb: 1, display: 'block' }}>
+                  <FormLabel className="form-section-label" style={{ display: 'block' }}>
                     Selecciona los grupos musculares
                   </FormLabel>
                   <FormGroup row>
@@ -598,11 +608,10 @@ const TrainingPlanDesigner = () => {
                             checked={customMuscles.includes(muscle)}
                             onChange={handleCustomMuscleChange}
                             value={muscle}
-                            color="primary"
                           />
                         }
                         label={muscle}
-                        sx={{ width: { xs: '50%', md: '33%', lg: '25%' } }}
+                        className="muscle-checkbox"
                       />
                     ))}
                   </FormGroup>
@@ -611,14 +620,14 @@ const TrainingPlanDesigner = () => {
 
               {/* Equipamiento Disponible */}
               <Grid item xs={12}>
-                <FormLabel sx={{ color: 'primary.main', mb: 1, display: 'block' }}>
+                <FormLabel className="form-section-label">
                   Equipamiento Disponible
                 </FormLabel>
                 <Button 
                   variant="outlined" 
                   size="small" 
                   onClick={selectAllEquipment}
-                  sx={{ mb: 2 }}
+                  className="action-button select-all-button"
                 >
                   Seleccionar Todo
                 </Button>
@@ -631,11 +640,10 @@ const TrainingPlanDesigner = () => {
                           checked={equipment.includes(eq)}
                           onChange={handleEquipmentChange}
                           value={eq}
-                          color="primary"
                         />
                       }
                       label={eq}
-                      sx={{ width: { xs: '50%', md: '33%', lg: '25%' } }}
+                      className="equipment-checkbox"
                     />
                   ))}
                 </FormGroup>
@@ -643,20 +651,20 @@ const TrainingPlanDesigner = () => {
 
               {/* Botones de Acción */}
               <Grid item xs={12}>
-                <Divider sx={{ my: 2 }} />
+                <Divider className="section-divider" />
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
                   <Button 
                     variant="contained" 
-                    color="primary" 
                     onClick={generatePlan}
+                    className="action-button generate-button"
                   >
                     Generar Plan
                   </Button>
                   <Button 
                     variant="contained" 
-                    color="secondary" 
                     type="submit"
                     disabled={trainingPlan.length === 0}
+                    className="action-button save-button"
                   >
                     Guardar Plan
                   </Button>
@@ -668,101 +676,46 @@ const TrainingPlanDesigner = () => {
         
         {/* Mensajes de estado */}
         {message && (
-          <Alert severity="success" sx={{ mb: 2 }}>{message}</Alert>
+          <Alert severity="success" className="status-alert success-alert">{message}</Alert>
         )}
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
+          <Alert severity="error" className="status-alert error-alert">{error}</Alert>
         )}
         
         {/* Tabla de resultados */}
         {trainingPlan.length > 0 && (
-          <Paper elevation={3} sx={{ mt: 4, p: 2 }}>
-            <Typography variant="h5" gutterBottom>
+          <Paper elevation={3} className="results-table-container">
+            <Typography variant="h5" gutterBottom className="results-table-title">
               Plan de Entrenamiento Generado
             </Typography>
             <TableContainer>
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ 
-                      fontWeight: 'bold', 
-                      backgroundColor: 'primary.main', 
-                      color: 'white',
-                      fontSize: '0.9rem'
-                    }}>Sesión</TableCell>
-                    <TableCell sx={{ 
-                      fontWeight: 'bold', 
-                      backgroundColor: 'primary.main', 
-                      color: 'white',
-                      fontSize: '0.9rem'
-                    }}>Ejercicio #</TableCell>
-                    <TableCell sx={{ 
-                      fontWeight: 'bold', 
-                      backgroundColor: 'primary.main', 
-                      color: 'white',
-                      fontSize: '0.9rem'
-                    }}>Grupo Muscular</TableCell>
-                    <TableCell sx={{ 
-                      fontWeight: 'bold', 
-                      backgroundColor: 'primary.main', 
-                      color: 'white',
-                      fontSize: '0.9rem'
-                    }}>Nombre Ejercicio</TableCell>
-                    <TableCell sx={{ 
-                      fontWeight: 'bold', 
-                      backgroundColor: 'primary.main', 
-                      color: 'white',
-                      fontSize: '0.9rem'
-                    }}>Patrón Movimiento</TableCell>
-                    <TableCell sx={{ 
-                      fontWeight: 'bold', 
-                      backgroundColor: 'primary.main', 
-                      color: 'white',
-                      fontSize: '0.9rem'
-                    }}>Enfoque</TableCell>
-                    <TableCell sx={{ 
-                      fontWeight: 'bold', 
-                      backgroundColor: 'primary.main', 
-                      color: 'white',
-                      fontSize: '0.9rem'
-                    }}>Series</TableCell>
-                    <TableCell sx={{ 
-                      fontWeight: 'bold', 
-                      backgroundColor: 'primary.main', 
-                      color: 'white',
-                      fontSize: '0.9rem'
-                    }}>Descanso (seg)</TableCell>
-                    <TableCell sx={{ 
-                      fontWeight: 'bold', 
-                      backgroundColor: 'primary.main', 
-                      color: 'white',
-                      fontSize: '0.9rem'
-                    }}>Equipamiento</TableCell>
+                    <TableCell className="table-header-cell">Sesión</TableCell>
+                    <TableCell className="table-header-cell">Ejercicio #</TableCell>
+                    <TableCell className="table-header-cell">Grupo Muscular</TableCell>
+                    <TableCell className="table-header-cell">Nombre Ejercicio</TableCell>
+                    <TableCell className="table-header-cell">Patrón Movimiento</TableCell>
+                    <TableCell className="table-header-cell">Enfoque</TableCell>
+                    <TableCell className="table-header-cell">Series</TableCell>
+                    <TableCell className="table-header-cell">Descanso (seg)</TableCell>
+                    <TableCell className="table-header-cell">Equipamiento</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {trainingPlan.map((exercise, index) => {
                     // Determinar el color de fondo basado en el número de sesión
                     const isEvenSession = exercise.sessionNumber % 2 === 0;
-                    const rowBgColor = isEvenSession ? 'rgba(232, 244, 253, 0.6)' : 'rgba(255, 243, 224, 0.4)';
                     
                     // Verificar si es el primer ejercicio de una nueva sesión
                     const isFirstOfSession = index === 0 || trainingPlan[index - 1].sessionNumber !== exercise.sessionNumber;
-                    
-                    // Aplicar un borde superior más grueso si es el primer ejercicio de la sesión
-                    const borderTop = isFirstOfSession ? '2px solid #1976d2' : 'none';
                     
                     return (
                     <TableRow 
                       key={index} 
                       hover
-                      sx={{ 
-                        backgroundColor: rowBgColor,
-                        borderTop: borderTop,
-                        '&:hover': {
-                          backgroundColor: isEvenSession ? 'rgba(232, 244, 253, 0.9)' : 'rgba(255, 243, 224, 0.7)',
-                        }
-                      }}
+                      className={`${isEvenSession ? 'even-session-row' : 'odd-session-row'} ${isFirstOfSession ? 'session-start-row' : ''}`}
                     >
                       <TableCell>{exercise.sessionNumber}</TableCell>
                       <TableCell>{exercise.exerciseNumber}</TableCell>
@@ -785,12 +738,13 @@ const TrainingPlanDesigner = () => {
                         </Select>
                       </TableCell>
                       <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Box className="exercise-select-container">
                           <Tooltip title="Ver detalles">
                             <IconButton 
                               size="small" 
                               color="primary"
                               onClick={(e) => handlePopoverOpen(e, exercise)}
+                              className="exercise-info-button"
                             >
                               <InfoIcon />
                             </IconButton>
@@ -806,7 +760,7 @@ const TrainingPlanDesigner = () => {
                                 <MenuItem 
                                   key={idx} 
                                   value={ex.nombre}
-                                  sx={{ display: 'flex', alignItems: 'center' }}
+                                  className="exercise-select-option"
                                   onClick={() => {
                                     const newPlan = [...trainingPlan];
                                     newPlan[index].nombreEjercicio = ex.nombre;
@@ -820,7 +774,7 @@ const TrainingPlanDesigner = () => {
                                     <img 
                                       src={ex.previewURL} 
                                       alt={ex.nombre} 
-                                      style={{ width: '30px', marginRight: '10px' }} 
+                                      className="exercise-thumbnail"
                                     />
                                   )}
                                   {ex.nombre}
@@ -904,36 +858,36 @@ const TrainingPlanDesigner = () => {
               }}
             >
               {popoverExercise && (
-                <Card sx={{ maxWidth: 400, m: 0 }}>
+                <Card className="exercise-popover-card">
                   {popoverExercise.preview && (
                     <CardMedia
                       component="img"
-                      height="200"
+                      className="exercise-image"
                       image={popoverExercise.preview}
                       alt={popoverExercise.nombreEjercicio}
                     />
                   )}
                   <CardContent>
-                    <Typography variant="h6" component="div">
+                    <Typography variant="h6" component="div" className="exercise-details-title">
                       {popoverExercise.nombreEjercicio}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                      <strong>Grupo Muscular:</strong> {popoverExercise.seleccionMuscular}
+                    <Typography variant="body2" className="exercise-details-text">
+                      <span className="exercise-details-label">Grupo Muscular:</span> {popoverExercise.seleccionMuscular}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      <strong>Patrón de Movimiento:</strong> {popoverExercise.patronMovimiento}
+                    <Typography variant="body2" className="exercise-details-text">
+                      <span className="exercise-details-label">Patrón de Movimiento:</span> {popoverExercise.patronMovimiento}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      <strong>Equipamiento:</strong> {popoverExercise.equipmentUsed}
+                    <Typography variant="body2" className="exercise-details-text">
+                      <span className="exercise-details-label">Equipamiento:</span> {popoverExercise.equipmentUsed}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      <strong>Enfoque:</strong> {popoverExercise.enfoque}
+                    <Typography variant="body2" className="exercise-details-text">
+                      <span className="exercise-details-label">Enfoque:</span> {popoverExercise.enfoque}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      <strong>Series:</strong> {popoverExercise.series}
+                    <Typography variant="body2" className="exercise-details-text">
+                      <span className="exercise-details-label">Series:</span> {popoverExercise.series}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      <strong>Descanso:</strong> {popoverExercise.rest} segundos
+                    <Typography variant="body2" className="exercise-details-text">
+                      <span className="exercise-details-label">Descanso:</span> {popoverExercise.rest} segundos
                     </Typography>
                   </CardContent>
                 </Card>

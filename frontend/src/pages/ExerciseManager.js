@@ -131,7 +131,7 @@ const ExerciseManager = () => {
           exerciseList.push({ id: doc.id, ...doc.data() });
         });
         setExercises(exerciseList);
-        // Inicialmente no se muestran ejercicios hasta aplicar filtros
+        // No mostrar ejercicios inicialmente hasta que se apliquen filtros
         setFilteredExercises([]);
         setLoadingExercises(false);
       } catch (err) {
@@ -168,6 +168,7 @@ const ExerciseManager = () => {
       mainMuscle: '',
       equipment: ''
     });
+    // Al reiniciar filtros, no mostrar ejercicios
     setFilteredExercises([]);
   };
 
@@ -370,7 +371,7 @@ const ExerciseManager = () => {
       ) : libraryError ? (
         <p style={{ color: "red" }}>{libraryError}</p>
       ) : filteredExercises.length === 0 ? (
-        <p>No se han aplicado filtros.</p>
+        <p>Usa los filtros para buscar ejercicios en la biblioteca.</p>
       ) : (
         <div className="exercise-grid">
           {filteredExercises.map(ex => (
@@ -534,6 +535,7 @@ const ExerciseManager = () => {
       {activeTab === 'library' ? renderLibrary() : renderImport()}
     </div>
   );
+
 };
 
 export default ExerciseManager;

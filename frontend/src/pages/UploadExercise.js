@@ -4,6 +4,7 @@ import { storage } from '../firebase';
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { getFirestore, collection, addDoc } from "firebase/firestore";
 import { app } from '../firebase';
+import './UploadExercise.css'; // Importar el archivo CSS
 import { 
   Container, Typography, Box, TextField, Button, 
   FormControl, InputLabel, Select, MenuItem,
@@ -146,15 +147,28 @@ const UploadExercise = () => {
   };
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
-      <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
-        <Typography variant="h4" component="h1" gutterBottom align="center" color="primary">
+    <Container maxWidth="md" sx={{ mt: 4, mb: 4 }} className="upload-container">
+      <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }} className="upload-paper">
+        <Typography 
+          variant="h4" 
+          component="h1" 
+          gutterBottom 
+          align="center" 
+          sx={{ 
+            fontFamily: "'Rajdhani', sans-serif",
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.02em',
+            color: '#BBFF00',
+            marginBottom: '1.5rem'
+          }}
+        >
           Subir Nuevo Ejercicio
         </Typography>
         
         <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
           <Grid container spacing={3}>
-            <Grid item xs={12}>
+            <Grid item xs={12} className="form-field">
               <TextField
                 fullWidth
                 label="Nombre del ejercicio"
@@ -276,7 +290,17 @@ const UploadExercise = () => {
                 variant="outlined"
                 component="label"
                 startIcon={<CloudUploadIcon />}
-                sx={{ mb: 2 }}
+                sx={{ 
+                  mb: 2,
+                  color: '#BBFF00',
+                  borderColor: '#BBFF00',
+                  '&:hover': {
+                    backgroundColor: 'rgba(187, 255, 0, 0.2)',
+                    borderColor: '#BBFF00',
+                    boxShadow: '0 0 10px rgba(187, 255, 0, 0.5)'
+                  }
+                }}
+                className="upload-button"
               >
                 Seleccionar archivo GIF
                 <input
@@ -287,7 +311,7 @@ const UploadExercise = () => {
                 />
               </Button>
               {file && (
-                <Typography variant="body2" sx={{ ml: 2 }}>
+                <Typography variant="body2" sx={{ ml: 2, color: '#33AAFF' }} className="file-name">
                   Archivo seleccionado: {file.name}
                 </Typography>
               )}
@@ -295,7 +319,7 @@ const UploadExercise = () => {
             
             {previewUrl && (
               <Grid item xs={12} sx={{ textAlign: 'center' }}>
-                <Card sx={{ maxWidth: 300, mx: 'auto' }}>
+                <Card sx={{ maxWidth: 300, mx: 'auto' }} className="preview-card">
                   <CardContent>
                     <Typography variant="subtitle2" gutterBottom>
                       Vista previa:
@@ -303,7 +327,7 @@ const UploadExercise = () => {
                     <img 
                       src={previewUrl} 
                       alt="Vista previa" 
-                      style={{ maxWidth: '100%', maxHeight: '200px' }} 
+                      className="preview-image"
                     />
                   </CardContent>
                 </Card>
@@ -318,7 +342,7 @@ const UploadExercise = () => {
                 <LinearProgress 
                   variant="determinate" 
                   value={uploadProgress} 
-                  sx={{ height: 10, borderRadius: 5 }}
+                  className="progress-bar"
                 />
               </Grid>
             )}
@@ -327,10 +351,26 @@ const UploadExercise = () => {
               <Button 
                 type="submit" 
                 variant="contained" 
-                color="primary" 
                 fullWidth
                 size="large"
                 disabled={uploadProgress > 0 && uploadProgress < 100}
+                sx={{
+                  backgroundColor: '#BBFF00',
+                  color: '#000000',
+                  fontFamily: "'Rajdhani', sans-serif",
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                  '&:hover': {
+                    backgroundColor: '#CCFF33',
+                    boxShadow: '0 0 15px rgba(187, 255, 0, 0.7)'
+                  },
+                  '&:disabled': {
+                    backgroundColor: '#333333',
+                    color: '#666666'
+                  }
+                }}
+                className="submit-button"
               >
                 Subir Ejercicio
               </Button>
@@ -339,14 +379,18 @@ const UploadExercise = () => {
         </Box>
         
         {error && (
-          <Alert severity="error" sx={{ mt: 3 }}>
+          <Alert severity="error" sx={{ mt: 3 }} className="error-alert">
             {error}
           </Alert>
         )}
         
         {downloadURL && (
           <Box sx={{ mt: 3, textAlign: 'center' }}>
-            <Alert severity="success">
+            <Alert severity="success" sx={{ 
+              backgroundColor: 'rgba(187, 255, 0, 0.2)',
+              color: '#BBFF00',
+              border: '1px solid rgba(187, 255, 0, 0.5)'
+            }} className="success-alert">
               Archivo subido correctamente
             </Alert>
             <Button 
@@ -354,7 +398,16 @@ const UploadExercise = () => {
               target="_blank" 
               rel="noopener noreferrer"
               variant="outlined"
-              sx={{ mt: 2 }}
+              sx={{ 
+                mt: 2,
+                color: '#33AAFF',
+                borderColor: '#33AAFF',
+                '&:hover': {
+                  backgroundColor: 'rgba(51, 170, 255, 0.2)',
+                  boxShadow: '0 0 10px rgba(51, 170, 255, 0.5)'
+                }
+              }}
+              className="view-button"
             >
               Ver GIF
             </Button>
@@ -371,6 +424,7 @@ const UploadExercise = () => {
           onClose={() => setOpenSnackbar(false)} 
           severity="success" 
           sx={{ width: '100%' }}
+          className="success-alert"
         >
           {message}
         </Alert>

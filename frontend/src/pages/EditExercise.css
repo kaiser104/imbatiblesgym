@@ -1,10 +1,107 @@
-/* Basic styling for EditExercise */
+/* Estilos para EditExercise con la estética del reloj */
 .edit-exercise-container {
   padding: 20px;
+  font-family: 'Rajdhani', sans-serif;
 }
 
 .edit-exercise {
-    padding: 1rem;
-    background-color: #121212; /* Fondo negro profundo */
-    color: #F5F5F5; /* Texto en blanco suave */
+  padding: 1rem;
+  background-color: #000000; /* Negro como el fondo del reloj */
+  color: #FFFFFF; /* Texto en blanco */
+}
+
+.edit-title {
+  font-family: 'Rajdhani', sans-serif !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.02em !important;
+  color: #BBFF00 !important; /* Verde neón como en el reloj */
+  margin-bottom: 1.5rem !important;
+}
+
+.edit-form-paper {
+  background-color: #121212 !important; /* Negro más claro */
+  border: 1px solid rgba(187, 255, 0, 0.2) !important; /* Borde sutil con verde neón */
+  color: #FFFFFF !important;
+}
+
+.edit-form-field label {
+  color: #BBFF00 !important; /* Verde neón para las etiquetas */
+  font-family: 'Rajdhani', sans-serif !important;
+  font-weight: 600 !important;
+}
+
+.edit-form-field input, 
+.edit-form-field .MuiSelect-select,
+.edit-form-field textarea {
+  color: #FFFFFF !important;
+  font-family: 'Rajdhani', sans-serif !important;
+}
+
+.edit-form-field .MuiOutlinedInput-notchedOutline {
+  border-color: rgba(187, 255, 0, 0.5) !important;
+}
+
+.edit-form-field .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: #BBFF00 !important;
+}
+
+.edit-form-field .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #BBFF00 !important;
+}
+
+.edit-form-button {
+  background-color: #BBFF00 !important;
+  color: #000000 !important;
+  font-family: 'Rajdhani', sans-serif !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  border-radius: 4px !important;
+  transition: all 0.3s ease !important;
+}
+
+.edit-form-button:hover {
+  background-color: #CCFF33 !important;
+  box-shadow: 0 0 15px rgba(187, 255, 0, 0.7) !important;
+}
+
+.edit-image-card {
+  background-color: #121212 !important;
+  border: 1px solid rgba(187, 255, 0, 0.3) !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Estilos para los menús desplegables */
+.MuiMenuItem-root {
+  font-family: 'Rajdhani', sans-serif !important;
+}
+
+.MuiPopover-paper {
+  background-color: #121212 !important;
+  color: #FFFFFF !important;
+}
+
+/* Estilos para las alertas */
+.MuiAlert-standardSuccess {
+  background-color: rgba(187, 255, 0, 0.1) !important;
+  color: #BBFF00 !important;
+  border: 1px solid rgba(187, 255, 0, 0.3) !important;
+  font-family: 'Rajdhani', sans-serif !important;
+}
+
+.MuiAlert-standardError {
+  background-color: rgba(255, 85, 51, 0.1) !important;
+  color: #FF5533 !important;
+  border: 1px solid rgba(255, 85, 51, 0.3) !important;
+  font-family: 'Rajdhani', sans-serif !important;
+}
+
+/* Estilos para el spinner de carga */
+.loading-text {
+  color: #BBFF00 !important;
+  font-family: 'Rajdhani', sans-serif !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.02em !important;
 }

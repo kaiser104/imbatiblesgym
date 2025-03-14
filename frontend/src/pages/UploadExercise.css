@@ -1,0 +1,226 @@
+/* src/pages/UploadExercise.css */
+.upload-container {
+  padding: 1rem;
+  background-color: #000000;
+  color: #FFFFFF;
+  font-family: 'Rajdhani', sans-serif;
+  min-height: 100vh;
+}
+
+.upload-paper {
+  background: #121212;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(187, 255, 0, 0.2);
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.upload-title {
+  font-family: 'Rajdhani', sans-serif !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.02em !important;
+  color: #BBFF00 !important;
+  margin-bottom: 1.5rem !important;
+  text-align: center !important;
+}
+
+.form-label {
+  color: #BBFF00;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+}
+
+.form-field {
+  margin-bottom: 1.5rem;
+}
+
+.form-input {
+  background-color: #1A1A1A;
+  color: #FFFFFF;
+  border: 1px solid rgba(187, 255, 0, 0.3);
+  border-radius: 4px;
+}
+
+.form-input:focus {
+  border-color: #BBFF00;
+  box-shadow: 0 0 0 2px rgba(187, 255, 0, 0.2);
+}
+
+.form-select {
+  background-color: #1A1A1A;
+  color: #FFFFFF;
+  border: 1px solid rgba(187, 255, 0, 0.3);
+}
+
+.upload-button {
+  background-color: transparent;
+  color: #BBFF00;
+  border: 1px solid #BBFF00;
+  border-radius: 4px;
+  padding: 0.75rem 1.5rem;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: all 0.3s ease;
+  margin-bottom: 1rem;
+}
+
+.upload-button:hover {
+  background-color: rgba(187, 255, 0, 0.2);
+  box-shadow: 0 0 10px rgba(187, 255, 0, 0.5);
+}
+
+.file-name {
+  color: #33AAFF;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+.preview-card {
+  background: #1A1A1A;
+  border: 1px solid rgba(187, 255, 0, 0.2);
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 1rem auto;
+  max-width: 300px;
+}
+
+.preview-title {
+  color: #BBFF00;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.preview-image {
+  max-width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.progress-container {
+  margin: 1rem 0;
+}
+
+.progress-text {
+  color: #33AAFF;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.progress-bar {
+  height: 10px;
+  background-color: #1A1A1A;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background-color: #BBFF00;
+  border-radius: 5px;
+  transition: width 0.3s ease;
+}
+
+.submit-button {
+  background-color: #BBFF00;
+  color: #000000;
+  border: none;
+  border-radius: 4px;
+  padding: 0.75rem 1.5rem;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: all 0.3s ease;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.submit-button:hover:not(:disabled) {
+  background-color: #CCFF33;
+  box-shadow: 0 0 15px rgba(187, 255, 0, 0.7);
+}
+
+.submit-button:disabled {
+  background-color: #333333;
+  color: #666666;
+}
+
+.success-alert {
+  background-color: rgba(187, 255, 0, 0.2);
+  color: #BBFF00;
+  border: 1px solid rgba(187, 255, 0, 0.5);
+  border-radius: 4px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.error-alert {
+  background-color: rgba(255, 85, 51, 0.2);
+  color: #FF5533;
+  border: 1px solid rgba(255, 85, 51, 0.5);
+  border-radius: 4px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.view-button {
+  background-color: transparent;
+  color: #33AAFF;
+  border: 1px solid #33AAFF;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: all 0.3s ease;
+  margin-top: 1rem;
+}
+
+.view-button:hover {
+  background-color: rgba(51, 170, 255, 0.2);
+  box-shadow: 0 0 10px rgba(51, 170, 255, 0.5);
+}
+
+/* Estilos para los componentes de Material UI */
+.MuiInputBase-root {
+  font-family: 'Rajdhani', sans-serif !important;
+}
+
+.MuiInputLabel-root {
+  font-family: 'Rajdhani', sans-serif !important;
+  color: #BBFF00 !important;
+}
+
+.MuiOutlinedInput-notchedOutline {
+  border-color: rgba(187, 255, 0, 0.3) !important;
+}
+
+.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: rgba(187, 255, 0, 0.5) !important;
+}
+
+.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #BBFF00 !important;
+}
+
+.MuiSelect-icon {
+  color: #BBFF00 !important;
+}
+
+.MuiMenuItem-root {
+  font-family: 'Rajdhani', sans-serif !important;
+}
+
+.MuiSnackbar-root .MuiAlert-root {
+  background-color: rgba(187, 255, 0, 0.2);
+  color: #BBFF00;
+  border: 1px solid rgba(187, 255, 0, 0.5);
+  font-family: 'Rajdhani', sans-serif;}

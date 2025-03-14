@@ -1,185 +1,299 @@
-/* Basic styling for ExerciseManager */
+/* ExerciseManager con estética del reloj */
 .exercise-manager-container {
   padding: 20px;
+  font-family: 'Rajdhani', sans-serif;
 }
 
-/* frontend/src/pages/ExerciseManager.css */
 .exercise-manager {
-    padding: 1rem;
-    background-color: #121212; /* Fondo negro profundo */
-    color: #F5F5F5; /* Texto en blanco suave */
+  padding: 1rem;
+  background-color: #000000; /* Negro como el fondo del reloj */
+  color: #FFFFFF; /* Texto en blanco */
+  font-family: 'Rajdhani', sans-serif;
 }
-  
+
+.exercise-manager h2 {
+  color: #BBFF00; /* Verde neón */
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-bottom: 1.5rem;
+}
+
 .tabs {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 1rem;
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
-  
+
 .tabs button {
-    padding: 0.5rem 1rem;
-    cursor: pointer;
-    border: none;
-    background-color: #1E1E1E; /* Gris oscuro */
-    border-radius: 4px;
-    color: #F5F5F5; /* Blanco suave */
-    transition: background-color 0.3s ease;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  border: 1px solid #BBFF00; /* Borde verde neón */
+  background-color: transparent;
+  border-radius: 4px;
+  color: #BBFF00; /* Verde neón */
+  transition: all 0.3s ease;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
-  
+
 .tabs button.active {
-    background-color: #145214; /* Verde oscuro */
-    font-weight: bold;
+  background-color: #BBFF00; /* Verde neón */
+  color: #000000; /* Negro */
+  font-weight: bold;
+  box-shadow: 0 0 10px rgba(187, 255, 0, 0.5);
 }
-  
+
 .tabs button:hover {
-    background-color: #28A745; /* Verde más brillante */
+  background-color: rgba(187, 255, 0, 0.2);
+  box-shadow: 0 0 10px rgba(187, 255, 0, 0.5);
 }
 
 /* Biblioteca */
 .library-section {
-    margin-bottom: 2rem;
+  margin-bottom: 2rem;
 }
-  
+
 .filter-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
 }
-  
-.filter-container input {
-    padding: 0.4rem;
-    border: 1px solid #3A3A3A; /* Gris medio */
-    border-radius: 4px;
-    background-color: #1E1E1E; /* Fondo oscuro */
-    color: #F5F5F5; /* Texto en blanco suave */
+
+.filter-container input,
+.filter-container select {
+  padding: 0.4rem;
+  border: 1px solid rgba(187, 255, 0, 0.5);
+  border-radius: 4px;
+  background-color: #121212;
+  color: #FFFFFF;
+  font-family: 'Rajdhani', sans-serif;
 }
-  
+
+.filter-container input:focus,
+.filter-container select:focus {
+  border-color: #BBFF00;
+  outline: none;
+  box-shadow: 0 0 5px rgba(187, 255, 0, 0.3);
+}
+
 .filter-buttons {
-    display: flex;
-    gap: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
 }
-  
+
 .filter-buttons button {
-    padding: 0.4rem 0.8rem;
-    cursor: pointer;
-    background-color: #145214; /* Verde oscuro */
-    color: #F5F5F5; /* Texto en blanco */
-    border: none;
-    border-radius: 4px;
-    transition: background-color 0.3s ease;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  background-color: #BBFF00;
+  color: #000000;
+  border: none;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
 }
-  
+
 .filter-buttons button:hover {
-    background-color: #28A745; /* Verde más brillante */
+  background-color: #CCFF33;
+  box-shadow: 0 0 15px rgba(187, 255, 0, 0.7);
 }
-  
+
 .exercise-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
 }
-  
+
 .exercise-card {
-    border: 1px solid #3A3A3A; /* Gris medio */
-    border-radius: 8px;
-    padding: 0.8rem;
-    text-align: center;
-    background-color: #1E1E1E; /* Fondo oscuro */
-    box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1); /* Sombra sutil */
-    color: #F5F5F5; /* Texto en blanco suave */
+  border: 1px solid rgba(187, 255, 0, 0.3);
+  border-radius: 8px;
+  padding: 0.8rem;
+  text-align: center;
+  background-color: #121212;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+  color: #FFFFFF;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
-  
+
+.exercise-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(187, 255, 0, 0.2);
+}
+
+.exercise-card h3 {
+  color: #BBFF00;
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+.exercise-card p {
+  margin: 0.3rem 0;
+}
+
+.exercise-card strong {
+  color: #33AAFF; /* Azul del reloj */
+}
+
 .exercise-image {
-    max-width: 100%;
-    border-radius: 4px;
+  max-width: 100%;
+  border-radius: 4px;
+  border: 1px solid rgba(187, 255, 0, 0.2);
 }
-  
+
 .edit-button {
-    display: inline-block;
-    margin-top: 0.5rem;
-    padding: 0.4rem 0.8rem;
-    background-color: #145214; /* Verde oscuro */
-    color: white;
-    border: none;
-    border-radius: 4px;
-    text-decoration: none;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  background-color: #BBFF00;
+  color: #000000;
+  border: none;
+  border-radius: 4px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
 }
-  
+
 .edit-button:hover {
-    background-color: #28A745; /* Verde más brillante */
+  background-color: #CCFF33;
+  box-shadow: 0 0 15px rgba(187, 255, 0, 0.7);
 }
 
 /* Importación */
 .import-section {
-    margin-top: 1rem;
+  margin-top: 1rem;
 }
-  
+
 .category-list,
 .file-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
-  
+
 .category-item,
 .file-item {
-    border: 1px solid #3A3A3A; /* Gris medio */
-    padding: 0.5rem;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    background-color: #1E1E1E; /* Fondo oscuro */
-    color: #F5F5F5; /* Texto en blanco suave */
+  border: 1px solid rgba(187, 255, 0, 0.3);
+  padding: 0.5rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background-color: #121212;
+  color: #FFFFFF;
 }
-  
+
+.files-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
 .category-button,
 .import-button,
 .back-button,
-.submit-button {
-    padding: 0.5rem 1rem;
-    cursor: pointer;
-    border: none;
-    border-radius: 4px;
-    background-color: #145214; /* Verde oscuro */
-    color: white;
-    transition: background-color 0.3s ease;
+.submit-button,
+.auto-import-button {
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  border: none;
+  border-radius: 4px;
+  background-color: #BBFF00;
+  color: #000000;
+  transition: all 0.3s ease;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
 }
-  
+
+.back-button {
+  background-color: transparent;
+  border: 1px solid #BBFF00;
+  color: #BBFF00;
+}
+
 .category-button:hover,
 .import-button:hover,
-.back-button:hover,
-.submit-button:hover {
-    background-color: #28A745; /* Verde más brillante */
+.submit-button:hover,
+.auto-import-button:hover {
+  background-color: #CCFF33;
+  box-shadow: 0 0 15px rgba(187, 255, 0, 0.7);
+}
+
+.back-button:hover {
+  background-color: rgba(187, 255, 0, 0.2);
+  box-shadow: 0 0 10px rgba(187, 255, 0, 0.5);
 }
 
 .import-form {
-    border: 1px solid #3A3A3A; /* Gris medio */
-    padding: 1rem;
-    border-radius: 8px;
-    max-width: 400px;
-    background-color: #242424; /* Gris oscuro */
+  border: 1px solid rgba(187, 255, 0, 0.3);
+  padding: 1rem;
+  border-radius: 8px;
+  max-width: 400px;
+  background-color: #121212;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
 }
-  
+
+.import-form h3 {
+  color: #BBFF00;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
 .import-form form div {
-    margin-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
 }
-  
+
 .import-form label {
-    display: block;
-    margin-bottom: 0.2rem;
-    color: #F5F5F5; /* Texto en blanco suave */
+  display: block;
+  margin-bottom: 0.2rem;
+  color: #BBFF00;
+  font-weight: 600;
 }
-  
-.import-form input {
-    width: 100%;
-    padding: 0.3rem;
-    box-sizing: border-box;
-    background-color: #1E1E1E; /* Fondo oscuro */
-    border: 1px solid #3A3A3A; /* Gris medio */
-    color: #F5F5F5; /* Texto en blanco suave */
+
+.import-form input,
+.import-form select {
+  width: 100%;
+  padding: 0.3rem;
+  box-sizing: border-box;
+  background-color: #121212;
+  border: 1px solid rgba(187, 255, 0, 0.5);
+  color: #FFFFFF;
+  font-family: 'Rajdhani', sans-serif;
 }
+
+.import-form input:focus,
+.import-form select:focus {
+  border-color: #BBFF00;
+  outline: none;
+  box-shadow: 0 0 5px rgba(187, 255, 0, 0.3);
+}
+
+/* Mensajes de estado */
+.import-section p[style*="color: green"] {
+  color: #BBFF00 !important;
+  font-weight: 600;
+  padding: 0.5rem;
+  background-color: rgba(187, 255, 0, 0.1);
+  border: 1px solid rgba(187, 255, 0, 0.3);
+  border-radius: 4px;
+}
+
+.import-section p[style*="color: red"],
+.library-section p[style*="color: red"] {
+  color: #FF5533 !important;
+  font-weight: 600;
+  padding: 0.5rem;
+  background-color: rgba(255, 85, 51, 0.1);
+  border: 1px solid rgba(255, 85, 51, 0.3);
+  border-radius: 4px;
     
+}

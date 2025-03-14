@@ -1,8 +1,18 @@
 /* src/pages/Dashboard.css */
 .dashboard {
   padding: 1rem;
-  background-color: #121212; /* Fondo negro profundo */
-  color: #F5F5F5; /* Texto en blanco suave */
+  background-color: #000000; /* Negro como el fondo del reloj */
+  color: #FFFFFF; /* Texto en blanco */
+  font-family: 'Rajdhani', sans-serif;
+}
+
+.dashboard-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #BBFF00; /* Verde neón como en el reloj */
+  margin-bottom: 1.5rem;
 }
 
 .cards-container {
@@ -12,20 +22,114 @@
   margin-bottom: 2rem;
 }
 
-.card {
-  background: #242424; /* Gris oscuro */
+.stat-card {
+  background: #121212; /* Negro más claro */
   padding: 1rem;
   border-radius: 8px;
-  width: 200px;
-  text-align: center;
-  box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1); /* Ajuste de sombra para modo oscuro */
-  color: #F5F5F5; /* Texto en blanco suave */
+  width: 100%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(187, 255, 0, 0.2); /* Borde sutil con verde neón */
+}
+
+.stat-card .card-title {
+  color: #BBFF00; /* Verde neón */
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-card .card-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin: 0.5rem 0;
+}
+
+.stat-card .card-subtitle {
+  color: #33AAFF; /* Azul del reloj */
+  font-weight: 500;
 }
 
 .chart-container {
-  background: #242424; /* Gris oscuro */
+  background: #121212; /* Negro más claro */
   padding: 1rem;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1); /* Ajuste de sombra para modo oscuro */
-  color: #F5F5F5; /* Texto en blanco suave */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+  color: #FFFFFF;
+  border: 1px solid rgba(187, 255, 0, 0.2); /* Borde sutil con verde neón */
+}
+
+.featured-card {
+  background: #121212; /* Negro más claro */
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(187, 255, 0, 0.2); /* Borde sutil con verde neón */
+}
+
+.featured-card .card-header {
+  border-bottom: 1px solid rgba(187, 255, 0, 0.2);
+  padding-bottom: 0.5rem;
+}
+
+.featured-card .card-title {
+  color: #BBFF00; /* Verde neón */
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.featured-card .card-subtitle {
+  color: #FFFFFF;
+  font-weight: 500;
+}
+
+.activity-item {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(187, 255, 0, 0.1);
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.activity-avatar {
+  background-color: #FF5533; /* Rojo/naranja del reloj */
+}
+
+.activity-time {
+  color: #33AAFF; /* Azul del reloj */
+  font-size: 0.85rem;
+}
+
+/* Estilos para los botones */
+.neon-button {
+  background-color: transparent;
+  color: #BBFF00;
+  border: 1px solid #BBFF00;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: all 0.3s ease;
+}
+
+.neon-button:hover {
+  background-color: rgba(187, 255, 0, 0.2);
+  box-shadow: 0 0 10px rgba(187, 255, 0, 0.5);
+}
+
+.neon-button-filled {
+  background-color: #BBFF00;
+  color: #000000;
+  border: none;
+}
+
+.neon-button-filled:hover {
+  background-color: #CCFF33;
+  box-shadow: 0 0 15px rgba(187, 255, 0, 0.7);
 }

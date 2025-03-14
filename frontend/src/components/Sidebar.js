@@ -1,174 +1,147 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Drawer, List, ListItem, ListItemIcon, ListItemText, Divider, Box, IconButton, useMediaQuery } from '@mui/material';
+import React from 'react';
+import { 
+  Drawer, 
+  Box, 
+  List,
+  Divider,
+  Typography,
+  Stack,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Tooltip,
+  IconButton
+} from '@mui/material';
+import { useNavigate, useLocation } from 'react-router-dom';
+import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
-import PeopleIcon from '@mui/icons-material/People';
 import PersonIcon from '@mui/icons-material/Person';
-import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import EventNoteIcon from '@mui/icons-material/EventNote';
+import BarChartIcon from '@mui/icons-material/BarChart';
 import MenuIcon from '@mui/icons-material/Menu';
-import CloseIcon from '@mui/icons-material/Close';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import './Sidebar.css';
 
-function Sidebar() {
-  const [open, setOpen] = useState(false);
-  const isMobile = useMediaQuery('(max-width:768px)');
-  const drawerWidth = 240;
-
-  // Cerrar automáticamente en dispositivos móviles cuando se cambia de ruta
-  const handleNavigation = () => {
-    if (isMobile) {
-      setOpen(false);
+const Sidebar = ({ open, toggleSidebar }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Definir los elementos del menú
+  const menuItems = [
+    { 
+      text: 'Dashboard', 
+      icon: <DashboardIcon />, 
+      path: '/' 
+    },
+    { 
+      text: 'Diseñador de Entrenamientos', 
+      icon: <FitnessCenterIcon />, 
+      path: '/training-plan-designer' 
+    },
+    { 
+      text: 'Perfil de Usuario', 
+      icon: <PersonIcon />, 
+      path: '/profile' 
+    },
+    { 
+      text: 'Biblioteca de Ejercicios', 
+      icon: <MenuBookIcon />, 
+      path: '/exercise-manager' 
+    },
+    { 
+      text: 'Subir Ejercicio', 
+      icon: <CloudUploadIcon />, 
+      path: '/upload-exercise' 
+    },
+    { 
+      text: 'Estadísticas', 
+      icon: <BarChartIcon />, 
+      path: '/statistics' 
     }
-  };
-
-  // Determinar el tipo de drawer según el dispositivo
-  const drawerVariant = isMobile ? "temporary" : "permanent";
-
+  ];
+  
   return (
     <>
-      {/* Botón de menú para móviles */}
-      {isMobile && (
-        <IconButton
-          color="primary"
-          aria-label="open drawer"
-          onClick={() => setOpen(!open)}
-          edge="start"
-          sx={{
-            position: 'fixed',
-            top: '70px',
-            left: '10px',
-            zIndex: 1200,
-            backgroundColor: 'background.paper',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
-            '&:hover': {
-              backgroundColor: 'rgba(25, 118, 210, 0.15)',
-            }
-          }}
-        >
-          <MenuIcon />
-        </IconButton>
-      )}
-
-      <Drawer
-        variant={drawerVariant}
-        open={isMobile ? open : true}
-        onClose={() => setOpen(false)}
+      {/* Botón para mostrar/ocultar sidebar */}
+      <IconButton
+        onClick={toggleSidebar}
+        className="sidebar-toggle-button"
         sx={{
-          width: drawerWidth,
-          flexShrink: 0,
-          '& .MuiDrawer-paper': {
-            width: drawerWidth,
-            boxSizing: 'border-box',
-            backgroundColor: 'background.paper',
-            borderRight: '1px solid rgba(255, 255, 255, 0.12)',
-          },
+          position: 'fixed',
+          left: open ? '240px' : '10px',
+          top: '70px',
+          zIndex: 1200,
+          backgroundColor: '#121212',
+          color: '#BBFF00',
+          border: '1px solid rgba(187, 255, 0, 0.3)',
+          transition: 'left 0.3s ease',
+          '&:hover': {
+            backgroundColor: 'rgba(187, 255, 0, 0.1)',
+            boxShadow: '0 0 10px rgba(187, 255, 0, 0.5)'
+          }
         }}
-        className="sidebar-drawer"
       >
-        <Box sx={{ overflow: 'auto', mt: 8, position: 'relative' }}>
-          {isMobile && (
-            <IconButton
-              onClick={() => setOpen(false)}
-              sx={{
-                position: 'absolute',
-                right: 10,
-                top: -40,
-                color: 'primary.main',
-              }}
+        {open ? <ChevronLeftIcon /> : <MenuIcon />}
+      </IconButton>
+      
+      {/* Cambiado a variant="temporary" para dispositivos móviles y "permanent" para desktop */}
+      <Drawer
+        variant="permanent"
+        open={open}
+        sx={{
+          display: { xs: 'block', sm: 'block' },
+          '& .MuiDrawer-paper': {
+            width: 240,
+            boxSizing: 'border-box',
+            backgroundColor: '#121212',
+            color: '#FFFFFF',
+            borderRight: '1px solid rgba(187, 255, 0, 0.2)',
+            transition: 'transform 0.3s ease',
+            transform: open ? 'translateX(0)' : 'translateX(-100%)'
+          }
+        }}
+      >
+        <Box className="sidebar-logo">
+          <Stack direction="row" spacing={1} alignItems="center">
+            <DirectionsRunIcon className="logo-icon" />
+            <Typography 
+              variant="h6" 
+              className="logo-text"
             >
-              <CloseIcon />
-            </IconButton>
-          )}
-
-          <List>
-            <ListItem button component={Link} to="/" onClick={handleNavigation}>
-              <ListItemIcon>
-                <DashboardIcon color="primary" />
-              </ListItemIcon>
-              <ListItemText 
-                primary="Dashboard" 
-                primaryTypographyProps={{ 
-                  sx: { color: '#F5F5F5', fontWeight: 'medium' } 
-                }} 
-              />
-            </ListItem>
-            <ListItem button component={Link} to="/gimnasios" onClick={handleNavigation}>
-              <ListItemIcon>
-                <FitnessCenterIcon color="primary" />
-              </ListItemIcon>
-              <ListItemText 
-                primary="Gimnasios" 
-                primaryTypographyProps={{ 
-                  sx: { color: '#F5F5F5', fontWeight: 'medium' } 
-                }} 
-              />
-            </ListItem>
-            <ListItem button component={Link} to="/entrenadores" onClick={handleNavigation}>
-              <ListItemIcon>
-                <PeopleIcon color="primary" />
-              </ListItemIcon>
-              <ListItemText 
-                primary="Entrenadores" 
-                primaryTypographyProps={{ 
-                  sx: { color: '#F5F5F5', fontWeight: 'medium' } 
-                }} 
-              />
-            </ListItem>
-            <ListItem button component={Link} to="/trainees" onClick={handleNavigation}>
-              <ListItemIcon>
-                <PersonIcon color="primary" />
-              </ListItemIcon>
-              <ListItemText 
-                primary="Trainees" 
-                primaryTypographyProps={{ 
-                  sx: { color: '#F5F5F5', fontWeight: 'medium' } 
-                }} 
-              />
-            </ListItem>
-          </List>
-          <Divider sx={{ backgroundColor: 'rgba(255, 255, 255, 0.12)' }} />
-          <List>
-            <ListItem button component={Link} to="/library" onClick={handleNavigation}>
-              <ListItemIcon>
-                <LibraryBooksIcon color="secondary" />
-              </ListItemIcon>
-              <ListItemText 
-                primary="Biblioteca de Ejercicios" 
-                primaryTypographyProps={{ 
-                  sx: { color: '#F5F5F5', fontWeight: 'medium' } 
-                }} 
-              />
-            </ListItem>
-            <ListItem button component={Link} to="/upload" onClick={handleNavigation}>
-              <ListItemIcon>
-                <CloudUploadIcon color="secondary" />
-              </ListItemIcon>
-              <ListItemText 
-                primary="Subir Ejercicio" 
-                primaryTypographyProps={{ 
-                  sx: { color: '#F5F5F5', fontWeight: 'medium' } 
-                }} 
-              />
-            </ListItem>
-            <ListItem button component={Link} to="/training-plan" onClick={handleNavigation}>
-              <ListItemIcon>
-                <EventNoteIcon color="secondary" />
-              </ListItemIcon>
-              <ListItemText 
-                primary="Plan de Entrenamiento" 
-                primaryTypographyProps={{ 
-                  sx: { color: '#F5F5F5', fontWeight: 'medium' } 
-                }} 
-              />
-            </ListItem>
-          </List>
+              Imbatibles
+            </Typography>
+          </Stack>
         </Box>
+        <Divider sx={{ backgroundColor: 'rgba(187, 255, 0, 0.2)' }} />
+        <List>
+          {menuItems.map((item) => {
+            const isActive = location.pathname === item.path;
+            
+            return (
+              <ListItem 
+                button 
+                key={item.text}
+                onClick={() => navigate(item.path)}
+                className={isActive ? 'menu-item menu-item-active' : 'menu-item'}
+              >
+                <Tooltip title={item.text} placement="right" arrow>
+                  <ListItemIcon className="menu-icon">
+                    {item.icon}
+                  </ListItemIcon>
+                </Tooltip>
+                <ListItemText 
+                  primary={item.text} 
+                  className="menu-text"
+                />
+              </ListItem>
+            );
+          })}
+        </List>
       </Drawer>
     </>
   );
-}
+};
 
 export default Sidebar;

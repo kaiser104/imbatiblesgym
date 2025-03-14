@@ -116,21 +116,21 @@ const EditExercise = () => {
   };
 
   if (loading) return (
-    <Container sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
-      <Typography>Cargando ejercicio...</Typography>
+    <Container sx={{ mt: 4, display: 'flex', justifyContent: 'center' }} className="edit-exercise">
+      <Typography className="loading-text">Cargando ejercicio...</Typography>
     </Container>
   );
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
-      <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
-        <Typography variant="h4" component="h1" gutterBottom align="center" color="primary">
+    <Container maxWidth="md" sx={{ mt: 4, mb: 4 }} className="edit-exercise-container">
+      <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }} className="edit-form-paper">
+        <Typography variant="h4" component="h1" gutterBottom align="center" className="edit-title">
           Editar Ejercicio
         </Typography>
         
         {exerciseData.fileURL && (
           <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-            <Card sx={{ maxWidth: 300 }}>
+            <Card sx={{ maxWidth: 300 }} className="edit-image-card">
               <CardMedia
                 component="img"
                 image={exerciseData.fileURL}
@@ -164,17 +164,21 @@ const EditExercise = () => {
                 onChange={handleChange}
                 required
                 variant="outlined"
+                className="edit-form-field"
+                InputLabelProps={{ className: "edit-form-field" }}
+                InputProps={{ className: "edit-form-field" }}
               />
             </Grid>
             
             <Grid item xs={12} md={6}>
-              <FormControl fullWidth required>
-                <InputLabel>Músculo principal</InputLabel>
+              <FormControl fullWidth required className="edit-form-field">
+                <InputLabel className="edit-form-field">Músculo principal</InputLabel>
                 <Select
                   name="mainMuscle"
                   value={exerciseData.mainMuscle}
                   onChange={handleChange}
                   label="Músculo principal"
+                  className="edit-form-field"
                 >
                   {muscleOptions.map((muscle) => (
                     <MenuItem key={muscle} value={muscle}>
@@ -186,13 +190,14 @@ const EditExercise = () => {
             </Grid>
             
             <Grid item xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel>Músculo secundario (opcional)</InputLabel>
+              <FormControl fullWidth className="edit-form-field">
+                <InputLabel className="edit-form-field">Músculo secundario (opcional)</InputLabel>
                 <Select
                   name="secondaryMuscle"
                   value={exerciseData.secondaryMuscle}
                   onChange={handleChange}
                   label="Músculo secundario (opcional)"
+                  className="edit-form-field"
                 >
                   <MenuItem value="">Ninguno</MenuItem>
                   {muscleOptions.map((muscle) => (
@@ -205,13 +210,14 @@ const EditExercise = () => {
             </Grid>
             
             <Grid item xs={12} md={6}>
-              <FormControl fullWidth required>
-                <InputLabel>Categoría de movimiento</InputLabel>
+              <FormControl fullWidth required className="edit-form-field">
+                <InputLabel className="edit-form-field">Categoría de movimiento</InputLabel>
                 <Select
                   name="movementCategory"
                   value={exerciseData.movementCategory}
                   onChange={handleChange}
                   label="Categoría de movimiento"
+                  className="edit-form-field"
                 >
                   {movementCategoryOptions.map((category) => (
                     <MenuItem key={category} value={category}>
@@ -223,13 +229,14 @@ const EditExercise = () => {
             </Grid>
             
             <Grid item xs={12} md={6}>
-              <FormControl fullWidth required>
-                <InputLabel>Enfoque</InputLabel>
+              <FormControl fullWidth required className="edit-form-field">
+                <InputLabel className="edit-form-field">Enfoque</InputLabel>
                 <Select
                   name="focus"
                   value={exerciseData.focus}
                   onChange={handleChange}
                   label="Enfoque"
+                  className="edit-form-field"
                 >
                   {focusOptions.map((focus) => (
                     <MenuItem key={focus} value={focus}>
@@ -241,13 +248,14 @@ const EditExercise = () => {
             </Grid>
             
             <Grid item xs={12}>
-              <FormControl fullWidth required>
-                <InputLabel>Equipamiento</InputLabel>
+              <FormControl fullWidth required className="edit-form-field">
+                <InputLabel className="edit-form-field">Equipamiento</InputLabel>
                 <Select
                   name="equipment"
                   value={exerciseData.equipment}
                   onChange={handleChange}
                   label="Equipamiento"
+                  className="edit-form-field"
                 >
                   {equipmentOptions.map((equipment) => (
                     <MenuItem key={equipment} value={equipment}>
@@ -269,6 +277,9 @@ const EditExercise = () => {
                   required
                   variant="outlined"
                   placeholder="Describe el equipamiento utilizado"
+                  className="edit-form-field"
+                  InputLabelProps={{ className: "edit-form-field" }}
+                  InputProps={{ className: "edit-form-field" }}
                 />
               </Grid>
             )}
@@ -277,9 +288,10 @@ const EditExercise = () => {
               <Button 
                 type="submit" 
                 variant="contained" 
-                color="primary" 
                 fullWidth
                 size="large"
+                className="edit-form-button"
+                sx={{ mt: 3 }}
               >
                 Actualizar Ejercicio
               </Button>

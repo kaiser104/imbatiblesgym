@@ -1,78 +1,81 @@
 import React from 'react';
-import { Box, Typography, Container, Link, IconButton, Grid, Divider } from '@mui/material';
-import FacebookIcon from '@mui/icons-material/Facebook';
-import TwitterIcon from '@mui/icons-material/Twitter';
-import InstagramIcon from '@mui/icons-material/Instagram';
-import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
-import './Footer.css'; // Importar el archivo CSS
+import { Box, Container, Grid, Typography, Link, IconButton } from '@mui/material';
+import { FitnessCenter, Facebook, Twitter, Instagram } from '@mui/icons-material';
+import { Link as RouterLink } from 'react-router-dom';
+import './Footer.css';
 
-function Footer() {
+const Footer = () => {
+  const currentYear = new Date().getFullYear();
+
   return (
-    <Box 
-      component="footer" 
-      className="app-footer"
-      sx={{ 
-        borderTop: '1px solid rgba(255, 255, 255, 0.12)',
-      }}
-    >
+    <Box component="footer" className="footer">
       <Container maxWidth="lg">
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={4}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <FitnessCenterIcon color="primary" sx={{ mr: 1, fontSize: 28 }} />
-              <Typography variant="h6" color="primary" fontWeight="bold">
-                Imbatibles Gym
-              </Typography>
+        <Grid container spacing={4}>
+          <Grid item xs={12} sm={4}>
+            <Box className="footer-brand">
+              <FitnessCenter />
+              <Typography variant="h6">Imbatibles Gym</Typography>
             </Box>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Transformando vidas a través del fitness y el entrenamiento personalizado.
+            <Typography variant="body2" color="text.secondary">
+              Tu camino hacia un estilo de vida más saludable y fuerte comienza aquí.
             </Typography>
           </Grid>
           
-          <Grid item xs={12} md={4}>
-            <Typography variant="subtitle1" color="primary" fontWeight="medium" sx={{ mb: 2 }}>
+          <Grid item xs={12} sm={4}>
+            <Typography variant="h6" gutterBottom>
               Enlaces Rápidos
             </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-              <Link href="/training-plan" color="inherit" sx={{ mb: 1 }}>Planes de Entrenamiento</Link>
-              <Link href="/library" color="inherit" sx={{ mb: 1 }}>Biblioteca de Ejercicios</Link>
-              <Link href="/gimnasios" color="inherit" sx={{ mb: 1 }}>Nuestros Gimnasios</Link>
-            </Box>
+            <ul className="footer-links">
+              <li>
+                <Link component={RouterLink} to="/exercises" color="inherit">
+                  Biblioteca de Ejercicios
+                </Link>
+              </li>
+              <li>
+                <Link component={RouterLink} to="/upload" color="inherit">
+                  Sugiere un Ejercicio
+                </Link>
+              </li>
+            </ul>
           </Grid>
           
-          <Grid item xs={12} md={4}>
-            <Typography variant="subtitle1" color="primary" fontWeight="medium" sx={{ mb: 2 }}>
+          <Grid item xs={12} sm={4}>
+            <Typography variant="h6" gutterBottom>
               Síguenos
             </Typography>
-            <Box>
-              <IconButton color="primary" aria-label="facebook" sx={{ mr: 1 }}>
-                <FacebookIcon />
+            <Box className="social-icons">
+              <IconButton color="inherit" aria-label="facebook">
+                <Facebook />
               </IconButton>
-              <IconButton color="primary" aria-label="twitter" sx={{ mr: 1 }}>
-                <TwitterIcon />
+              <IconButton color="inherit" aria-label="twitter">
+                <Twitter />
               </IconButton>
-              <IconButton color="primary" aria-label="instagram">
-                <InstagramIcon />
+              <IconButton color="inherit" aria-label="instagram">
+                <Instagram />
               </IconButton>
             </Box>
           </Grid>
         </Grid>
         
-        <Divider sx={{ my: 3, backgroundColor: 'rgba(255, 255, 255, 0.12)' }} />
-        
-        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'center', sm: 'center' } }}>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: { xs: 2, sm: 0 } }}>
-            © {new Date().getFullYear()} Imbatibles Gym. Todos los derechos reservados.
+        <Box className="footer-bottom">
+          <Typography variant="body2" color="text.secondary">
+            &copy; {currentYear} Imbatibles Gym. Todos los derechos reservados.
           </Typography>
-          <Box sx={{ display: 'flex' }}>
-            <Link href="#" color="inherit" sx={{ mx: 1 }}>Política de Privacidad</Link>
-            <Link href="#" color="inherit" sx={{ mx: 1 }}>Términos de Servicio</Link>
-            <Link href="#" color="inherit" sx={{ mx: 1 }}>Contacto</Link>
+          <Box className="footer-legal">
+            <Link color="inherit" component={RouterLink} to="/privacy">
+              Política de Privacidad
+            </Link>
+            <Link color="inherit" component={RouterLink} to="/terms">
+              Términos de Servicio
+            </Link>
+            <Link color="inherit" component={RouterLink} to="/contact">
+              Contacto
+            </Link>
           </Box>
         </Box>
       </Container>
     </Box>
   );
-}
+};
 
 export default Footer;
