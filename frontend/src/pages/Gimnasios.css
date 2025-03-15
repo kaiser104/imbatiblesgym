@@ -1,0 +1,388 @@
+/* Estilos para la página de Gimnasios */
+
+.gimnasios-container {
+  padding: 20px;
+}
+
+.gimnasios-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.gimnasios-title {
+  color: #BBFF00;
+  font-weight: bold;
+}
+
+.add-gym-button {
+  background-color: #BBFF00 !important;
+  color: #121212 !important;
+}
+
+.add-gym-button:hover {
+  background-color: #CCFF33 !important;
+  box-shadow: 0 0 15px rgba(187, 255, 0, 0.7) !important;
+}
+
+.gimnasios-grid {
+  margin-top: 20px;
+}
+
+.gimnasio-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: #1E1E1E !important;
+  border: 1px solid rgba(187, 255, 0, 0.2) !important;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.gimnasio-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3) !important;
+}
+
+.gimnasio-image {
+  object-fit: cover;
+  border-bottom: 1px solid rgba(187, 255, 0, 0.2);
+}
+
+.gimnasio-content {
+  flex-grow: 1;
+  padding: 16px;
+}
+
+.gimnasio-name {
+  color: #BBFF00;
+  font-weight: bold;
+}
+
+.gimnasio-rating {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.gimnasio-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.gimnasio-servicios {
+  margin-bottom: 16px;
+}
+
+.servicios-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.servicio-chip {
+  background-color: rgba(187, 255, 0, 0.1) !important;
+  border-color: #BBFF00 !important;
+  color: #BBFF00 !important;
+}
+
+.gimnasio-actions {
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid rgba(187, 255, 0, 0.2);
+}
+
+/* Estilos para el diálogo de registro */
+.registro-dialog .MuiPaper-root {
+  background-color: #1E1E1E;
+  border: 1px solid rgba(187, 255, 0, 0.3);
+}
+
+.dialog-title {
+  background-color: #121212;
+  color: #BBFF00;
+  border-bottom: 1px solid rgba(187, 255, 0, 0.3);
+}
+
+.dialog-content {
+  padding: 24px !important;
+}
+
+.registro-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-field .MuiOutlinedInput-root {
+  border-color: rgba(187, 255, 0, 0.3);
+}
+
+.form-field .MuiOutlinedInput-root:hover {
+  border-color: rgba(187, 255, 0, 0.5);
+}
+
+.form-field .MuiOutlinedInput-root.Mui-focused {
+  border-color: #BBFF00;
+}
+
+.form-field .MuiInputLabel-root {
+  color: #BBFF00;
+}
+
+.form-field .MuiInputBase-input {
+  color: #FFFFFF;
+}
+
+.form-field .MuiFormHelperText-root {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.dialog-actions {
+  padding: 16px 24px;
+  background-color: #121212;
+  border-top: 1px solid rgba(187, 255, 0, 0.3);
+}
+
+.dialog-actions button {
+  margin-left: 16px;
+}
+
+.dialog-actions button.MuiButton-contained {
+  background-color: #BBFF00;
+  color: #121212;
+}
+
+.dialog-actions button.MuiButton-contained:hover {
+  background-color: #CCFF33;
+  box-shadow: 0 0 15px rgba(187, 255, 0, 0.7);
+}
+
+/* Estilos para los chips de servicios seleccionados */
+.MuiChip-root {
+  background-color: rgba(187, 255, 0, 0.2);
+  color: #BBFF00;
+  border: 1px solid rgba(187, 255, 0, 0.3);
+}
+
+.MuiChip-deleteIcon {
+  color: rgba(187, 255, 0, 0.7);
+}
+
+.MuiChip-deleteIcon:hover {
+  color: #BBFF00;
+}
+
+/* Estilos para el menú desplegable */
+.MuiMenu-paper {
+  background-color: #1E1E1E;
+  border: 1px solid rgba(187, 255, 0, 0.3);
+}
+
+.MuiMenuItem-root {
+  color: #FFFFFF;
+}
+
+.MuiMenuItem-root:hover {
+  background-color: rgba(187, 255, 0, 0.1);
+}
+
+.MuiMenuItem-root.Mui-selected {
+  background-color: rgba(187, 255, 0, 0.2);
+}
+
+.MuiMenuItem-root.Mui-selected:hover {
+  background-color: rgba(187, 255, 0, 0.3);
+}
+
+/* Estilos responsivos */
+@media (max-width: 600px) {
+  .gimnasios-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .add-gym-button {
+    align-self: flex-end;
+  }
+  
+  .gimnasio-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .gimnasio-actions button {
+    width: 100%;
+  }
+}
+
+/* Estilos para la carga de imágenes */
+.image-upload-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+
+.upload-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: rgba(187, 255, 0, 0.1) !important;
+  color: #BBFF00 !important;
+  border: 1px dashed #BBFF00 !important;
+  padding: 16px !important;
+  transition: all 0.3s ease;
+}
+
+.upload-button:hover {
+  background-color: rgba(187, 255, 0, 0.2) !important;
+  box-shadow: 0 0 10px rgba(187, 255, 0, 0.3);
+}
+
+.image-preview-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.image-preview-item {
+  position: relative;
+  height: 120px;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(187, 255, 0, 0.3);
+}
+
+.image-preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-delete-button {
+  position: absolute !important;
+  top: 4px;
+  right: 4px;
+  background-color: rgba(0, 0, 0, 0.7) !important;
+  color: #BBFF00 !important;
+  padding: 4px !important;
+  min-width: auto !important;
+  width: 24px !important;
+  height: 24px !important;
+}
+
+.image-delete-button:hover {
+  background-color: rgba(0, 0, 0, 0.9) !important;
+}
+
+/* Estilos para Autocomplete de servicios */
+.MuiAutocomplete-root .MuiOutlinedInput-root {
+  border-color: rgba(187, 255, 0, 0.3);
+  color: #FFFFFF;
+}
+
+.MuiAutocomplete-root .MuiOutlinedInput-root:hover {
+  border-color: rgba(187, 255, 0, 0.5);
+}
+
+.MuiAutocomplete-root .MuiOutlinedInput-root.Mui-focused {
+  border-color: #BBFF00;
+}
+
+.MuiAutocomplete-endAdornment .MuiIconButton-root {
+  color: #BBFF00;
+}
+
+.MuiAutocomplete-tag {
+  background-color: rgba(187, 255, 0, 0.2) !important;
+  color: #BBFF00 !important;
+  border: 1px solid rgba(187, 255, 0, 0.3) !important;
+}
+
+.MuiAutocomplete-option {
+  color: #FFFFFF;
+}
+
+.MuiAutocomplete-option:hover {
+  background-color: rgba(187, 255, 0, 0.1) !important;
+}
+
+.MuiAutocomplete-option[aria-selected="true"] {
+  background-color: rgba(187, 255, 0, 0.2) !important;
+}
+
+/* Estilos para alertas */
+.alert-container {
+  margin-bottom: 16px;
+}
+
+.MuiAlert-root {
+  background-color: #1E1E1E !important;
+  border: 1px solid;
+}
+
+.MuiAlert-standardSuccess {
+  border-color: rgba(76, 175, 80, 0.5) !important;
+  color: #4caf50 !important;
+}
+
+.MuiAlert-standardError {
+  border-color: rgba(244, 67, 54, 0.5) !important;
+  color: #f44336 !important;
+}
+
+.MuiAlert-standardWarning {
+  border-color: rgba(255, 152, 0, 0.5) !important;
+  color: #ff9800 !important;
+}
+
+.MuiAlert-standardInfo {
+  border-color: rgba(33, 150, 243, 0.5) !important;
+  color: #2196f3 !important;
+}
+
+.MuiAlert-icon {
+  color: inherit !important;
+}
+
+/* Estilos para el estado de carga */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+}
+
+.loading-text {
+  color: #BBFF00;
+  margin-left: 16px;
+}
+
+/* Estilos para la galería de imágenes */
+.gallery-container {
+  margin-top: 16px;
+}
+
+.gallery-title {
+  color: #BBFF00;
+  margin-bottom: 8px;
+}
+
+.gallery-count {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.875rem;
+  margin-bottom: 16px;
+}

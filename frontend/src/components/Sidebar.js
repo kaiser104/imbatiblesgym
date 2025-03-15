@@ -7,12 +7,13 @@ import {
   Typography,
   Stack,
   ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   Tooltip,
   IconButton
 } from '@mui/material';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
@@ -23,6 +24,9 @@ import BarChartIcon from '@mui/icons-material/BarChart';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import './Sidebar.css';
+import LocationOnIcon from '@mui/icons-material/LocationOn'; // Importar icono para Gimnasios
+import PeopleIcon from '@mui/icons-material/People'; // Import icon for Entrenadores
+import SchoolIcon from '@mui/icons-material/School'; // Importar icono para Trainees
 
 const Sidebar = ({ open, toggleSidebar }) => {
   const navigate = useNavigate();
@@ -56,6 +60,21 @@ const Sidebar = ({ open, toggleSidebar }) => {
       path: '/upload-exercise' 
     },
     { 
+      text: 'Gimnasios', 
+      icon: <LocationOnIcon />, 
+      path: '/gimnasios' 
+    },
+    { 
+      text: 'Entrenadores', 
+      icon: <PeopleIcon />, 
+      path: '/entrenadores' 
+    },
+    { 
+      text: 'Trainees', 
+      icon: <SchoolIcon />, 
+      path: '/trainees' 
+    },
+    { 
       text: 'Estadísticas', 
       icon: <BarChartIcon />, 
       path: '/statistics' 
@@ -71,7 +90,7 @@ const Sidebar = ({ open, toggleSidebar }) => {
         sx={{
           position: 'fixed',
           left: open ? '240px' : '10px',
-          top: '70px',
+          top: '90px', // Cambiado de 70px a 90px para bajar un poco el botón
           zIndex: 1200,
           backgroundColor: '#121212',
           color: '#BBFF00',
@@ -121,20 +140,20 @@ const Sidebar = ({ open, toggleSidebar }) => {
             
             return (
               <ListItem 
-                button 
                 key={item.text}
+                button
                 onClick={() => navigate(item.path)}
-                className={isActive ? 'menu-item menu-item-active' : 'menu-item'}
+                sx={{
+                  color: location.pathname === item.path ? '#BBFF00' : '#FFFFFF',
+                  '&:hover': {
+                    backgroundColor: 'rgba(187, 255, 0, 0.1)',
+                  },
+                }}
               >
-                <Tooltip title={item.text} placement="right" arrow>
-                  <ListItemIcon className="menu-icon">
-                    {item.icon}
-                  </ListItemIcon>
-                </Tooltip>
-                <ListItemText 
-                  primary={item.text} 
-                  className="menu-text"
-                />
+                <ListItemIcon sx={{ color: location.pathname === item.path ? '#BBFF00' : '#FFFFFF' }}>
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText primary={item.text} />
               </ListItem>
             );
           })}

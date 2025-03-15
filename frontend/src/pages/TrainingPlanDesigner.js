@@ -467,11 +467,12 @@ const TrainingPlanDesigner = () => {
 
   // Eliminar el texto "t es" que está causando el error
   return (
-    <Container maxWidth="lg" className="training-plan-container">
+    <Container maxWidth="lg" className="training-plan-container" sx={{ paddingTop: '100px' }}>
       <Box sx={{ py: 4 }}>
         <Typography 
           variant="h4" 
-          component="h1"           gutterBottom 
+          component="h1"           
+          gutterBottom 
           className="training-plan-title"
         >
           Diseñador de Entrenamientos
