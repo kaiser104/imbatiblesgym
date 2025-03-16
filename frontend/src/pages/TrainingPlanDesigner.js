@@ -283,112 +283,124 @@ const TrainingPlanDesigner = () => {
     fetchExercises();
   }, [equipment]); // Recargar cuando cambie el equipamiento
   
-  // Añadir la función generatePlan que falta
+  // Añadir estado para controlar la carga del plan
+  const [generatingPlan, setGeneratingPlan] = useState(false);
+  
+  // Modificar la función generatePlan para mostrar el mensaje de carga
   const generatePlan = async () => {
     setMessage('');
     setError('');
+    setGeneratingPlan(true); // Activar indicador de carga
     
     // Validar que se haya seleccionado al menos un grupo muscular
     if (muscleSelection === 'Personalizado' && customMuscles.length === 0) {
       setError('Por favor selecciona al menos un grupo muscular');
+      setGeneratingPlan(false);
       return;
     }
     
-    // Obtener ejercicios desde Firebase
-    const exercises = await fetchExercises();
-    
-    // Separar ejercicios en multi-articulares y de aislamiento
-    const multiExercises = exercises.filter(ex => 
-      ["Horizontal Push", "Upward Push", "Horizontal Pull", "Upward Pull", "Downward Pull", 
-       "Double Leg Push", "Single Leg Push", "Bent Leg Hip Extension", "Straight Leg Hip Extension"].includes(ex.movementCategory)
-    );
-    
-    const isoExercises = exercises.filter(ex => 
-      ["Auxiliary", "Core Stability", "Mobility", "Explosive", "Cardio"].includes(ex.movementCategory)
-    );
-    
-    // Calcular número de sesiones totales
-    const durationMonths = parseInt(duration, 10);
-    const frequencyPerWeek = parseInt(frequency, 10);
-    const totalSessions = durationMonths * 4 * frequencyPerWeek; // 4 semanas por mes
-    
-    // Determinar cantidad de ejercicios por sesión según objetivo y tiempo
-    const { total, multi, iso } = getExercisesCountByObjectiveTime(fitnessObjective, timeAvailable);
-    
-    // Determinar series y descanso según objetivo
-    const defaultSeries = fitnessObjective === 'strength' ? 5 : (fitnessObjective === 'muscleMass' ? 4 : 3);
-    const restDefault = getRecommendedRest();
-
-    // Determinar el ciclo de selección muscular
-    let muscleCycle = [];
-    if (muscleSelection) {
-      if(muscleSelection === 'Personalizado'){
-        muscleCycle = customMuscles;
-      } else {
-        muscleCycle = muscleSelection.split(',').map(g => g.trim());
-      }
-    }
-
-    let plan = [];
-    for (let s = 1; s <= totalSessions; s++) {
-      // Asignar de forma cíclica la selección muscular
-      const seleccionMuscular = muscleCycle.length > 0 ? muscleCycle[(s - 1) % muscleCycle.length] : "";
-      // Obtener patrones permitidos según la selección muscular
-      const allowedPatterns = movementPatternMapping[seleccionMuscular] || [];
+    try {
+      // Obtener ejercicios desde Firebase
+      const exercises = await fetchExercises();
       
-      let sessionExercises = [];
-      // Generar ejercicios compuestos (multi)
-      for (let m = 0; m < multi; m++) {
-        let filteredMulti = multiExercises;
-        if (allowedPatterns.length > 0) {
-          filteredMulti = multiExercises.filter(ex => allowedPatterns.includes(ex.movementCategory));
-          if(filteredMulti.length === 0) filteredMulti = multiExercises;
+      // Separar ejercicios en multi-articulares y de aislamiento
+      const multiExercises = exercises.filter(ex => 
+        ["Horizontal Push", "Upward Push", "Horizontal Pull", "Upward Pull", "Downward Pull", 
+         "Double Leg Push", "Single Leg Push", "Bent Leg Hip Extension", "Straight Leg Hip Extension"].includes(ex.movementCategory)
+      );
+      
+      const isoExercises = exercises.filter(ex => 
+        ["Auxiliary", "Core Stability", "Mobility", "Explosive", "Cardio"].includes(ex.movementCategory)
+      );
+      
+      // Calcular número de sesiones totales
+      const durationMonths = parseInt(duration, 10);
+      const frequencyPerWeek = parseInt(frequency, 10);
+      const totalSessions = durationMonths * 4 * frequencyPerWeek; // 4 semanas por mes
+      
+      // Determinar cantidad de ejercicios por sesión según objetivo y tiempo
+      const { total, multi, iso } = getExercisesCountByObjectiveTime(fitnessObjective, timeAvailable);
+      
+      // Determinar series y descanso según objetivo
+      const defaultSeries = fitnessObjective === 'strength' ? 5 : (fitnessObjective === 'muscleMass' ? 4 : 3);
+      const restDefault = getRecommendedRest();
+  
+      // Determinar el ciclo de selección muscular
+      let muscleCycle = [];
+      if (muscleSelection) {
+        if(muscleSelection === 'Personalizado'){
+          muscleCycle = customMuscles;
+        } else {
+          muscleCycle = muscleSelection.split(',').map(g => g.trim());
         }
-        const randIndex = Math.floor(Math.random() * filteredMulti.length);
-        sessionExercises.push({
-          isMulti: true,
-          suggestedExercise: filteredMulti[randIndex]
-        });
       }
-      // Generar ejercicios de aislamiento
-      for (let i = 0; i < iso; i++) {
-        let filteredIso = isoExercises;
-        if (allowedPatterns.length > 0) {
-          filteredIso = isoExercises.filter(ex => allowedPatterns.includes(ex.movementCategory));
-          if(filteredIso.length === 0) filteredIso = isoExercises;
+  
+      let plan = [];
+      for (let s = 1; s <= totalSessions; s++) {
+        // Asignar de forma cíclica la selección muscular
+        const seleccionMuscular = muscleCycle.length > 0 ? muscleCycle[(s - 1) % muscleCycle.length] : "";
+        // Obtener patrones permitidos según la selección muscular
+        const allowedPatterns = movementPatternMapping[seleccionMuscular] || [];
+        
+        let sessionExercises = [];
+        // Generar ejercicios compuestos (multi)
+        for (let m = 0; m < multi; m++) {
+          let filteredMulti = multiExercises;
+          if (allowedPatterns.length > 0) {
+            filteredMulti = multiExercises.filter(ex => allowedPatterns.includes(ex.movementCategory));
+            if(filteredMulti.length === 0) filteredMulti = multiExercises;
+          }
+          const randIndex = Math.floor(Math.random() * filteredMulti.length);
+          sessionExercises.push({
+            isMulti: true,
+            suggestedExercise: filteredMulti[randIndex]
+          });
         }
-        const randIndex = Math.floor(Math.random() * filteredIso.length);
-        sessionExercises.push({
-          isMulti: false,
-          suggestedExercise: filteredIso[randIndex]
+        // Generar ejercicios de aislamiento
+        for (let i = 0; i < iso; i++) {
+          let filteredIso = isoExercises;
+          if (allowedPatterns.length > 0) {
+            filteredIso = isoExercises.filter(ex => allowedPatterns.includes(ex.movementCategory));
+            if(filteredIso.length === 0) filteredIso = isoExercises;
+          }
+          const randIndex = Math.floor(Math.random() * filteredIso.length);
+          sessionExercises.push({
+            isMulti: false,
+            suggestedExercise: filteredIso[randIndex]
+          });
+        }
+        // Recortar si se generan más ejercicios de los requeridos
+        if (sessionExercises.length > total) {
+          sessionExercises = sessionExercises.slice(0, total);
+        }
+        sessionExercises.forEach((exObj, idx) => {
+          plan.push({
+            sessionNumber: s,
+            exerciseNumber: idx + 1,
+            preview: exObj.suggestedExercise.previewURL || "",
+            exerciseId: exObj.suggestedExercise.id,
+            enfoque: exObj.isMulti ? "Multi-Generic Exercise" : "Isolation-Generic Exercise",
+            seleccionMuscular: seleccionMuscular,
+            nombreEjercicio: exObj.suggestedExercise.nombre || (exObj.isMulti ? "Multi-Generic Exercise" : "Isolation-Generic Exercise"),
+            // Aquí se asigna el movimiento desde movementCategory
+            patronMovimiento: exObj.suggestedExercise.movementCategory || "",
+            equipmentUsed: exObj.suggestedExercise.equipo || "Sin equipo",
+            series: defaultSeries,
+            rest: restDefault
+          });
         });
       }
-      // Recortar si se generan más ejercicios de los requeridos
-      if (sessionExercises.length > total) {
-        sessionExercises = sessionExercises.slice(0, total);
-      }
-      sessionExercises.forEach((exObj, idx) => {
-        plan.push({
-          sessionNumber: s,
-          exerciseNumber: idx + 1,
-          preview: exObj.suggestedExercise.previewURL || "",
-          exerciseId: exObj.suggestedExercise.id,
-          enfoque: exObj.isMulti ? "Multi-Generic Exercise" : "Isolation-Generic Exercise",
-          seleccionMuscular: seleccionMuscular,
-          nombreEjercicio: exObj.suggestedExercise.nombre || (exObj.isMulti ? "Multi-Generic Exercise" : "Isolation-Generic Exercise"),
-          // Aquí se asigna el movimiento desde movementCategory
-          patronMovimiento: exObj.suggestedExercise.movementCategory || "",
-          equipmentUsed: exObj.suggestedExercise.equipo || "Sin equipo",
-          series: defaultSeries,
-          rest: restDefault
-        });
-      });
+  
+      setTrainingPlan(plan);
+      setMessage("Plan generado exitosamente. Puedes editarlo en la tabla.");
+    } catch (error) {
+      console.error("Error al generar el plan:", error);
+      setError("Ocurrió un error al generar el plan. Por favor intenta de nuevo.");
+    } finally {
+      setGeneratingPlan(false); // Desactivar indicador de carga
     }
-
-    setTrainingPlan(plan);
-    setMessage("Plan generado exitosamente. Puedes editarlo en la tabla.");
   };
-
+  
   // Añadir la función handleSubmit que falta
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -474,6 +486,7 @@ const TrainingPlanDesigner = () => {
           component="h1"           
           gutterBottom 
           className="training-plan-title"
+          sx={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600 }}
         >
           Diseñador de Entrenamientos
         </Typography>
@@ -657,9 +670,17 @@ const TrainingPlanDesigner = () => {
                   <Button 
                     variant="contained" 
                     onClick={generatePlan}
+                    disabled={generatingPlan}
                     className="action-button generate-button"
                   >
-                    Generar Plan
+                    {generatingPlan ? (
+                      <>
+                        <CircularProgress size={24} sx={{ mr: 1 }} color="inherit" />
+                        Generando plan...
+                      </>
+                    ) : (
+                      "Generar Plan"
+                    )}
                   </Button>
                   <Button 
                     variant="contained" 
@@ -686,22 +707,126 @@ const TrainingPlanDesigner = () => {
         {/* Tabla de resultados */}
         {trainingPlan.length > 0 && (
           <Paper elevation={3} className="results-table-container">
-            <Typography variant="h5" gutterBottom className="results-table-title">
+            <Typography 
+              variant="h5" 
+              gutterBottom 
+              className="results-table-title"
+              sx={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600, p: 2 }}
+            >
               Plan de Entrenamiento Generado
             </Typography>
             <TableContainer>
-              <Table size="small">
+              <Table size="small" sx={{ minWidth: 1200 }}>
                 <TableHead>
                   <TableRow>
-                    <TableCell className="table-header-cell">Sesión</TableCell>
-                    <TableCell className="table-header-cell">Ejercicio #</TableCell>
-                    <TableCell className="table-header-cell">Grupo Muscular</TableCell>
-                    <TableCell className="table-header-cell">Nombre Ejercicio</TableCell>
-                    <TableCell className="table-header-cell">Patrón Movimiento</TableCell>
-                    <TableCell className="table-header-cell">Enfoque</TableCell>
-                    <TableCell className="table-header-cell">Series</TableCell>
-                    <TableCell className="table-header-cell">Descanso (seg)</TableCell>
-                    <TableCell className="table-header-cell">Equipamiento</TableCell>
+                    <TableCell 
+                      className="table-header-cell" 
+                      sx={{ 
+                        backgroundColor: '#333', 
+                        color: '#BBFF00',
+                        fontWeight: 'bold',
+                        fontFamily: "'Montserrat', sans-serif",
+                        width: '5%'
+                      }}
+                    >
+                      Sesión
+                    </TableCell>
+                    <TableCell 
+                      className="table-header-cell"
+                      sx={{ 
+                        backgroundColor: '#333', 
+                        color: '#BBFF00',
+                        fontWeight: 'bold',
+                        fontFamily: "'Montserrat', sans-serif",
+                        width: '5%'
+                      }}
+                    >
+                      Ejercicio #
+                    </TableCell>
+                    <TableCell 
+                      className="table-header-cell"
+                      sx={{ 
+                        backgroundColor: '#333', 
+                        color: '#BBFF00',
+                        fontWeight: 'bold',
+                        fontFamily: "'Montserrat', sans-serif",
+                        width: '10%'
+                      }}
+                    >
+                      Grupo Muscular
+                    </TableCell>
+                    <TableCell 
+                      className="table-header-cell"
+                      sx={{ 
+                        backgroundColor: '#333', 
+                        color: '#BBFF00',
+                        fontWeight: 'bold',
+                        fontFamily: "'Montserrat', sans-serif",
+                        width: '25%'
+                      }}
+                    >
+                      Nombre Ejercicio
+                    </TableCell>
+                    <TableCell 
+                      className="table-header-cell"
+                      sx={{ 
+                        backgroundColor: '#333', 
+                        color: '#BBFF00',
+                        fontWeight: 'bold',
+                        fontFamily: "'Montserrat', sans-serif",
+                        width: '15%'
+                      }}
+                    >
+                      Patrón Movimiento
+                    </TableCell>
+                    <TableCell 
+                      className="table-header-cell"
+                      sx={{ 
+                        backgroundColor: '#333', 
+                        color: '#BBFF00',
+                        fontWeight: 'bold',
+                        fontFamily: "'Montserrat', sans-serif",
+                        width: '15%'
+                      }}
+                    >
+                      Enfoque
+                    </TableCell>
+                    <TableCell 
+                      className="table-header-cell"
+                      sx={{ 
+                        backgroundColor: '#333', 
+                        color: '#BBFF00',
+                        fontWeight: 'bold',
+                        fontFamily: "'Montserrat', sans-serif",
+                        width: '5%'
+                      }}
+                    >
+                      Series
+                    </TableCell>
+                    <TableCell 
+                      className="table-header-cell"
+                      sx={{ 
+                        backgroundColor: '#333', 
+                        color: '#BBFF00',
+                        fontWeight: 'bold',
+                        fontFamily: "'Montserrat', sans-serif",
+                        width: '10%'
+                      }}
+                    >
+                      Descanso (seg)
+                    </TableCell>
+                    <TableCell 
+                      className="table-header-cell"
+                      sx={{ 
+                        backgroundColor: '#333', 
+                        color: '#BBFF00',
+                        fontWeight: 'bold',
+                        fontFamily: "'Montserrat', sans-serif",
+                        width: '10%'
+                      }}
+                    >
+                      Equipamiento
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -716,8 +841,16 @@ const TrainingPlanDesigner = () => {
                     <TableRow 
                       key={index} 
                       hover
-                      className={`${isEvenSession ? 'even-session-row' : 'odd-session-row'} ${isFirstOfSession ? 'session-start-row' : ''}`}
+                      sx={{ 
+                        backgroundColor: isEvenSession ? '#1a1a1a' : '#2a2a2a',
+                        '&:hover': {
+                          backgroundColor: isEvenSession ? '#222222' : '#333333',
+                        }
+                      }}
+                      className={`${isFirstOfSession ? 'session-start-row' : ''}`}
                     >
+                      {/* Resto de las celdas de la tabla */}
+                      
                       <TableCell>{exercise.sessionNumber}</TableCell>
                       <TableCell>{exercise.exerciseNumber}</TableCell>
                       <TableCell>

@@ -297,3 +297,63 @@
   color: #FFFFFF !important;
   border-bottom-color: rgba(187, 255, 0, 0.1) !important;
 }
+
+
+/* Mejorar la visualización de la tabla */
+.results-table-container {
+  margin-top: 20px;
+  overflow-x: auto;
+  background-color: #121212;
+  border-radius: 8px;
+}
+
+.table-header-cell {
+  font-weight: bold !important;
+  white-space: nowrap;
+}
+
+/* Estilos para filas alternadas por sesión */
+.even-session-row {
+  background-color: #1a1a1a !important;
+}
+
+.odd-session-row {
+  background-color: #2a2a2a !important;
+}
+
+.session-start-row {
+  border-top: 2px solid #BBFF00 !important;
+}
+
+/* Estilos para el método de entrenamiento */
+.method-select {
+  min-width: 120px;
+}
+
+/* Estilos para mejorar la responsividad */
+@media (max-width: 1200px) {
+  .results-table-container {
+    max-width: 100%;
+    overflow-x: scroll;
+  }
+}
+
+/* Asegurar que los textos en la tabla sean legibles */
+.MuiTableCell-root {
+  color: #FFFFFF !important;
+  border-bottom-color: rgba(187, 255, 0, 0.1) !important;
+}
+
+/* Estilo para los selects dentro de la tabla */
+.MuiTableCell-root .MuiSelect-select {
+  padding: 8px !important;
+}
+
+/* Mejorar la visualización de las miniaturas de ejercicios */
+.exercise-thumbnail {
+  width: 30px;
+  height: 30px;
+  margin-right: 8px;
+  object-fit: cover;
+  border-radius: 4px;
+}
