@@ -183,6 +183,38 @@ function Entrenadores() {
   };
 
   // Manejar el envío del formulario
+  // Añadir un estado para almacenar la información del gimnasio actual
+  const [gimnasioInfo, setGimnasioInfo] = useState(null);
+  
+  // Obtener información del gimnasio al cargar el componente
+  useEffect(() => {
+    const fetchGimnasioInfo = async () => {
+      if (!currentUser) return;
+      
+      try {
+        // Buscar si el usuario actual es administrador de un gimnasio
+        const gimnasiosRef = collection(db, 'gimnasios');
+        const q = query(gimnasiosRef, where('adminUid', '==', currentUser.uid));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+          // El usuario es administrador de un gimnasio
+          const gimnasioData = querySnapshot.docs[0].data();
+          setGimnasioInfo({
+            id: querySnapshot.docs[0].id,
+            nombre: gimnasioData.nombre,
+            direccion: gimnasioData.direccion
+          });
+        }
+      } catch (error) {
+        console.error('Error al obtener información del gimnasio:', error);
+      }
+    };
+    
+    fetchGimnasioInfo();
+  }, [currentUser]);
+
+  // Modificar la función handleSubmit para incluir la información del gimnasio
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -220,6 +252,21 @@ function Entrenadores() {
         .map(cert => cert.trim())
         .filter(cert => cert !== '');
       
+      // Crear objeto registradoPor con información detallada
+      const registradoPor = {
+        uid: currentUser.uid,
+        email: currentUser.email,
+        fecha: serverTimestamp()
+      };
+      
+      // Añadir información del gimnasio si está disponible
+      if (gimnasioInfo) {
+        registradoPor.tipoUsuario = 'gimnasio';
+        registradoPor.gimnasioId = gimnasioInfo.id;
+        registradoPor.gimnasioNombre = gimnasioInfo.nombre;
+        registradoPor.gimnasioUbicacion = gimnasioInfo.direccion;
+      }
+      
       const docRef = await addDoc(collection(db, 'entrenadores'), {
         uid,
         nombre: formData.nombre,
@@ -233,12 +280,9 @@ function Entrenadores() {
         instagram: formData.instagram,
         rating: 0,
         role: 'entrenador',
-        registradoPor: {
-          uid: currentUser.uid,
-          email: currentUser.email,
-          fecha: serverTimestamp()
-        },
-        fechaCreacion: serverTimestamp()
+        registradoPor: registradoPor,
+        fechaCreacion: serverTimestamp(),
+        gimnasioId: gimnasioInfo ? gimnasioInfo.id : null // Asociar directamente con el gimnasio
       });
       
       // Agregar el nuevo entrenador a la lista local

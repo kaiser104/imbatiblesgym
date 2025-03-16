@@ -59,7 +59,16 @@ const VisuallyHiddenInput = styled('input')({
   width: 1,
 });
 
+// Importar useAuth para obtener el usuario actual
+import { useAuth } from '../contexts/AuthContext';
+
 function Gimnasios() {
+  // Obtener el usuario actual
+  const { currentUser } = useAuth();
+  
+  // Estado para controlar si el usuario es super-administrador
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  
   // Estado para controlar el diálogo de registro
   const [openDialog, setOpenDialog] = useState(false);
   
@@ -91,6 +100,30 @@ function Gimnasios() {
     "Pesas", "Cardio", "Clases grupales", "Sauna", "Piscina",
     "Spa", "Entrenamiento personal", "Nutrición", "Yoga", "Pilates"
   ];
+  
+  // Verificar si el usuario es super-administrador
+  useEffect(() => {
+    const checkUserRole = async () => {
+      try {
+        if (!currentUser) return;
+        
+        const querySnapshot = await getDocs(
+          query(collection(db, "usuarios"), where("uid", "==", currentUser.uid))
+        );
+        
+        if (!querySnapshot.empty) {
+          const userData = querySnapshot.docs[0].data();
+          if (userData.rol === "super-administrador") {
+            setIsSuperAdmin(true);
+          }
+        }
+      } catch (error) {
+        console.error("Error al verificar rol de usuario:", error);
+      }
+    };
+    
+    checkUserRole();
+  }, [currentUser]);
   
   // Cargar gimnasios desde Firestore
   useEffect(() => {

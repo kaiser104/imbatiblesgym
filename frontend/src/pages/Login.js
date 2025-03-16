@@ -1,184 +1,217 @@
 import React, { useState } from 'react';
 import { 
+  Container, 
   Box, 
-  Paper, 
   Typography, 
   TextField, 
   Button, 
+  Paper, 
+  Grid,
+  Link,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   Alert,
-  Container,
-  Stack
+  CircularProgress
 } from '@mui/material';
-import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
+import { useAuth } from '../contexts/AuthContext';
+import { getAuth, sendPasswordResetEmail } from 'firebase/auth';
+// Remove the CSS import that's causing the error
+// import './Login.css';
 
 const Login = () => {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+  const auth = getAuth();
+  
+  // Estado para el formulario de login
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
-  const navigate = useNavigate();
-
-  // Make sure the login form is properly handling authentication
-  const handleLogin = async (e) => {
+  
+  // Estado para el modal de restablecimiento de contraseña
+  const [openResetModal, setOpenResetModal] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetError, setResetError] = useState(null);
+  const [resetSuccess, setResetSuccess] = useState(false);
+  
+  // Manejar envío del formulario de login
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setLoading(true);
     
     try {
-      setError('');
-      setLoading(true);
       await login(email, password);
-      navigate('/');
+      navigate('/dashboard');
     } catch (error) {
+      console.error("Error al iniciar sesión:", error);
       setError('Error al iniciar sesión: ' + error.message);
     } finally {
       setLoading(false);
     }
-  }
-
+  };
+  
+  // Función para manejar el restablecimiento de contraseña
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setResetLoading(true);
+    setResetError(null);
+    setResetSuccess(false);
+    
+    try {
+      await sendPasswordResetEmail(auth, resetEmail);
+      setResetSuccess(true);
+      // Opcional: cerrar el modal después de un tiempo
+      setTimeout(() => {
+        setOpenResetModal(false);
+        setResetEmail('');
+        setResetSuccess(false);
+      }, 3000);
+    } catch (error) {
+      console.error("Error al enviar correo de restablecimiento:", error);
+      setResetError(error.message);
+    } finally {
+      setResetLoading(false);
+    }
+  };
+  
   return (
-    <Container 
-      maxWidth="100%" 
-      sx={{ 
-        minHeight: '100vh', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center',
-        backgroundColor: '#000000',
-        padding: 3
-      }}
-    >
-      <Paper 
-        elevation={3} 
-        sx={{ 
-          padding: 4, 
-          maxWidth: 400, 
-          width: '100%',
-          backgroundColor: '#121212',
-          borderRadius: 2,
-          border: '1px solid rgba(187, 255, 0, 0.2)'
-        }}
-      >
-        <Stack spacing={3} alignItems="center">
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <DirectionsRunIcon sx={{ color: '#BBFF00', fontSize: 40, mr: 1 }} />
-            <Typography 
-              variant="h4" 
-              component="h1" 
-              sx={{ 
-                fontWeight: 'bold', 
-                color: '#BBFF00',
-                textTransform: 'uppercase'
-              }}
-            >
-              Imbatibles
-            </Typography>
-          </Box>
-          
-          <Typography 
-            variant="h5" 
-            component="h2" 
-            sx={{ 
-              color: '#FFFFFF',
-              textAlign: 'center',
-              mb: 2
-            }}
-          >
+    <Container component="main" maxWidth="xs" className="login-container">
+      <Paper elevation={3} className="login-paper">
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            p: 4
+          }}
+        >
+          <Typography component="h1" variant="h5" className="login-title">
             Iniciar Sesión
           </Typography>
           
-          {error && <Alert severity="error" sx={{ width: '100%' }}>{error}</Alert>}
+          {error && (
+            <Alert severity="error" sx={{ width: '100%', mt: 2 }}>
+              {error}
+            </Alert>
+          )}
           
-          <Box component="form" onSubmit={handleLogin} sx={{ width: '100%' }}>
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              id="email"
-              label="Correo Electrónico"
-              name="email"
-              autoComplete="email"
-              autoFocus
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '& fieldset': {
-                    borderColor: 'rgba(187, 255, 0, 0.3)',
-                  },
-                  '&:hover fieldset': {
-                    borderColor: 'rgba(187, 255, 0, 0.5)',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#BBFF00',
-                  },
-                },
-                '& .MuiInputLabel-root': {
-                  color: '#BBFF00',
-                },
-                '& .MuiInputBase-input': {
-                  color: '#FFFFFF',
-                },
-              }}
-            />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="password"
-              label="Contraseña"
-              type="password"
-              id="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '& fieldset': {
-                    borderColor: 'rgba(187, 255, 0, 0.3)',
-                  },
-                  '&:hover fieldset': {
-                    borderColor: 'rgba(187, 255, 0, 0.5)',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#BBFF00',
-                  },
-                },
-                '& .MuiInputLabel-root': {
-                  color: '#BBFF00',
-                },
-                '& .MuiInputBase-input': {
-                  color: '#FFFFFF',
-                },
-              }}
-            />
+          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3, width: '100%' }}>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <TextField
+                  required
+                  fullWidth
+                  label="Correo Electrónico"
+                  name="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  required
+                  fullWidth
+                  name="password"
+                  label="Contraseña"
+                  type="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </Grid>
+            </Grid>
+            
             <Button
               type="submit"
               fullWidth
               variant="contained"
+              color="primary"
+              sx={{ mt: 3, mb: 2 }}
               disabled={loading}
-              sx={{
-                mt: 3,
-                mb: 2,
-                backgroundColor: '#BBFF00',
-                color: '#000000',
-                fontWeight: 'bold',
-                '&:hover': {
-                  backgroundColor: '#CCFF33',
-                  boxShadow: '0 0 15px rgba(187, 255, 0, 0.7)'
-                },
-                '&:disabled': {
-                  backgroundColor: '#333333',
-                  color: '#666666'
-                }
-              }}
             >
-              {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+              {loading ? (
+                <>
+                  <CircularProgress size={24} sx={{ mr: 1 }} />
+                  Iniciando sesión...
+                </>
+              ) : (
+                "Iniciar Sesión"
+              )}
             </Button>
+            
+            {/* Enlace para restablecer contraseña */}
+            <Box sx={{ textAlign: 'center', mt: 1 }}>
+              <Button 
+                variant="text" 
+                color="primary"
+                size="small"
+                onClick={(e) => {
+                  e.preventDefault(); // Prevenir comportamiento por defecto
+                  setOpenResetModal(true);
+                }}
+              >
+                ¿Olvidaste tu contraseña?
+              </Button>
+            </Box>
           </Box>
-        </Stack>
+        </Box>
       </Paper>
+      
+      {/* Modal para restablecer contraseña */}
+      <Dialog open={openResetModal} onClose={() => setOpenResetModal(false)}>
+        <DialogTitle>Restablecer contraseña</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.
+          </Typography>
+          <TextField
+            fullWidth
+            label="Correo electrónico"
+            type="email"
+            value={resetEmail}
+            onChange={(e) => setResetEmail(e.target.value)}
+            margin="normal"
+            required
+          />
+          {resetError && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {resetError}
+            </Alert>
+          )}
+          {resetSuccess && (
+            <Alert severity="success" sx={{ mt: 2 }}>
+              Se ha enviado un correo de restablecimiento a {resetEmail}
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenResetModal(false)}>
+            Cancelar
+          </Button>
+          <Button 
+            onClick={handleResetPassword} 
+            variant="contained" 
+            color="primary"
+            disabled={resetLoading || !resetEmail}
+          >
+            {resetLoading ? (
+              <>
+                <CircularProgress size={24} sx={{ mr: 1 }} />
+                Enviando...
+              </>
+            ) : (
+              "Enviar correo"
+            )}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

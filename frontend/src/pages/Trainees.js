@@ -34,7 +34,7 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../firebase';
-import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
+import { getAuth, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { collection, addDoc, getDocs, query, where, serverTimestamp } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import './Trainees.css';
@@ -297,6 +297,8 @@ const Trainees = () => {
         return;
       }
 
+      console.log("Creando usuario con:", formData.correo, formData.password);
+      
       // Create user account
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -304,54 +306,133 @@ const Trainees = () => {
         formData.password
       );
 
-      let photoURL = formData.foto;
+      console.log("Usuario creado:", userCredential.user.uid);
+      
+      let photoURL = formData.foto || '';
 
       // Upload photo if selected
       if (selectedFile) {
-        const storageRef = ref(storage, `trainees/${userCredential.user.uid}`);
-        await uploadBytes(storageRef, selectedFile);
-        photoURL = await getDownloadURL(storageRef);
+        try {
+          const storageRef = ref(storage, `trainees/${userCredential.user.uid}`);
+          await uploadBytes(storageRef, selectedFile);
+          photoURL = await getDownloadURL(storageRef);
+          console.log("Foto subida:", photoURL);
+        } catch (uploadError) {
+          console.error("Error al subir la foto:", uploadError);
+          // Continuamos con el proceso aunque falle la subida de la foto
+        }
       }
 
-      // Prepare trainee data
+      // Prepare trainee data - asegurándonos de que todos los campos sean válidos
       const traineeData = {
-        ...formData,
+        nombre: formData.nombre || '',
+        correo: formData.correo || '',
+        whatsapp: formData.whatsapp || '',
+        // Usamos null en lugar de undefined para fechaNacimiento
+        fechaNacimiento: null,
+        genero: formData.genero || '',
+        altura: formData.altura || '',
+        peso: formData.peso || '',
+        experiencia: formData.experiencia || '',
         foto: photoURL,
         uid: userCredential.user.uid,
         createdAt: serverTimestamp(),
-        role: 'trainee'
+        role: 'trainee',
+        // Añadir información de quién registró al trainee
+        registradoPor: {
+          uid: currentUser.uid,
+          email: currentUser.email,
+          tipo: userType,
+          fecha: serverTimestamp()
+        }
       };
 
+      console.log("Tipo de usuario:", userType);
+      
       // Add associations based on user type
       if (userType === 'gimnasio') {
         traineeData.gimnasioId = selectedGimnasio;
-      } else if (userType === 'entrenador') {
-        traineeData.entrenadorId = selectedEntrenador;
-      } else if (userType === 'admin') {
-        if (!selectedGimnasio && !selectedEntrenador) {
-          throw new Error('Debe seleccionar un gimnasio o entrenador');
+        
+        // Obtener el nombre del gimnasio para incluirlo en el registro
+        const gimnasioDoc = gimnasios.find(g => g.id === selectedGimnasio);
+        if (gimnasioDoc) {
+          traineeData.registradoPor.nombreGimnasio = gimnasioDoc.nombre;
         }
-        if (selectedGimnasio) traineeData.gimnasioId = selectedGimnasio;
-        if (selectedEntrenador) traineeData.entrenadorId = selectedEntrenador;
+      } else if (userType === 'entrenador') {
+        // Usar el ID del entrenador actual
+        if (entrenadores && entrenadores.length > 0) {
+          const entrenadorDoc = entrenadores[0]; // El primer entrenador en la lista (debería ser el actual)
+          if (entrenadorDoc) {
+            traineeData.entrenadorId = entrenadorDoc.id;
+            traineeData.registradoPor.nombreEntrenador = entrenadorDoc.nombre;
+            console.log("Asociando trainee con entrenador:", entrenadorDoc.id, entrenadorDoc.nombre);
+          } else {
+            console.error("No se encontró información del entrenador actual");
+          }
+        } else {
+          console.error("No hay entrenadores disponibles");
+        }
+      } else if (userType === 'admin') {
+        if (selectedGimnasio) {
+          traineeData.gimnasioId = selectedGimnasio;
+          // Obtener el nombre del gimnasio
+          const gimnasioDoc = gimnasios.find(g => g.id === selectedGimnasio);
+          if (gimnasioDoc) {
+            traineeData.registradoPor.nombreGimnasio = gimnasioDoc.nombre;
+          }
+        }
+        if (selectedEntrenador) {
+          traineeData.entrenadorId = selectedEntrenador;
+          // Obtener el nombre del entrenador
+          const entrenadorDoc = entrenadores.find(e => e.id === selectedEntrenador);
+          if (entrenadorDoc) {
+            traineeData.registradoPor.nombreEntrenador = entrenadorDoc.nombre;
+          }
+        }
       }
 
-      // Save trainee to Firestore
-      await addDoc(collection(db, 'trainees'), traineeData);
-
-      // Close modal and refresh list
-      handleCloseModal();
+      console.log("Guardando trainee en Firestore:", traineeData);
       
-      // Reload trainees list
-      const traineesQuery = query(collection(db, 'trainees'));
-      const traineesSnapshot = await getDocs(traineesQuery);
-      setTrainees(traineesSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })));
+      try {
+        // Save trainee to Firestore
+        const docRef = await addDoc(collection(db, 'trainees'), traineeData);
+        console.log("Trainee guardado con ID:", docRef.id);
+  
+        // Close modal and refresh list
+        handleCloseModal();
+        
+        // Reload trainees list
+        if (userType === 'entrenador' && entrenadores && entrenadores.length > 0) {
+          const entrenadorDoc = entrenadores[0];
+          if (entrenadorDoc) {
+            const traineesQuery = query(
+              collection(db, 'trainees'),
+              where('entrenadorId', '==', entrenadorDoc.id)
+            );
+            const traineesSnapshot = await getDocs(traineesQuery);
+            setTrainees(traineesSnapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            })));
+          }
+        } else {
+          // Código existente para recargar trainees
+          const traineesQuery = query(collection(db, 'trainees'));
+          const traineesSnapshot = await getDocs(traineesQuery);
+          setTrainees(traineesSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          })));
+        }
+      } catch (firestoreError) {
+        console.error("Error al guardar en Firestore:", firestoreError);
+        throw firestoreError;
+      }
 
     } catch (error) {
       console.error("Error al registrar trainee:", error);
       setError("Error al registrar trainee: " + error.message);
+      alert("Error al registrar trainee: " + error.message);
     } finally {
       setRegistrando(false);
     }
@@ -513,6 +594,41 @@ const Trainees = () => {
                   onChange={handleChange}
                   error={!!errors.whatsapp}
                   helperText={errors.whatsapp}
+                />
+              </Grid>
+              
+              {/* Añadir campo de género */}
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth required error={!!errors.genero}>
+                  <InputLabel>Género</InputLabel>
+                  <Select
+                    name="genero"
+                    value={formData.genero}
+                    onChange={handleChange}
+                  >
+                    <MenuItem value="Masculino">Masculino</MenuItem>
+                    <MenuItem value="Femenino">Femenino</MenuItem>
+                    <MenuItem value="Otro">Otro</MenuItem>
+                  </Select>
+                  {errors.genero && <FormHelperText>{errors.genero}</FormHelperText>}
+                </FormControl>
+              </Grid>
+              
+              {/* Añadir campo de fecha de nacimiento */}
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  required
+                  fullWidth
+                  label="Fecha de Nacimiento"
+                  name="fechaNacimiento"
+                  type="date"
+                  value={formData.fechaNacimiento || ''}
+                  onChange={handleChange}
+                  error={!!errors.fechaNacimiento}
+                  helperText={errors.fechaNacimiento || 'Formato: DD/MM/AAAA'}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
                 />
               </Grid>
               

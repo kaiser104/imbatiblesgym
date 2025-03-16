@@ -1,0 +1,21 @@
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.login-paper {
+  width: 100%;
+  max-width: 400px;
+}
+
+.login-title {
+  margin-bottom: 16px;
+}
+
+/* Añadir estilos para el modal de recuperación de contraseña */
+.MuiDialog-paper {
+  min-width: 300px;
+}
