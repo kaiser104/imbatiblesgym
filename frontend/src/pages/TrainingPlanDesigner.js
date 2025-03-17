@@ -1,8 +1,8 @@
 // frontend/src/pages/TrainingPlanDesigner.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { collection, addDoc, getDocs } from 'firebase/firestore';
-import { db } from '../firebase';
-import './TrainingPlanDesigner.css'; // Importar el archivo CSS
+import { db, auth } from '../firebase';
+import './TrainingPlanDesigner.css';
 import { 
   Typography, 
   Paper, 
@@ -49,6 +49,20 @@ const enfoqueOptions = [
   "Isolation-Generic Exercise"
 ];
 
+const methodOptions = [
+  "Standard",
+  "Drop Sets",
+  "Rest-Pause",
+  "Supersets",
+  "Cluster Sets",
+  "AMRAP",
+  "EMOM",
+  "Circuit Training",
+  "Tabata",
+  "Complex Training",
+  "Contrast Loading"
+];
+
 const equipmentOptions = [
   'Trineo', 'Suspensión', 'Rodillo de espuma', 'Polea', 'Peso Corporal',
   'Fit ball', 'Mancuernas', 'Landmine', 'Kettlebell', 'Disco',
@@ -91,43 +105,6 @@ const allMovementPatterns = [
   "Horizontal Pull"
 ];
 
-// DELETE THE DUPLICATE IMPORT BLOCK BELOW
-// Primero, importa los componentes necesarios en la parte superior del archivo
-// import { 
-//   Typography, 
-//   Paper, 
-//   Grid, 
-//   Radio, 
-//   RadioGroup, 
-//   FormControlLabel, 
-//   FormControl, 
-//   FormLabel, 
-//   Select, 
-//   MenuItem, 
-//   Checkbox, 
-//   Button, 
-//   Box, 
-//   Alert, 
-//   Table, 
-//   TableBody, 
-//   TableCell, 
-//   TableContainer, 
-//   TableHead, 
-//   TableRow,
-//   CircularProgress,
-//   Divider,
-//   FormGroup,
-//   Container,
-//   Popover,
-//   Card,
-//   CardContent,
-//   CardMedia,
-//   IconButton,
-//   Tooltip
-// } from '@mui/material';
-// import InfoIcon from '@mui/icons-material/Info';
-
-// Add the Popover state variables and handlers
 const TrainingPlanDesigner = () => {
   // Estados de selección
   const [fitnessObjective, setFitnessObjective] = useState('muscleMass'); // muscleMass, conditioning, strength
@@ -141,11 +118,13 @@ const TrainingPlanDesigner = () => {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   
-  // Add Popover state variables
+  // Estado para almacenar todos los ejercicios disponibles por patrón
+  const [allAvailableExercises, setAllAvailableExercises] = useState({});
+  
+  // Popover state variables y handlers
   const [anchorEl, setAnchorEl] = useState(null);
   const [popoverExercise, setPopoverExercise] = useState(null);
   
-  // Add Popover handler functions
   const handlePopoverOpen = (event, exercise) => {
     setAnchorEl(event.currentTarget);
     setPopoverExercise(exercise);
@@ -224,12 +203,7 @@ const TrainingPlanDesigner = () => {
     return 60;
   };
 
-  // Función para obtener ejercicios desde Firebase (se espera que en cada documento existan:
-  // nombre, movementCategory, equipo (o sus variantes) y fileURL)
-  // Añadir un nuevo estado para almacenar todos los ejercicios disponibles
-  const [allAvailableExercises, setAllAvailableExercises] = useState({});
-  
-  // Modificar fetchExercises para guardar los ejercicios por patrón de movimiento
+  // Función para obtener ejercicios desde Firebase (se espera que en cada documento existan: nombre, movementCategory, equipo y fileURL)
   const fetchExercises = async () => {
     try {
       const snapshot = await getDocs(collection(db, "exercises"));
@@ -247,11 +221,9 @@ const TrainingPlanDesigner = () => {
       // Filtrar según equipamiento disponible
       const filtered = allExercises.filter(ex => {
         if(equipment.length === 0) return true;
-        // Si el campo 'equipo' es una cadena, comprobamos que incluya alguno de los equipamientos
         if (typeof ex.equipo === 'string') {
           return equipment.some(eq => ex.equipo.includes(eq));
         }
-        // Si es un array
         if (Array.isArray(ex.equipo)) {
           return equipment.some(eq => ex.equipo.includes(eq));
         }
@@ -268,9 +240,7 @@ const TrainingPlanDesigner = () => {
         exercisesByPattern[pattern].push(ex);
       });
   
-      // Guardar en el estado
       setAllAvailableExercises(exercisesByPattern);
-      
       return filtered;
     } catch (err) {
       console.error("Error fetching exercises:", err);
@@ -278,21 +248,18 @@ const TrainingPlanDesigner = () => {
     }
   };
   
-  // Modificar el componente para cargar los ejercicios al inicio
+  // Cargar ejercicios al inicio o cuando cambie el equipamiento
   React.useEffect(() => {
     fetchExercises();
-  }, [equipment]); // Recargar cuando cambie el equipamiento
+  }, [equipment]);
   
-  // Añadir estado para controlar la carga del plan
   const [generatingPlan, setGeneratingPlan] = useState(false);
   
-  // Modificar la función generatePlan para mostrar el mensaje de carga
   const generatePlan = async () => {
     setMessage('');
     setError('');
-    setGeneratingPlan(true); // Activar indicador de carga
+    setGeneratingPlan(true);
     
-    // Validar que se haya seleccionado al menos un grupo muscular
     if (muscleSelection === 'Personalizado' && customMuscles.length === 0) {
       setError('Por favor selecciona al menos un grupo muscular');
       setGeneratingPlan(false);
@@ -300,10 +267,9 @@ const TrainingPlanDesigner = () => {
     }
     
     try {
-      // Obtener ejercicios desde Firebase
       const exercises = await fetchExercises();
       
-      // Separar ejercicios en multi-articulares y de aislamiento
+      // Separar ejercicios en compuestos (multi) y de aislamiento (iso)
       const multiExercises = exercises.filter(ex => 
         ["Horizontal Push", "Upward Push", "Horizontal Pull", "Upward Pull", "Downward Pull", 
          "Double Leg Push", "Single Leg Push", "Bent Leg Hip Extension", "Straight Leg Hip Extension"].includes(ex.movementCategory)
@@ -313,19 +279,15 @@ const TrainingPlanDesigner = () => {
         ["Auxiliary", "Core Stability", "Mobility", "Explosive", "Cardio"].includes(ex.movementCategory)
       );
       
-      // Calcular número de sesiones totales
       const durationMonths = parseInt(duration, 10);
       const frequencyPerWeek = parseInt(frequency, 10);
-      const totalSessions = durationMonths * 4 * frequencyPerWeek; // 4 semanas por mes
+      const totalSessions = durationMonths * 4 * frequencyPerWeek;
       
-      // Determinar cantidad de ejercicios por sesión según objetivo y tiempo
       const { total, multi, iso } = getExercisesCountByObjectiveTime(fitnessObjective, timeAvailable);
       
-      // Determinar series y descanso según objetivo
       const defaultSeries = fitnessObjective === 'strength' ? 5 : (fitnessObjective === 'muscleMass' ? 4 : 3);
       const restDefault = getRecommendedRest();
   
-      // Determinar el ciclo de selección muscular
       let muscleCycle = [];
       if (muscleSelection) {
         if(muscleSelection === 'Personalizado'){
@@ -337,13 +299,10 @@ const TrainingPlanDesigner = () => {
   
       let plan = [];
       for (let s = 1; s <= totalSessions; s++) {
-        // Asignar de forma cíclica la selección muscular
         const seleccionMuscular = muscleCycle.length > 0 ? muscleCycle[(s - 1) % muscleCycle.length] : "";
-        // Obtener patrones permitidos según la selección muscular
         const allowedPatterns = movementPatternMapping[seleccionMuscular] || [];
         
         let sessionExercises = [];
-        // Generar ejercicios compuestos (multi)
         for (let m = 0; m < multi; m++) {
           let filteredMulti = multiExercises;
           if (allowedPatterns.length > 0) {
@@ -356,7 +315,6 @@ const TrainingPlanDesigner = () => {
             suggestedExercise: filteredMulti[randIndex]
           });
         }
-        // Generar ejercicios de aislamiento
         for (let i = 0; i < iso; i++) {
           let filteredIso = isoExercises;
           if (allowedPatterns.length > 0) {
@@ -369,7 +327,6 @@ const TrainingPlanDesigner = () => {
             suggestedExercise: filteredIso[randIndex]
           });
         }
-        // Recortar si se generan más ejercicios de los requeridos
         if (sessionExercises.length > total) {
           sessionExercises = sessionExercises.slice(0, total);
         }
@@ -382,11 +339,11 @@ const TrainingPlanDesigner = () => {
             enfoque: exObj.isMulti ? "Multi-Generic Exercise" : "Isolation-Generic Exercise",
             seleccionMuscular: seleccionMuscular,
             nombreEjercicio: exObj.suggestedExercise.nombre || (exObj.isMulti ? "Multi-Generic Exercise" : "Isolation-Generic Exercise"),
-            // Aquí se asigna el movimiento desde movementCategory
             patronMovimiento: exObj.suggestedExercise.movementCategory || "",
             equipmentUsed: exObj.suggestedExercise.equipo || "Sin equipo",
             series: defaultSeries,
-            rest: restDefault
+            rest: restDefault,
+            metodo: "Standard" // Por defecto "Standard"
           });
         });
       }
@@ -397,33 +354,23 @@ const TrainingPlanDesigner = () => {
       console.error("Error al generar el plan:", error);
       setError("Ocurrió un error al generar el plan. Por favor intenta de nuevo.");
     } finally {
-      setGeneratingPlan(false); // Desactivar indicador de carga
+      setGeneratingPlan(false);
     }
   };
   
-  // Añadir la función handleSubmit que falta
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      // Ejemplo: guardar el plan en Firestore
-      await addDoc(collection(db, "trainingPlans"), { 
-        plan: trainingPlan,
-        fitnessObjective,
-        duration,
-        frequency,
-        timeAvailable,
-        muscleSelection,
-        customMuscles,
-        equipment,
-        createdAt: new Date()
-      });
-      setMessage("Plan de entrenamiento guardado correctamente.");
-    } catch (err) {
-      console.error("Error al guardar plan de entrenamiento:", err);
-      setError("Error al guardar plan de entrenamiento: " + err.message);
-    }
-  };
-
+  // Add a state to store the current user
+  const [currentUser, setCurrentUser] = useState(null);
+  
+  // Add useEffect to get the current user when component mounts
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(user => {
+      setCurrentUser(user);
+    });
+    
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, []);
+  
   // Handlers para editar la tabla
   const handleExerciseChange = (e, index) => {
     const newPlan = [...trainingPlan];
@@ -443,13 +390,11 @@ const TrainingPlanDesigner = () => {
     setTrainingPlan(newPlan);
   };
 
-  // Modificar el handler para el patrón de movimiento
   const handlePatternMovementChange = (e, index) => {
     const newPlan = [...trainingPlan];
     const newPattern = e.target.value;
     newPlan[index].patronMovimiento = newPattern;
     
-    // Si tenemos ejercicios disponibles para este patrón, seleccionamos uno al azar
     if (allAvailableExercises[newPattern] && allAvailableExercises[newPattern].length > 0) {
       const randomIndex = Math.floor(Math.random() * allAvailableExercises[newPattern].length);
       const newExercise = allAvailableExercises[newPattern][randomIndex];
@@ -463,21 +408,25 @@ const TrainingPlanDesigner = () => {
     setTrainingPlan(newPlan);
   };
 
-  // Handler para cambiar el nombre del ejercicio
   const handleExerciseNameChange = (e, index) => {
     const newPlan = [...trainingPlan];
     newPlan[index].nombreEjercicio = e.target.value;
     setTrainingPlan(newPlan);
   };
 
-  // Handler para cambiar el grupo muscular
   const handleMuscleGroupChange = (e, index) => {
     const newPlan = [...trainingPlan];
     newPlan[index].seleccionMuscular = e.target.value;
     setTrainingPlan(newPlan);
   };
 
-  // Eliminar el texto "t es" que está causando el error
+  // Nuevo handler para cambiar el método
+  const handleMethodChange = (e, index) => {
+    const newPlan = [...trainingPlan];
+    newPlan[index].metodo = e.target.value;
+    setTrainingPlan(newPlan);
+  };
+
   return (
     <Container maxWidth="lg" className="training-plan-container" sx={{ paddingTop: '100px' }}>
       <Box sx={{ py: 4 }}>
@@ -607,7 +556,7 @@ const TrainingPlanDesigner = () => {
                 </FormControl>
               </Grid>
 
-              {/* Músculos Personalizados (condicional) */}
+              {/* Músculos Personalizados */}
               {muscleSelection === 'Personalizado' && (
                 <Grid item xs={12}>
                   <FormLabel className="form-section-label" style={{ display: 'block' }}>
@@ -688,7 +637,7 @@ const TrainingPlanDesigner = () => {
                     disabled={trainingPlan.length === 0}
                     className="action-button save-button"
                   >
-                    Guardar Plan
+                    Guardar Plan de Entrenamiento
                   </Button>
                 </Box>
               </Grid>
@@ -706,278 +655,208 @@ const TrainingPlanDesigner = () => {
         
         {/* Tabla de resultados */}
         {trainingPlan.length > 0 && (
-          <Paper elevation={3} className="results-table-container">
+          <Paper elevation={3} className="results-container">
             <Typography 
               variant="h5" 
               gutterBottom 
-              className="results-table-title"
+              className="results-title"
               sx={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600, p: 2 }}
             >
               Plan de Entrenamiento Generado
             </Typography>
-            <TableContainer>
-              <Table size="small" sx={{ minWidth: 1200 }}>
-                <TableHead>
-                  <TableRow>
-                    <TableCell 
-                      className="table-header-cell" 
-                      sx={{ 
-                        backgroundColor: '#333', 
-                        color: '#BBFF00',
-                        fontWeight: 'bold',
-                        fontFamily: "'Montserrat', sans-serif",
-                        width: '5%'
-                      }}
-                    >
-                      Sesión
-                    </TableCell>
-                    <TableCell 
-                      className="table-header-cell"
-                      sx={{ 
-                        backgroundColor: '#333', 
-                        color: '#BBFF00',
-                        fontWeight: 'bold',
-                        fontFamily: "'Montserrat', sans-serif",
-                        width: '5%'
-                      }}
-                    >
-                      Ejercicio #
-                    </TableCell>
-                    <TableCell 
-                      className="table-header-cell"
-                      sx={{ 
-                        backgroundColor: '#333', 
-                        color: '#BBFF00',
-                        fontWeight: 'bold',
-                        fontFamily: "'Montserrat', sans-serif",
-                        width: '10%'
-                      }}
-                    >
-                      Grupo Muscular
-                    </TableCell>
-                    <TableCell 
-                      className="table-header-cell"
-                      sx={{ 
-                        backgroundColor: '#333', 
-                        color: '#BBFF00',
-                        fontWeight: 'bold',
-                        fontFamily: "'Montserrat', sans-serif",
-                        width: '25%'
-                      }}
-                    >
-                      Nombre Ejercicio
-                    </TableCell>
-                    <TableCell 
-                      className="table-header-cell"
-                      sx={{ 
-                        backgroundColor: '#333', 
-                        color: '#BBFF00',
-                        fontWeight: 'bold',
-                        fontFamily: "'Montserrat', sans-serif",
-                        width: '15%'
-                      }}
-                    >
-                      Patrón Movimiento
-                    </TableCell>
-                    <TableCell 
-                      className="table-header-cell"
-                      sx={{ 
-                        backgroundColor: '#333', 
-                        color: '#BBFF00',
-                        fontWeight: 'bold',
-                        fontFamily: "'Montserrat', sans-serif",
-                        width: '15%'
-                      }}
-                    >
-                      Enfoque
-                    </TableCell>
-                    <TableCell 
-                      className="table-header-cell"
-                      sx={{ 
-                        backgroundColor: '#333', 
-                        color: '#BBFF00',
-                        fontWeight: 'bold',
-                        fontFamily: "'Montserrat', sans-serif",
-                        width: '5%'
-                      }}
-                    >
-                      Series
-                    </TableCell>
-                    <TableCell 
-                      className="table-header-cell"
-                      sx={{ 
-                        backgroundColor: '#333', 
-                        color: '#BBFF00',
-                        fontWeight: 'bold',
-                        fontFamily: "'Montserrat', sans-serif",
-                        width: '10%'
-                      }}
-                    >
-                      Descanso (seg)
-                    </TableCell>
-                    <TableCell 
-                      className="table-header-cell"
-                      sx={{ 
-                        backgroundColor: '#333', 
-                        color: '#BBFF00',
-                        fontWeight: 'bold',
-                        fontFamily: "'Montserrat', sans-serif",
-                        width: '10%'
-                      }}
-                    >
-                      Equipamiento
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {trainingPlan.map((exercise, index) => {
-                    // Determinar el color de fondo basado en el número de sesión
-                    const isEvenSession = exercise.sessionNumber % 2 === 0;
-                    
-                    // Verificar si es el primer ejercicio de una nueva sesión
-                    const isFirstOfSession = index === 0 || trainingPlan[index - 1].sessionNumber !== exercise.sessionNumber;
-                    
-                    return (
-                    <TableRow 
-                      key={index} 
-                      hover
-                      sx={{ 
-                        backgroundColor: isEvenSession ? '#1a1a1a' : '#2a2a2a',
-                        '&:hover': {
-                          backgroundColor: isEvenSession ? '#222222' : '#333333',
-                        }
-                      }}
-                      className={`${isFirstOfSession ? 'session-start-row' : ''}`}
-                    >
-                      {/* Resto de las celdas de la tabla */}
-                      
-                      <TableCell>{exercise.sessionNumber}</TableCell>
-                      <TableCell>{exercise.exerciseNumber}</TableCell>
-                      <TableCell>
-                        <Select
-                          value={exercise.seleccionMuscular || ""}
-                          onChange={(e) => handleMuscleGroupChange(e, index)}
-                          size="small"
-                          fullWidth
-                        >
-                          {muscleOptions.flatMap(option => 
-                            option === 'Personalizado' 
-                              ? customMuscleOptions.map(muscle => (
-                                  <MenuItem key={muscle} value={muscle}>{muscle}</MenuItem>
-                                ))
-                              : option.split(',').map(g => (
-                                  <MenuItem key={g.trim()} value={g.trim()}>{g.trim()}</MenuItem>
-                                ))
-                          )}
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <Box className="exercise-select-container">
+            
+            {/* Agrupamos los ejercicios por sesión */}
+            {Array.from(new Set(trainingPlan.map(ex => ex.sessionNumber))).map(sessionNum => (
+              <Box key={sessionNum} className="session-container" sx={{ mb: 4, p: 2, backgroundColor: sessionNum % 2 === 0 ? '#1a1a1a' : '#2a2a2a' }}>
+                <Typography variant="h6" sx={{ color: '#BBFF00', mb: 2, fontWeight: 'bold' }}>
+                  Sesión {sessionNum}
+                </Typography>
+                
+                <Grid container spacing={2}>
+                  {trainingPlan.filter(ex => ex.sessionNumber === sessionNum).map((exercise, index) => (
+                    <Grid item xs={12} sm={6} md={4} key={index}>
+                      <Card sx={{ height: '100%', backgroundColor: '#333', color: 'white', position: 'relative' }}>
+                        <Box sx={{ position: 'absolute', top: 8, right: 8, zIndex: 2 }}>
                           <Tooltip title="Ver detalles">
                             <IconButton 
                               size="small" 
                               color="primary"
                               onClick={(e) => handlePopoverOpen(e, exercise)}
-                              className="exercise-info-button"
                             >
                               <InfoIcon />
                             </IconButton>
                           </Tooltip>
-                          <Select
-                            value={exercise.nombreEjercicio || ""}
-                            onChange={(e) => handleExerciseNameChange(e, index)}
-                            size="small"
-                            fullWidth
-                          >
-                            {allAvailableExercises[exercise.patronMovimiento] ? 
-                              allAvailableExercises[exercise.patronMovimiento].map((ex, idx) => (
-                                <MenuItem 
-                                  key={idx} 
-                                  value={ex.nombre}
-                                  className="exercise-select-option"
-                                  onClick={() => {
-                                    const newPlan = [...trainingPlan];
-                                    newPlan[index].nombreEjercicio = ex.nombre;
-                                    newPlan[index].preview = ex.previewURL;
-                                    newPlan[index].equipmentUsed = ex.equipo;
-                                    newPlan[index].exerciseId = ex.id;
-                                    setTrainingPlan(newPlan);
-                                  }}
-                                >
-                                  {ex.previewURL && (
-                                    <img 
-                                      src={ex.previewURL} 
-                                      alt={ex.nombre} 
-                                      className="exercise-thumbnail"
-                                    />
-                                  )}
-                                  {ex.nombre}
-                                </MenuItem>
-                              )) : (
-                                <MenuItem value={exercise.nombreEjercicio}>{exercise.nombreEjercicio}</MenuItem>
-                              )
-                            }
-                          </Select>
                         </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Select
-                          value={exercise.patronMovimiento || ""}
-                          onChange={(e) => handlePatternMovementChange(e, index)}
-                          size="small"
-                          fullWidth
-                        >
-                          {allMovementPatterns.map((pattern, idx) => (
-                            <MenuItem key={idx} value={pattern}>{pattern}</MenuItem>
-                          ))}
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <Select
-                          value={exercise.enfoque}
-                          onChange={(e) => handleExerciseChange(e, index)}
-                          size="small"
-                          fullWidth
-                        >
-                          {enfoqueOptions.map((opt, idx) => (
-                            <MenuItem key={idx} value={opt}>{opt}</MenuItem>
-                          ))}
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <Select
-                          value={exercise.series}
-                          onChange={(e) => handleSeriesChange(e, index)}
-                          size="small"
-                          fullWidth
-                        >
-                          {[...Array(8)].map((_, i) => (
-                            <MenuItem key={i} value={i+1}>{i+1}</MenuItem>
-                          ))}
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <Select
-                          value={exercise.rest}
-                          onChange={(e) => handleRestChange(e, index)}
-                          size="small"
-                          fullWidth
-                        >
-                          <MenuItem value={30}>30</MenuItem>
-                          <MenuItem value={60}>60</MenuItem>
-                          <MenuItem value={90}>90</MenuItem>
-                          <MenuItem value={120}>120</MenuItem>
-                          <MenuItem value={180}>180</MenuItem>
-                        </Select>
-                      </TableCell>
-                      <TableCell>{exercise.equipmentUsed}</TableCell>
-                    </TableRow>
-                  )})}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                        
+                        {exercise.preview && (
+                          <CardMedia
+                            component="img"
+                            height="140"
+                            image={exercise.preview}
+                            alt={exercise.nombreEjercicio}
+                            sx={{ objectFit: 'contain', backgroundColor: '#222' }}
+                          />
+                        )}
+                        
+                        <CardContent>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1 }}>
+                            Ejercicio #{exercise.exerciseNumber}
+                          </Typography>
+                          
+                          <Grid container spacing={1}>
+                            <Grid item xs={12}>
+                              <Typography variant="body2" sx={{ color: '#aaa', fontSize: '0.8rem' }}>Nombre:</Typography>
+                              <Select
+                                value={exercise.nombreEjercicio || ""}
+                                onChange={(e) => handleExerciseNameChange(e, index)}
+                                size="small"
+                                fullWidth
+                                sx={{ mb: 1 }}
+                              >
+                                {allAvailableExercises[exercise.patronMovimiento] ? 
+                                  allAvailableExercises[exercise.patronMovimiento].map((ex, idx) => (
+                                    <MenuItem 
+                                      key={idx} 
+                                      value={ex.nombre}
+                                      onClick={() => {
+                                        const newPlan = [...trainingPlan];
+                                        newPlan[index].nombreEjercicio = ex.nombre;
+                                        newPlan[index].preview = ex.previewURL;
+                                        newPlan[index].equipmentUsed = ex.equipo;
+                                        newPlan[index].exerciseId = ex.id;
+                                        setTrainingPlan(newPlan);
+                                      }}
+                                    >
+                                      {ex.previewURL && (
+                                        <img 
+                                          src={ex.previewURL} 
+                                          alt={ex.nombre} 
+                                          className="exercise-thumbnail"
+                                          style={{ width: '30px', height: '30px', marginRight: '8px' }}
+                                        />
+                                      )}
+                                      {ex.nombre}
+                                    </MenuItem>
+                                  )) : (
+                                    <MenuItem value={exercise.nombreEjercicio}>{exercise.nombreEjercicio}</MenuItem>
+                                  )
+                                }
+                              </Select>
+                            </Grid>
+                            
+                            <Grid item xs={6}>
+                              <Typography variant="body2" sx={{ color: '#aaa', fontSize: '0.8rem' }}>Grupo Muscular:</Typography>
+                              <Select
+                                value={exercise.seleccionMuscular || ""}
+                                onChange={(e) => handleMuscleGroupChange(e, index)}
+                                size="small"
+                                fullWidth
+                                sx={{ mb: 1 }}
+                              >
+                                {muscleOptions.flatMap(option => 
+                                  option === 'Personalizado' 
+                                    ? customMuscleOptions.map(muscle => (
+                                        <MenuItem key={muscle} value={muscle}>{muscle}</MenuItem>
+                                      ))
+                                    : option.split(',').map(g => (
+                                        <MenuItem key={g.trim()} value={g.trim()}>{g.trim()}</MenuItem>
+                                      ))
+                                )}
+                              </Select>
+                            </Grid>
+                            
+                            <Grid item xs={6}>
+                              <Typography variant="body2" sx={{ color: '#aaa', fontSize: '0.8rem' }}>Patrón:</Typography>
+                              <Select
+                                value={exercise.patronMovimiento || ""}
+                                onChange={(e) => handlePatternMovementChange(e, index)}
+                                size="small"
+                                fullWidth
+                                sx={{ mb: 1 }}
+                              >
+                                {allMovementPatterns.map((pattern, idx) => (
+                                  <MenuItem key={idx} value={pattern}>{pattern}</MenuItem>
+                                ))}
+                              </Select>
+                            </Grid>
+                            
+                            <Grid item xs={6}>
+                              <Typography variant="body2" sx={{ color: '#aaa', fontSize: '0.8rem' }}>Método:</Typography>
+                              <Select
+                                value={exercise.metodo || "Standard"}
+                                onChange={(e) => handleMethodChange(e, index)}
+                                size="small"
+                                fullWidth
+                                sx={{ mb: 1 }}
+                              >
+                                {methodOptions.map((opt, idx) => (
+                                  <MenuItem key={idx} value={opt}>{opt}</MenuItem>
+                                ))}
+                              </Select>
+                            </Grid>
+                            
+                            <Grid item xs={6}>
+                              <Typography variant="body2" sx={{ color: '#aaa', fontSize: '0.8rem' }}>Enfoque:</Typography>
+                              <Select
+                                value={exercise.enfoque}
+                                onChange={(e) => handleExerciseChange(e, index)}
+                                size="small"
+                                fullWidth
+                                sx={{ mb: 1 }}
+                              >
+                                {enfoqueOptions.map((opt, idx) => (
+                                  <MenuItem key={idx} value={opt}>{opt}</MenuItem>
+                                ))}
+                              </Select>
+                            </Grid>
+                            
+                            <Grid item xs={6}>
+                              <Typography variant="body2" sx={{ color: '#aaa', fontSize: '0.8rem' }}>Series:</Typography>
+                              <Select
+                                value={exercise.series}
+                                onChange={(e) => handleSeriesChange(e, index)}
+                                size="small"
+                                fullWidth
+                                sx={{ mb: 1 }}
+                              >
+                                {[...Array(8)].map((_, i) => (
+                                  <MenuItem key={i} value={i+1}>{i+1}</MenuItem>
+                                ))}
+                              </Select>
+                            </Grid>
+                            
+                            <Grid item xs={6}>
+                              <Typography variant="body2" sx={{ color: '#aaa', fontSize: '0.8rem' }}>Descanso (seg):</Typography>
+                              <Select
+                                value={exercise.rest}
+                                onChange={(e) => handleRestChange(e, index)}
+                                size="small"
+                                fullWidth
+                                sx={{ mb: 1 }}
+                              >
+                                <MenuItem value={30}>30</MenuItem>
+                                <MenuItem value={60}>60</MenuItem>
+                                <MenuItem value={90}>90</MenuItem>
+                                <MenuItem value={120}>120</MenuItem>
+                                <MenuItem value={180}>180</MenuItem>
+                              </Select>
+                            </Grid>
+                            
+                            <Grid item xs={12}>
+                              <Typography variant="body2" sx={{ color: '#aaa', fontSize: '0.8rem' }}>
+                                Equipamiento: <span style={{ color: 'white' }}>{exercise.equipmentUsed}</span>
+                              </Typography>
+                            </Grid>
+                          </Grid>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              </Box>
+            ))}
             
-            {/* Popover para mostrar detalles del ejercicio */}
+            {/* Popover para detalles del ejercicio - se mantiene igual */}
             <Popover
               open={open}
               anchorEl={anchorEl}
@@ -1035,3 +914,34 @@ const TrainingPlanDesigner = () => {
 };
 
 export default TrainingPlanDesigner;
+
+// Añade la función handleSubmit si no existe o actualiza la existente
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  try {
+    // Crear el objeto de datos del plan con la información del creador
+    const planData = {
+      plan: trainingPlan,
+      fitnessObjective,
+      duration,
+      frequency,
+      timeAvailable,
+      muscleSelection,
+      customMuscles,
+      equipment,
+      createdAt: new Date(),
+      // Añadir información del creador
+      creator: {
+        uid: currentUser ? currentUser.uid : 'anonymous',
+        email: currentUser ? currentUser.email : 'anonymous',
+        displayName: currentUser ? currentUser.displayName : 'Usuario Anónimo'
+      }
+    };
+    
+    await addDoc(collection(db, "trainingPlans"), planData);
+    setMessage("Plan de entrenamiento guardado correctamente.");
+  } catch (err) {
+    console.error("Error al guardar plan de entrenamiento:", err);
+    setError("Error al guardar plan de entrenamiento: " + err.message);
+  }
+};
