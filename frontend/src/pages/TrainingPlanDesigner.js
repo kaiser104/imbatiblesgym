@@ -38,7 +38,6 @@ import {
 import InfoIcon from '@mui/icons-material/Info';
 
 // Mapeo de la selección muscular a patrones de movimiento (ejemplo)
-// Add this mapping for upper/lower body patterns
 const movementPatternMapping = {
   "Empuje": ["Horizontal Push", "Upward Push"],
   "Jalar": ["Horizontal Pull", "Upward Pull", "Downward Pull"],
@@ -92,7 +91,7 @@ const customMuscleOptions = [
   'Abductores', 'Antebrazos', 'Trapecio'
 ];
 
-// Añadir esta constante con todos los patrones de movimiento disponibles
+// Agregamos la constante con todos los patrones de movimiento disponibles
 const allMovementPatterns = [
   "Bent Leg Hip Extension",
   "Cardio",
@@ -123,6 +122,9 @@ const TrainingPlanDesigner = () => {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   
+  // Nuevo estado para la priorización: "diversidad" o "control"
+  const [prioritizacion, setPrioritizacion] = useState("diversidad");
+
   // Estado para almacenar todos los ejercicios disponibles por patrón
   const [allAvailableExercises, setAllAvailableExercises] = useState({});
   
@@ -177,6 +179,11 @@ const TrainingPlanDesigner = () => {
   };
 
   const selectAllEquipment = () => setEquipment(equipmentOptions);
+
+  // Nuevo handler para la priorización
+  const handlePrioritizacionChange = (e) => {
+    setPrioritizacion(e.target.value);
+  };
 
   // Heurística: determinar cantidad de ejercicios según objetivo y tiempo disponible
   const getExercisesCountByObjectiveTime = (obj, t) => {
@@ -254,7 +261,7 @@ const TrainingPlanDesigner = () => {
   };
   
   // Cargar ejercicios al inicio o cuando cambie el equipamiento
-  React.useEffect(() => {
+  useEffect(() => {
     fetchExercises();
   }, [equipment]);
   
@@ -298,7 +305,8 @@ const TrainingPlanDesigner = () => {
       
       const durationMonths = parseInt(duration, 10);
       const frequencyPerWeek = parseInt(frequency, 10);
-      const totalSessions = durationMonths * 4 * frequencyPerWeek;
+      const weeks = durationMonths * 4;
+      const totalSessions = frequencyPerWeek * weeks;
       
       const { total, multi, iso } = getExercisesCountByObjectiveTime(fitnessObjective, timeAvailable);
       
@@ -310,7 +318,6 @@ const TrainingPlanDesigner = () => {
         if(muscleSelection === 'Personalizado'){
           muscleCycle = customMuscles;
         } else if(muscleSelection === 'Superior, Inferior, Cuerpo completo') {
-          // Special handling for this specific selection
           muscleCycle = ['Superior', 'Inferior', 'Cuerpo completo'];
         } else {
           muscleCycle = muscleSelection.split(',').map(g => g.trim());
@@ -318,58 +325,125 @@ const TrainingPlanDesigner = () => {
       }
   
       let plan = [];
-      for (let s = 1; s <= totalSessions; s++) {
-        // For "Superior, Inferior, Cuerpo completo" we use modulo to cycle through the days
-        const seleccionMuscular = muscleCycle.length > 0 ? muscleCycle[(s - 1) % muscleCycle.length] : "";
-        
-        // Get allowed movement patterns based on the muscle selection for this session
-        const allowedPatterns = movementPatternMapping[seleccionMuscular] || [];
-        
-        let sessionExercises = [];
-        for (let m = 0; m < multi; m++) {
-          let filteredMulti = multiExercises;
-          if (allowedPatterns.length > 0) {
-            filteredMulti = multiExercises.filter(ex => allowedPatterns.includes(ex.movementCategory));
-            if(filteredMulti.length === 0) filteredMulti = multiExercises;
+      
+      if(prioritizacion === "control") {
+        // Modo "Control": Generamos la misma estructura de sesiones para cada semana
+        let weekPlan = [];
+        for (let s = 1; s <= frequencyPerWeek; s++) {
+          const seleccionMuscular = muscleCycle.length > 0 ? muscleCycle[(s - 1) % muscleCycle.length] : "";
+          const allowedPatterns = movementPatternMapping[seleccionMuscular] || [];
+          
+          let sessionExercises = [];
+          for (let m = 0; m < multi; m++) {
+            let filteredMulti = multiExercises;
+            if (allowedPatterns.length > 0) {
+              filteredMulti = multiExercises.filter(ex => allowedPatterns.includes(ex.movementCategory));
+              if(filteredMulti.length === 0) filteredMulti = multiExercises;
+            }
+            const randIndex = Math.floor(Math.random() * filteredMulti.length);
+            sessionExercises.push({
+              isMulti: true,
+              suggestedExercise: filteredMulti[randIndex]
+            });
           }
-          // En la función generatePlan
-          const randIndex = Math.floor(Math.random() * filteredMulti.length);
-          sessionExercises.push({
-            isMulti: true,
-            suggestedExercise: filteredMulti[randIndex] // Posible error si filteredMulti está vacío
-          });
-        }
-        for (let i = 0; i < iso; i++) {
-          let filteredIso = isoExercises;
-          if (allowedPatterns.length > 0) {
-            filteredIso = isoExercises.filter(ex => allowedPatterns.includes(ex.movementCategory));
-            if(filteredIso.length === 0) filteredIso = isoExercises;
+          for (let i = 0; i < iso; i++) {
+            let filteredIso = isoExercises;
+            if (allowedPatterns.length > 0) {
+              filteredIso = isoExercises.filter(ex => allowedPatterns.includes(ex.movementCategory));
+              if(filteredIso.length === 0) filteredIso = isoExercises;
+            }
+            const randIndex = Math.floor(Math.random() * filteredIso.length);
+            sessionExercises.push({
+              isMulti: false,
+              suggestedExercise: filteredIso[randIndex]
+            });
           }
-          const randIndex = Math.floor(Math.random() * filteredIso.length);
-          sessionExercises.push({
-            isMulti: false,
-            suggestedExercise: filteredIso[randIndex]
+          if (sessionExercises.length > total) {
+            sessionExercises = sessionExercises.slice(0, total);
+          }
+          let sessionPlan = [];
+          sessionExercises.forEach((exObj, idx) => {
+            sessionPlan.push({
+              sessionNumber: s, // esta sesión dentro de la semana
+              exerciseNumber: idx + 1,
+              preview: exObj.suggestedExercise.previewURL || "",
+              exerciseId: exObj.suggestedExercise.id,
+              enfoque: exObj.isMulti ? "Multi-Generic Exercise" : "Isolation-Generic Exercise",
+              seleccionMuscular: seleccionMuscular,
+              nombreEjercicio: exObj.suggestedExercise.nombre || (exObj.isMulti ? "Multi-Generic Exercise" : "Isolation-Generic Exercise"),
+              patronMovimiento: exObj.suggestedExercise.movementCategory || "",
+              equipmentUsed: exObj.suggestedExercise.equipo || "Sin equipo",
+              series: defaultSeries,
+              rest: restDefault,
+              metodo: "Standard"
+            });
+          });
+          weekPlan.push(sessionPlan);
+        }
+        // Ahora, replicamos la misma semana para cada semana del programa
+        for (let w = 0; w < weeks; w++) {
+          weekPlan.forEach(session => {
+            // Clonamos la sesión y actualizamos el número de sesión global
+            const globalSessionNumber = (w * frequencyPerWeek) + session[0].sessionNumber;
+            session.forEach(ex => {
+              plan.push({
+                ...ex,
+                sessionNumber: (w * frequencyPerWeek) + ex.sessionNumber
+              });
+            });
           });
         }
-        if (sessionExercises.length > total) {
-          sessionExercises = sessionExercises.slice(0, total);
-        }
-        sessionExercises.forEach((exObj, idx) => {
-          plan.push({
-            sessionNumber: s,
-            exerciseNumber: idx + 1,
-            preview: exObj.suggestedExercise.previewURL || "",
-            exerciseId: exObj.suggestedExercise.id,
-            enfoque: exObj.isMulti ? "Multi-Generic Exercise" : "Isolation-Generic Exercise",
-            seleccionMuscular: seleccionMuscular,
-            nombreEjercicio: exObj.suggestedExercise.nombre || (exObj.isMulti ? "Multi-Generic Exercise" : "Isolation-Generic Exercise"),
-            patronMovimiento: exObj.suggestedExercise.movementCategory || "",
-            equipmentUsed: exObj.suggestedExercise.equipo || "Sin equipo",
-            series: defaultSeries,
-            rest: restDefault,
-            metodo: "Standard" // Por defecto "Standard"
+      } else {
+        // Modo "Diversidad": Se genera aleatoriamente para cada sesión
+        for (let s = 1; s <= totalSessions; s++) {
+          const seleccionMuscular = muscleCycle.length > 0 ? muscleCycle[(s - 1) % muscleCycle.length] : "";
+          const allowedPatterns = movementPatternMapping[seleccionMuscular] || [];
+          
+          let sessionExercises = [];
+          for (let m = 0; m < multi; m++) {
+            let filteredMulti = multiExercises;
+            if (allowedPatterns.length > 0) {
+              filteredMulti = multiExercises.filter(ex => allowedPatterns.includes(ex.movementCategory));
+              if(filteredMulti.length === 0) filteredMulti = multiExercises;
+            }
+            const randIndex = Math.floor(Math.random() * filteredMulti.length);
+            sessionExercises.push({
+              isMulti: true,
+              suggestedExercise: filteredMulti[randIndex]
+            });
+          }
+          for (let i = 0; i < iso; i++) {
+            let filteredIso = isoExercises;
+            if (allowedPatterns.length > 0) {
+              filteredIso = isoExercises.filter(ex => allowedPatterns.includes(ex.movementCategory));
+              if(filteredIso.length === 0) filteredIso = isoExercises;
+            }
+            const randIndex = Math.floor(Math.random() * filteredIso.length);
+            sessionExercises.push({
+              isMulti: false,
+              suggestedExercise: filteredIso[randIndex]
+            });
+          }
+          if (sessionExercises.length > total) {
+            sessionExercises = sessionExercises.slice(0, total);
+          }
+          sessionExercises.forEach((exObj, idx) => {
+            plan.push({
+              sessionNumber: s,
+              exerciseNumber: idx + 1,
+              preview: exObj.suggestedExercise.previewURL || "",
+              exerciseId: exObj.suggestedExercise.id,
+              enfoque: exObj.isMulti ? "Multi-Generic Exercise" : "Isolation-Generic Exercise",
+              seleccionMuscular: seleccionMuscular,
+              nombreEjercicio: exObj.suggestedExercise.nombre || (exObj.isMulti ? "Multi-Generic Exercise" : "Isolation-Generic Exercise"),
+              patronMovimiento: exObj.suggestedExercise.movementCategory || "",
+              equipmentUsed: exObj.suggestedExercise.equipo || "Sin equipo",
+              series: defaultSeries,
+              rest: restDefault,
+              metodo: "Standard"
+            });
           });
-        });
+        }
       }
   
       setTrainingPlan(plan);
@@ -382,18 +456,16 @@ const TrainingPlanDesigner = () => {
     }
   };
   
-  // Add a state to store the current user
+  // Agregamos estado para almacenar el usuario actual
   const [currentUser, setCurrentUser] = useState(null);
-  // Añadir estado para el nombre del plan
+  // Estado para el nombre del plan
   const [planName, setPlanName] = useState('');
   
-  // Add useEffect to get the current user when component mounts
+  // useEffect para obtener el usuario actual al montar el componente
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(user => {
       setCurrentUser(user);
     });
-    
-    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []);
   
@@ -446,15 +518,13 @@ const TrainingPlanDesigner = () => {
     setTrainingPlan(newPlan);
   };
 
-  // Nuevo handler para cambiar el método
+  // Handler para cambiar el método
   const handleMethodChange = (e, index) => {
     const newPlan = [...trainingPlan];
     newPlan[index].metodo = e.target.value;
     setTrainingPlan(newPlan);
   };
 
-  // Eliminar completamente esta función externa
-  // Añadir handleSubmit dentro del componente
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -479,8 +549,8 @@ const TrainingPlanDesigner = () => {
         muscleSelection,
         customMuscles,
         equipment,
+        prioritizacion,
         createdAt: new Date(),
-        // Añadir información del creador
         creator: {
           uid: currentUser ? currentUser.uid : 'anonymous',
           email: currentUser ? currentUser.email : 'anonymous',
@@ -490,7 +560,7 @@ const TrainingPlanDesigner = () => {
       
       await addDoc(collection(db, "trainingPlans"), planData);
       setMessage("Plan de entrenamiento guardado correctamente.");
-      setPlanName(''); // Limpiar el nombre después de guardar
+      setPlanName('');
     } catch (err) {
       console.error("Error al guardar plan de entrenamiento:", err);
       setError("Error al guardar plan de entrenamiento: " + err.message);
@@ -605,6 +675,31 @@ const TrainingPlanDesigner = () => {
                     </FormControl>
                   </Grid>
                 </Grid>
+              </Grid>
+
+              {/* Nueva sección: Prioritización */}
+              <Grid item xs={12}>
+                <FormControl component="fieldset" fullWidth className="form-control-group">
+                  <FormLabel component="legend" className="form-section-label">
+                    Prioritización del Plan
+                  </FormLabel>
+                  <RadioGroup
+                    name="prioritizacion"
+                    value={prioritizacion}
+                    onChange={handlePrioritizacionChange}
+                  >
+                    <FormControlLabel 
+                      value="diversidad" 
+                      control={<Radio />} 
+                      label="Diversidad (entrenamientos variados)" 
+                    />
+                    <FormControlLabel 
+                      value="control" 
+                      control={<Radio />} 
+                      label="Control (entrenamiento con mayor control de cargas)" 
+                    />
+                  </RadioGroup>
+                </FormControl>
               </Grid>
 
               {/* Selección Muscular */}
@@ -953,7 +1048,7 @@ const TrainingPlanDesigner = () => {
               </Box>
             ))}
             
-            {/* Popover para detalles del ejercicio - se mantiene igual */}
+            {/* Popover para detalles del ejercicio */}
             <Popover
               open={open}
               anchorEl={anchorEl}
