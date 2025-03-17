@@ -38,10 +38,15 @@ import {
 import InfoIcon from '@mui/icons-material/Info';
 
 // Mapeo de la selección muscular a patrones de movimiento (ejemplo)
+// Add this mapping for upper/lower body patterns
 const movementPatternMapping = {
   "Empuje": ["Horizontal Push", "Upward Push"],
   "Jalar": ["Horizontal Pull", "Upward Pull", "Downward Pull"],
-  "Piernas": ["Double Leg Push", "Single Leg Push", "Bent Leg Hip Extension", "Straight Leg Hip Extension"]
+  "Piernas": ["Double Leg Push", "Single Leg Push", "Bent Leg Hip Extension", "Straight Leg Hip Extension"],
+  "Superior": ["Horizontal Push", "Upward Push", "Horizontal Pull", "Upward Pull", "Downward Pull"],
+  "Inferior": ["Double Leg Push", "Single Leg Push", "Bent Leg Hip Extension", "Straight Leg Hip Extension"],
+  "Cuerpo completo": ["Horizontal Push", "Upward Push", "Horizontal Pull", "Upward Pull", "Downward Pull", 
+                      "Double Leg Push", "Single Leg Push", "Bent Leg Hip Extension", "Straight Leg Hip Extension"]
 };
 
 const enfoqueOptions = [
@@ -266,8 +271,20 @@ const TrainingPlanDesigner = () => {
       return;
     }
     
+    if (equipment.length === 0) {
+      setError('Por favor selecciona al menos un equipamiento disponible');
+      setGeneratingPlan(false);
+      return;
+    }
+    
     try {
       const exercises = await fetchExercises();
+      
+      if (exercises.length === 0) {
+        setError('No se encontraron ejercicios con el equipamiento seleccionado');
+        setGeneratingPlan(false);
+        return;
+      }
       
       // Separar ejercicios en compuestos (multi) y de aislamiento (iso)
       const multiExercises = exercises.filter(ex => 
@@ -292,6 +309,9 @@ const TrainingPlanDesigner = () => {
       if (muscleSelection) {
         if(muscleSelection === 'Personalizado'){
           muscleCycle = customMuscles;
+        } else if(muscleSelection === 'Superior, Inferior, Cuerpo completo') {
+          // Special handling for this specific selection
+          muscleCycle = ['Superior', 'Inferior', 'Cuerpo completo'];
         } else {
           muscleCycle = muscleSelection.split(',').map(g => g.trim());
         }
@@ -299,7 +319,10 @@ const TrainingPlanDesigner = () => {
   
       let plan = [];
       for (let s = 1; s <= totalSessions; s++) {
+        // For "Superior, Inferior, Cuerpo completo" we use modulo to cycle through the days
         const seleccionMuscular = muscleCycle.length > 0 ? muscleCycle[(s - 1) % muscleCycle.length] : "";
+        
+        // Get allowed movement patterns based on the muscle selection for this session
         const allowedPatterns = movementPatternMapping[seleccionMuscular] || [];
         
         let sessionExercises = [];
@@ -309,10 +332,11 @@ const TrainingPlanDesigner = () => {
             filteredMulti = multiExercises.filter(ex => allowedPatterns.includes(ex.movementCategory));
             if(filteredMulti.length === 0) filteredMulti = multiExercises;
           }
+          // En la función generatePlan
           const randIndex = Math.floor(Math.random() * filteredMulti.length);
           sessionExercises.push({
             isMulti: true,
-            suggestedExercise: filteredMulti[randIndex]
+            suggestedExercise: filteredMulti[randIndex] // Posible error si filteredMulti está vacío
           });
         }
         for (let i = 0; i < iso; i++) {
@@ -360,6 +384,8 @@ const TrainingPlanDesigner = () => {
   
   // Add a state to store the current user
   const [currentUser, setCurrentUser] = useState(null);
+  // Añadir estado para el nombre del plan
+  const [planName, setPlanName] = useState('');
   
   // Add useEffect to get the current user when component mounts
   useEffect(() => {
@@ -425,6 +451,50 @@ const TrainingPlanDesigner = () => {
     const newPlan = [...trainingPlan];
     newPlan[index].metodo = e.target.value;
     setTrainingPlan(newPlan);
+  };
+
+  // Eliminar completamente esta función externa
+  // Añadir handleSubmit dentro del componente
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (trainingPlan.length === 0) {
+      setError("Por favor genera un plan antes de guardar");
+      return;
+    }
+    
+    if (!planName.trim()) {
+      setError("Por favor ingresa un nombre para el plan");
+      return;
+    }
+    
+    try {
+      const planData = {
+        name: planName,
+        plan: trainingPlan,
+        fitnessObjective,
+        duration,
+        frequency,
+        timeAvailable,
+        muscleSelection,
+        customMuscles,
+        equipment,
+        createdAt: new Date(),
+        // Añadir información del creador
+        creator: {
+          uid: currentUser ? currentUser.uid : 'anonymous',
+          email: currentUser ? currentUser.email : 'anonymous',
+          displayName: currentUser ? currentUser.displayName : 'Usuario Anónimo'
+        }
+      };
+      
+      await addDoc(collection(db, "trainingPlans"), planData);
+      setMessage("Plan de entrenamiento guardado correctamente.");
+      setPlanName(''); // Limpiar el nombre después de guardar
+    } catch (err) {
+      console.error("Error al guardar plan de entrenamiento:", err);
+      setError("Error al guardar plan de entrenamiento: " + err.message);
+    }
   };
 
   return (
@@ -615,6 +685,33 @@ const TrainingPlanDesigner = () => {
               {/* Botones de Acción */}
               <Grid item xs={12}>
                 <Divider className="section-divider" />
+                
+                {/* Campo para el nombre del plan */}
+                <Box sx={{ mb: 2 }}>
+                  <FormControl fullWidth>
+                    <FormLabel className="form-section-label">
+                      Nombre del Plan de Entrenamiento
+                    </FormLabel>
+                    <input
+                      type="text"
+                      value={planName}
+                      onChange={(e) => setPlanName(e.target.value)}
+                      placeholder="Ingresa un nombre para tu plan"
+                      className="form-input"
+                      style={{
+                        padding: '10px',
+                        fontSize: '16px',
+                        width: '100%',
+                        backgroundColor: '#333',
+                        color: 'white',
+                        border: '1px solid #555',
+                        borderRadius: '4px',
+                        marginTop: '8px'
+                      }}
+                    />
+                  </FormControl>
+                </Box>
+                
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
                   <Button 
                     variant="contained" 
@@ -914,34 +1011,3 @@ const TrainingPlanDesigner = () => {
 };
 
 export default TrainingPlanDesigner;
-
-// Añade la función handleSubmit si no existe o actualiza la existente
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  try {
-    // Crear el objeto de datos del plan con la información del creador
-    const planData = {
-      plan: trainingPlan,
-      fitnessObjective,
-      duration,
-      frequency,
-      timeAvailable,
-      muscleSelection,
-      customMuscles,
-      equipment,
-      createdAt: new Date(),
-      // Añadir información del creador
-      creator: {
-        uid: currentUser ? currentUser.uid : 'anonymous',
-        email: currentUser ? currentUser.email : 'anonymous',
-        displayName: currentUser ? currentUser.displayName : 'Usuario Anónimo'
-      }
-    };
-    
-    await addDoc(collection(db, "trainingPlans"), planData);
-    setMessage("Plan de entrenamiento guardado correctamente.");
-  } catch (err) {
-    console.error("Error al guardar plan de entrenamiento:", err);
-    setError("Error al guardar plan de entrenamiento: " + err.message);
-  }
-};
