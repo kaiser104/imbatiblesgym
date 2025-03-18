@@ -144,7 +144,7 @@ const TrainingPlanDesigner = () => {
   
   const open = Boolean(anchorEl);
 
-  // HANDLERS
+  // HANDLERS DE CAMBIO
   const handleFitnessObjectiveChange = (e) => setFitnessObjective(e.target.value);
   const handleDurationChange = (e) => setDuration(e.target.value);
   
@@ -180,12 +180,19 @@ const TrainingPlanDesigner = () => {
 
   const selectAllEquipment = () => setEquipment(equipmentOptions);
 
-  // Nuevo handler para la priorización
+  // Handler para priorización
   const handlePrioritizacionChange = (e) => {
     setPrioritizacion(e.target.value);
   };
 
-  // Heurística: determinar cantidad de ejercicios según objetivo y tiempo disponible
+  // Función de utilidad para encontrar el índice de un ejercicio en el plan
+  const findExerciseIndex = (sessionNumber, exerciseNumber) => {
+    return trainingPlan.findIndex(ex => 
+      ex.sessionNumber === sessionNumber && ex.exerciseNumber === exerciseNumber
+    );
+  };
+
+  // Función para obtener cantidad de ejercicios según objetivo y tiempo disponible
   const getExercisesCountByObjectiveTime = (obj, t) => {
     const timeNum = parseInt(t, 10);
     let total = 0, multi = 0, iso = 0;
@@ -215,7 +222,7 @@ const TrainingPlanDesigner = () => {
     return 60;
   };
 
-  // Función para obtener ejercicios desde Firebase (se espera que en cada documento existan: nombre, movementCategory, equipo y fileURL)
+  // Función para obtener ejercicios desde Firebase
   const fetchExercises = async () => {
     try {
       const snapshot = await getDocs(collection(db, "exercises"));
@@ -364,7 +371,7 @@ const TrainingPlanDesigner = () => {
           let sessionPlan = [];
           sessionExercises.forEach((exObj, idx) => {
             sessionPlan.push({
-              sessionNumber: s, // esta sesión dentro de la semana
+              sessionNumber: s, // número de sesión dentro de la semana
               exerciseNumber: idx + 1,
               preview: exObj.suggestedExercise.previewURL || "",
               exerciseId: exObj.suggestedExercise.id,
@@ -380,11 +387,9 @@ const TrainingPlanDesigner = () => {
           });
           weekPlan.push(sessionPlan);
         }
-        // Ahora, replicamos la misma semana para cada semana del programa
+        // Replicar la misma semana para cada semana del programa
         for (let w = 0; w < weeks; w++) {
           weekPlan.forEach(session => {
-            // Clonamos la sesión y actualizamos el número de sesión global
-            const globalSessionNumber = (w * frequencyPerWeek) + session[0].sessionNumber;
             session.forEach(ex => {
               plan.push({
                 ...ex,
@@ -456,12 +461,10 @@ const TrainingPlanDesigner = () => {
     }
   };
   
-  // Agregamos estado para almacenar el usuario actual
+  // Estado para almacenar el usuario actual y el nombre del plan
   const [currentUser, setCurrentUser] = useState(null);
-  // Estado para el nombre del plan
   const [planName, setPlanName] = useState('');
   
-  // useEffect para obtener el usuario actual al montar el componente
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(user => {
       setCurrentUser(user);
@@ -469,27 +472,76 @@ const TrainingPlanDesigner = () => {
     return () => unsubscribe();
   }, []);
   
-  // Handlers para editar la tabla
+  // HANDLERS PARA EDITAR LA TABLA CON PROPAGACIÓN EN MODO "CONTROL"
   const handleExerciseChange = (e, index) => {
     const newPlan = [...trainingPlan];
+    const currentExercise = newPlan[index];
     newPlan[index].enfoque = e.target.value;
+    
+    if (prioritizacion === 'control') {
+      const sessionNumber = currentExercise.sessionNumber;
+      const exerciseNumber = currentExercise.exerciseNumber;
+      const weeklyFrequency = parseInt(frequency, 10);
+      
+      newPlan.forEach((ex, i) => {
+        if (i !== index &&
+            ex.exerciseNumber === exerciseNumber &&
+            (ex.sessionNumber - sessionNumber) % weeklyFrequency === 0 &&
+            ex.sessionNumber > sessionNumber) {
+          ex.enfoque = e.target.value;
+        }
+      });
+    }
     setTrainingPlan(newPlan);
   };
-  
+
   const handleSeriesChange = (e, index) => {
     const newPlan = [...trainingPlan];
+    const currentExercise = newPlan[index];
     newPlan[index].series = e.target.value;
+    
+    if (prioritizacion === 'control') {
+      const sessionNumber = currentExercise.sessionNumber;
+      const exerciseNumber = currentExercise.exerciseNumber;
+      const weeklyFrequency = parseInt(frequency, 10);
+      
+      newPlan.forEach((ex, i) => {
+        if (i !== index &&
+            ex.exerciseNumber === exerciseNumber &&
+            (ex.sessionNumber - sessionNumber) % weeklyFrequency === 0 &&
+            ex.sessionNumber > sessionNumber) {
+          ex.series = e.target.value;
+        }
+      });
+    }
     setTrainingPlan(newPlan);
   };
-  
+
   const handleRestChange = (e, index) => {
     const newPlan = [...trainingPlan];
+    const currentExercise = newPlan[index];
     newPlan[index].rest = e.target.value;
+    
+    if (prioritizacion === 'control') {
+      const sessionNumber = currentExercise.sessionNumber;
+      const exerciseNumber = currentExercise.exerciseNumber;
+      const weeklyFrequency = parseInt(frequency, 10);
+      
+      newPlan.forEach((ex, i) => {
+        if (i !== index &&
+            ex.exerciseNumber === exerciseNumber &&
+            (ex.sessionNumber - sessionNumber) % weeklyFrequency === 0 &&
+            ex.sessionNumber > sessionNumber) {
+          ex.rest = e.target.value;
+        }
+      });
+    }
     setTrainingPlan(newPlan);
   };
 
   const handlePatternMovementChange = (e, index) => {
     const newPlan = [...trainingPlan];
+    const currentExercise = newPlan[index];
     const newPattern = e.target.value;
     newPlan[index].patronMovimiento = newPattern;
     
@@ -501,27 +553,119 @@ const TrainingPlanDesigner = () => {
       newPlan[index].preview = newExercise.previewURL || "";
       newPlan[index].equipmentUsed = newExercise.equipo || "Sin equipo";
       newPlan[index].exerciseId = newExercise.id;
+      
+      if (prioritizacion === 'control') {
+        const sessionNumber = currentExercise.sessionNumber;
+        const exerciseNumber = currentExercise.exerciseNumber;
+        const weeklyFrequency = parseInt(frequency, 10);
+        
+        newPlan.forEach((ex, i) => {
+          if (i !== index &&
+              ex.exerciseNumber === exerciseNumber &&
+              (ex.sessionNumber - sessionNumber) % weeklyFrequency === 0 &&
+              ex.sessionNumber > sessionNumber) {
+            ex.patronMovimiento = newPattern;
+            ex.nombreEjercicio = newExercise.nombre || "";
+            ex.preview = newExercise.previewURL || "";
+            ex.equipmentUsed = newExercise.equipo || "Sin equipo";
+            ex.exerciseId = newExercise.id;
+          }
+        });
+      }
     }
-    
     setTrainingPlan(newPlan);
   };
 
   const handleExerciseNameChange = (e, index) => {
     const newPlan = [...trainingPlan];
+    const currentExercise = newPlan[index];
     newPlan[index].nombreEjercicio = e.target.value;
+    
+    if (prioritizacion === 'control') {
+      const sessionNumber = currentExercise.sessionNumber;
+      const exerciseNumber = currentExercise.exerciseNumber;
+      const weeklyFrequency = parseInt(frequency, 10);
+      newPlan.forEach((ex, i) => {
+        if (i !== index &&
+            ex.exerciseNumber === exerciseNumber &&
+            (ex.sessionNumber - sessionNumber) % weeklyFrequency === 0 &&
+            ex.sessionNumber > sessionNumber) {
+          ex.nombreEjercicio = e.target.value;
+        }
+      });
+    }
     setTrainingPlan(newPlan);
   };
 
   const handleMuscleGroupChange = (e, index) => {
     const newPlan = [...trainingPlan];
+    const currentExercise = newPlan[index];
     newPlan[index].seleccionMuscular = e.target.value;
+    
+    if (prioritizacion === 'control') {
+      const sessionNumber = currentExercise.sessionNumber;
+      const exerciseNumber = currentExercise.exerciseNumber;
+      const weeklyFrequency = parseInt(frequency, 10);
+      newPlan.forEach((ex, i) => {
+        if (i !== index &&
+            ex.exerciseNumber === exerciseNumber &&
+            (ex.sessionNumber - sessionNumber) % weeklyFrequency === 0 &&
+            ex.sessionNumber > sessionNumber) {
+          ex.seleccionMuscular = e.target.value;
+        }
+      });
+    }
     setTrainingPlan(newPlan);
   };
 
-  // Handler para cambiar el método
   const handleMethodChange = (e, index) => {
     const newPlan = [...trainingPlan];
+    const currentExercise = newPlan[index];
     newPlan[index].metodo = e.target.value;
+    
+    if (prioritizacion === 'control') {
+      const sessionNumber = currentExercise.sessionNumber;
+      const exerciseNumber = currentExercise.exerciseNumber;
+      const weeklyFrequency = parseInt(frequency, 10);
+      newPlan.forEach((ex, i) => {
+        if (i !== index &&
+            ex.exerciseNumber === exerciseNumber &&
+            (ex.sessionNumber - sessionNumber) % weeklyFrequency === 0 &&
+            ex.sessionNumber > sessionNumber) {
+          ex.metodo = e.target.value;
+        }
+      });
+    }
+    setTrainingPlan(newPlan);
+  };
+
+  // Modificar el onClick de la selección de ejercicio en el menú desplegable
+  // para propagar el cambio en modo "control"
+  const handleSelectExerciseOption = (ex, index) => {
+    const newPlan = [...trainingPlan];
+    const currentExercise = newPlan[index];
+    newPlan[index].nombreEjercicio = ex.nombre;
+    newPlan[index].preview = ex.previewURL;
+    newPlan[index].equipmentUsed = ex.equipo;
+    newPlan[index].exerciseId = ex.id;
+    
+    if (prioritizacion === 'control') {
+      const sessionNumber = currentExercise.sessionNumber;
+      const exerciseNumber = currentExercise.exerciseNumber;
+      const weeklyFrequency = parseInt(frequency, 10);
+      
+      newPlan.forEach((planEx, i) => {
+        if (i !== index &&
+            planEx.exerciseNumber === exerciseNumber &&
+            (planEx.sessionNumber - sessionNumber) % weeklyFrequency === 0 &&
+            planEx.sessionNumber > sessionNumber) {
+          planEx.nombreEjercicio = ex.nombre;
+          planEx.preview = ex.previewURL;
+          planEx.equipmentUsed = ex.equipo;
+          planEx.exerciseId = ex.id;
+        }
+      });
+    }
     setTrainingPlan(newPlan);
   };
 
@@ -677,7 +821,7 @@ const TrainingPlanDesigner = () => {
                 </Grid>
               </Grid>
 
-              {/* Nueva sección: Prioritización */}
+              {/* Nueva sección: Prioritización con indicador visual */}
               <Grid item xs={12}>
                 <FormControl component="fieldset" fullWidth className="form-control-group">
                   <FormLabel component="legend" className="form-section-label">
@@ -699,6 +843,11 @@ const TrainingPlanDesigner = () => {
                       label="Control (entrenamiento con mayor control de cargas)" 
                     />
                   </RadioGroup>
+                  {prioritizacion === 'control' && (
+                    <Alert severity="info" sx={{ mt: 1 }}>
+                      Modo Control: Los cambios en un ejercicio se aplicarán automáticamente a las semanas siguientes.
+                    </Alert>
+                  )}
                 </FormControl>
               </Grid>
 
@@ -910,14 +1059,7 @@ const TrainingPlanDesigner = () => {
                                     <MenuItem 
                                       key={idx} 
                                       value={ex.nombre}
-                                      onClick={() => {
-                                        const newPlan = [...trainingPlan];
-                                        newPlan[index].nombreEjercicio = ex.nombre;
-                                        newPlan[index].preview = ex.previewURL;
-                                        newPlan[index].equipmentUsed = ex.equipo;
-                                        newPlan[index].exerciseId = ex.id;
-                                        setTrainingPlan(newPlan);
-                                      }}
+                                      onClick={() => handleSelectExerciseOption(ex, index)}
                                     >
                                       {ex.previewURL && (
                                         <img 

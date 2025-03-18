@@ -7,29 +7,123 @@ import {
   IconButton, 
   Menu, 
   MenuItem, 
-  Avatar 
+  Avatar,
+  Chip
 } from '@mui/material';
-import { AccountCircle, Logout, Person } from '@mui/icons-material';
+import { AccountCircle, Logout, Person, FitnessCenter, SportsMartialArts, DirectionsRun } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { auth } from '../firebase';
+import { auth, db } from '../firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import './Header.css';
 
 const Header = () => {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
-  
+  const [userRole, setUserRole] = useState(null);
+
   // Escuchar cambios en el estado de autenticación
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(user => {
+    const unsubscribe = auth.onAuthStateChanged(async user => {
       console.log("Usuario autenticado:", user);
+      console.log("UID del usuario:", user ? user.uid : "No hay usuario");
       setCurrentUser(user);
+
+      if (user) {
+        try {
+          console.log("Buscando en Firestore el usuario con UID:", user.uid);
+
+          // Buscar en trainees
+          const traineeQuery = query(collection(db, "trainees"), where("uid", "==", user.uid));
+          const traineeSnapshot = await getDocs(traineeQuery);
+          if (!traineeSnapshot.empty) {
+            console.log("Usuario encontrado en 'trainees'");
+            setUserRole('deportista');
+            return;
+          }
+
+          // Buscar en entrenadores
+          const trainerQuery = query(collection(db, "entrenadores"), where("uid", "==", user.uid));
+          const trainerSnapshot = await getDocs(trainerQuery);
+          if (!trainerSnapshot.empty) {
+            console.log("Usuario encontrado en 'entrenadores'");
+            setUserRole('entrenador');
+            return;
+          }
+
+          // Buscar en gimnasios
+          const gymQuery = query(collection(db, "gimnasios"), where("uid", "==", user.uid));
+          const gymSnapshot = await getDocs(gymQuery);
+          if (!gymSnapshot.empty) {
+            console.log("Usuario encontrado en 'gimnasios'");
+            setUserRole('gimnasio');
+            return;
+          }
+
+          // Buscar en usuarios
+          const userQuery = query(collection(db, "usuarios"), where("uid", "==", user.uid));
+          const userSnapshot = await getDocs(userQuery);
+          if (!userSnapshot.empty) {
+            const userData = userSnapshot.docs[0].data();
+            console.log("Usuario encontrado en 'usuarios':", userData);
+
+            // Determinar el rol basado en el campo "role"
+            if (userData.role) {
+              console.log("Rol encontrado:", userData.role);
+              setUserRole(userData.role.toLowerCase());
+            } else {
+              setUserRole('usuario');
+            }
+            return;
+          }
+
+          console.log("Usuario no encontrado en ninguna colección específica");
+          setUserRole('usuario');
+
+        } catch (error) {
+          console.error("Error al buscar el usuario en Firestore:", error);
+          setUserRole('usuario');
+        }
+      } else {
+        setUserRole(null);
+      }
     });
-    
-    // Limpiar suscripción al desmontar
+
     return () => unsubscribe();
   }, []);
-  
+
+  // Función para obtener el icono según el rol
+  const getRoleIcon = () => {
+    if (!userRole) return <Person fontSize="small" />;
+    
+    switch(userRole) {
+      case 'gimnasio':
+        return <FitnessCenter fontSize="small" />;
+      case 'entrenador':
+        return <SportsMartialArts fontSize="small" />;
+      case 'deportista':
+        return <DirectionsRun fontSize="small" />;
+      default:
+        return <Person fontSize="small" />;
+    }
+  };
+
+  // Función para obtener el texto del rol en español
+  const getRoleText = () => {
+    if (!userRole) return 'Usuario';
+    
+    switch(userRole) {
+      case 'gimnasio':
+        return 'Gimnasio';
+      case 'entrenador':
+        return 'Entrenador';
+      case 'deportista':
+        return 'Deportista';
+      default:
+        return 'Usuario';
+    }
+  };
+
   const handleProfileMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
   };
@@ -44,7 +138,6 @@ const Header = () => {
   };
 
   const handleLogout = () => {
-    // Implementar cierre de sesión
     auth.signOut()
       .then(() => {
         navigate('/login');
@@ -84,57 +177,55 @@ const Header = () => {
         
         <Box sx={{ flexGrow: 1 }} />
         
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column' }}>
           {currentUser && (
-            <Typography variant="body2" sx={{ mr: 1 }}>
-              {currentUser.displayName || currentUser.email || 'Usuario'}
-            </Typography>
-          )}
-          
-          <IconButton
-            edge="end"
-            aria-label="cuenta del usuario"
-            aria-controls="profile-menu"
-            aria-haspopup="true"
-            onClick={handleProfileMenuOpen}
-            color="inherit"
-          >
-            {currentUser && currentUser.photoURL ? (
-              <Avatar 
-                src={currentUser.photoURL} 
-                alt={currentUser.displayName || 'Usuario'}
-                sx={{ width: 32, height: 32, border: '2px solid white' }}
-              />
-            ) : (
-              <Avatar 
+            <>
+              <Chip
+                icon={getRoleIcon()}
+                label={getRoleText()}
+                size="small"
+                color="secondary"
                 sx={{ 
-                  width: 32, 
-                  height: 32, 
-                  bgcolor: 'secondary.main',
-                  color: 'white',
+                  mb: 0.5, 
+                  height: 24, 
+                  fontSize: '0.7rem', 
                   fontWeight: 'bold',
-                  border: '2px solid white'
+                  '& .MuiChip-icon': { fontSize: '0.9rem' }
                 }}
-              >
-                {getUserInitials()}
-              </Avatar>
-            )}
-          </IconButton>
+              />
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Typography variant="body2" sx={{ mr: 1 }}>
+                  {currentUser.displayName || currentUser.email || 'Usuario'}
+                </Typography>
+                
+                <IconButton
+                  edge="end"
+                  aria-label="cuenta del usuario"
+                  aria-controls="profile-menu"
+                  aria-haspopup="true"
+                  onClick={handleProfileMenuOpen}
+                  color="inherit"
+                >
+                  {currentUser && currentUser.photoURL ? (
+                    <Avatar 
+                      src={currentUser.photoURL} 
+                      alt={currentUser.displayName || 'Usuario'}
+                      sx={{ width: 32, height: 32, border: '2px solid white' }}
+                    />
+                  ) : (
+                    <Avatar sx={{ width: 32, height: 32, bgcolor: 'secondary.main', color: 'white', fontWeight: 'bold', border: '2px solid white' }}>
+                      {getUserInitials()}
+                    </Avatar>
+                  )}
+                </IconButton>
+              </Box>
+            </>
+          )}
         </Box>
         
-        <Menu
-          id="profile-menu"
-          anchorEl={anchorEl}
-          keepMounted
-          open={Boolean(anchorEl)}
-          onClose={handleMenuClose}
-        >
-          <MenuItem onClick={handleProfileClick}>
-            <Person sx={{ mr: 1 }} /> Perfil
-          </MenuItem>
-          <MenuItem onClick={handleLogout}>
-            <Logout sx={{ mr: 1 }} /> Cerrar Sesión
-          </MenuItem>
+        <Menu id="profile-menu" anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={handleMenuClose}>
+          <MenuItem onClick={handleProfileClick}><Person sx={{ mr: 1 }} /> Perfil</MenuItem>
+          <MenuItem onClick={handleLogout}><Logout sx={{ mr: 1 }} /> Cerrar Sesión</MenuItem>
         </Menu>
       </Toolbar>
     </AppBar>
