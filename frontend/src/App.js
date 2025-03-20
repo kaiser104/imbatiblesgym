@@ -20,6 +20,11 @@ import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import Entrenadores from './pages/Entrenadores';
 import PrivateRoute from './components/PrivateRoute';
 import Trainees from './pages/Trainees'; // Añadir esta importación
+// Asegúrate de tener esta importación al principio del archivo
+import Profile from './pages/Profile';
+
+// Y en la sección de rutas, verifica que tengas:
+<Route path="/profile" element={<Profile />} />
 
 function App() {
   // Estado para controlar la visibilidad de la sidebar
@@ -72,9 +77,10 @@ function App() {
                       <Route path="/training-plan-designer" element={<TrainingPlanDesigner />} />
                       <Route path="/exercise-manager" element={<ExerciseManager />} />
                       <Route path="/upload-exercise" element={<UploadExercise />} />
-                      <Route path="/profile" element={<div>Perfil de Usuario</div>} />
+                      // Luego, en la sección de rutas, asegúrate de tener esta ruta:
+                      <Route path="/profile" element={<Profile />} />
                       <Route path="/statistics" element={<div>Estadísticas</div>} />
-                      // Asegúrate de que tengas una ruta como esta en tu App.js
+                      {/* Asegúrate de que tengas una ruta como esta en tu App.js */}
                       <Route path="/trainees" element={
                         <PrivateRoute>
                           <Trainees />

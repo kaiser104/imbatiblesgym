@@ -1,2 +1,11 @@
-/* Estilos básicos para la aplicación */
-/* La mayoría del estilo ahora vendrá de Material-UI */
+/* Añade esto al archivo CSS global */
+.main-content {
+  margin-top: 80px;
+  padding-top: 20px;
+}
+
+/* O si prefieres usar clases de Material UI */
+.MuiContainer-root {
+  margin-top: 80px !important;
+  padding-top: 20px !important;
+}

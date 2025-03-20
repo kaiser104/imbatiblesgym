@@ -1,0 +1,199 @@
+/* Profile.css */
+.profile-container {
+  margin-top: 80px !important;
+  padding-top: 20px !important;
+}
+
+/* Asegúrate de que el contenido principal tenga suficiente espacio */
+.profile-paper {
+  margin-bottom: 30px;
+}
+
+.profile-paper {
+  background-color: #121212;
+  border: 1px solid rgba(187, 255, 0, 0.2);
+  border-radius: 8px;
+}
+
+.profile-paper .MuiAvatar-root {
+  border: 3px solid #BBFF00;
+}
+
+.social-icons {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.footer-links {
+  list-style: none;
+  padding: 0;
+}
+
+.footer-links li {
+  margin-bottom: 8px;
+}
+
+.footer-bottom {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.footer-legal {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+/* Estilos para las pestañas */
+.MuiTabs-root {
+  background-color: #1E1E1E;
+  border-radius: 4px;
+}
+
+.MuiTab-root {
+  color: #F5F5F5;
+}
+
+.MuiTab-root.Mui-selected {
+  color: #BBFF00;
+}
+
+/* Profile avatar and container styles */
+.profile-avatar-container {
+  position: relative;
+}
+
+.profile-avatar {
+  width: 150px;
+  height: 150px;
+  margin-bottom: 16px;
+}
+
+.profile-avatar-edit-button {
+  position: absolute;
+  bottom: 16px;
+  right: 0;
+  background-color: #1976d2;
+  color: white;
+}
+
+.profile-avatar-edit-button:hover {
+  background-color: #1565c0;
+}
+
+.profile-user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.profile-edit-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.profile-tabs-container {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  margin-bottom: 16px;
+}
+
+.profile-section-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.room-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.room-equipment-container {
+  margin-top: 16px;
+}
+
+.room-equipment-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.equipment-input-container {
+  display: flex;
+  gap: 8px;
+}
+
+.equipment-chips-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.weekday-chips-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.weekday-chip {
+  margin-bottom: 8px;
+}
+
+.capacity-toggle-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.capacity-toggle-chip {
+  margin-right: 8px;
+}
+
+/* Estilos para los campos de formulario */
+.MuiOutlinedInput-root {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: rgba(187, 255, 0, 0.5);
+}
+
+.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #BBFF00;
+}
+
+.MuiInputLabel-root {
+  color: #F5F5F5;
+}
+
+.MuiInputLabel-root.Mui-focused {
+  color: #BBFF00;
+}
+
+/* Estilos para los botones */
+.MuiButton-containedPrimary {
+  background-color: #BBFF00;
+  color: #000000;
+}
+
+.MuiButton-containedPrimary:hover {
+  background-color: #A0D800;
+}
+
+.MuiButton-outlined {
+  border-color: #BBFF00;
+  color: #BBFF00;
+}
+
+.MuiButton-outlined:hover {
+  background-color: rgba(187, 255, 0, 0.1);
+}

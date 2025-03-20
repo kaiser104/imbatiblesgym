@@ -71,11 +71,6 @@ const Header = () => {
             setUserRole('gimnasio');
             return;
           }
-          if (!gymSnapshot.empty) {
-            console.log("Usuario encontrado en 'gimnasios'");
-            setUserRole('gimnasio');
-            return;
-          }
 
           // Buscar en usuarios
           const userQuery = query(collection(db, "usuarios"), where("uid", "==", user.uid));
@@ -95,8 +90,37 @@ const Header = () => {
           }
 
           console.log("Usuario no encontrado en ninguna colección específica");
+          
+          // Búsqueda adicional - listar todos los gimnasios para depuración
+          console.log("Realizando búsqueda adicional en gimnasios...");
+          try {
+            const allGymsQuery = query(collection(db, "gimnasios"));
+            const allGymsSnapshot = await getDocs(allGymsQuery);
+            console.log("Total de gimnasios en la colección:", allGymsSnapshot.size);
+            
+            allGymsSnapshot.forEach(doc => {
+              const data = doc.data();
+              console.log("ID del documento:", doc.id);
+              console.log("Datos del gimnasio:", data);
+              
+              // Verificar si algún campo coincide con el usuario actual
+              if (
+                doc.id === user.uid || 
+                data.adminId === user.uid || 
+                data.uid === user.uid || 
+                data.email === user.email ||
+                data.correo === user.email
+              ) {
+                console.log("¡Coincidencia encontrada en gimnasio!");
+                setUserRole('gimnasio');
+                return;
+              }
+            });
+          } catch (error) {
+            console.error("Error al listar todos los gimnasios:", error);
+          }
+          
           setUserRole('usuario');
-
         } catch (error) {
           console.error("Error al buscar el usuario en Firestore:", error);
           setUserRole('usuario');
@@ -250,33 +274,3 @@ const Header = () => {
 };
 
 export default Header;
-
-// Búsqueda adicional - listar todos los gimnasios para depuración
-          // Si no se encontró el usuario en ninguna colección específica
-          console.log("Realizando búsqueda adicional en gimnasios...");
-          try {
-            const allGymsQuery = query(collection(db, "gimnasios"));
-            const allGymsSnapshot = await getDocs(allGymsQuery);
-            console.log("Total de gimnasios en la colección:", allGymsSnapshot.size);
-            
-            allGymsSnapshot.forEach(doc => {
-              const data = doc.data();
-              console.log("ID del documento:", doc.id);
-              console.log("Datos del gimnasio:", data);
-              
-              // Verificar si algún campo coincide con el usuario actual
-              if (
-                doc.id === user.uid || 
-                data.adminId === user.uid || 
-                data.uid === user.uid || 
-                data.email === user.email ||
-                data.correo === user.email
-              ) {
-                console.log("¡Coincidencia encontrada en gimnasio!");
-                setUserRole('gimnasio');
-                return;
-              }
-            });
-          } catch (error) {
-            console.error("Error al listar todos los gimnasios:", error);
-          }
