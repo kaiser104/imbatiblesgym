@@ -1,72 +1,60 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { db } from '../firebase';
+import { collection, query, where, getDocs, doc, updateDoc, addDoc } from 'firebase/firestore';
 import {
-  Container, Typography, Box, Tabs, Tab, TextField, FormControl,
-  InputLabel, Select, MenuItem, Button, TableContainer, Table,
-  TableHead, TableBody, TableRow, TableCell, Paper, Avatar,
-  Chip, CircularProgress, Alert, Dialog, DialogTitle, DialogContent,
-  DialogActions, InputAdornment
+  Container, Typography, Box, TextField, Button, Table, TableBody, TableCell, 
+  TableContainer, TableHead, TableRow, Paper, Tabs, Tab, FormControl, InputLabel,
+  Select, MenuItem, InputAdornment, Chip, Avatar, CircularProgress, Alert,
+  Dialog, DialogTitle, DialogContent, DialogActions
 } from '@mui/material';
 import {
-  Search, Refresh, Edit, CheckCircle, Warning, Block, LocationOn,
-  AccessTime, WhatsApp
+  Search, Refresh, Edit, CheckCircle, Block, Warning, LocationOn, 
+  AccessTime, WhatsApp, InfoOutlined
 } from '@mui/icons-material';
-import { collection, query, where, getDocs, doc, updateDoc, addDoc, deleteDoc } from 'firebase/firestore';
-import { auth, db } from '../firebase';
-import './UserManagement.css';
 
-const UserManagement = () => {
-  // Estado para el usuario actual
-  const [currentUser, setCurrentUser] = useState(null);
+function UserManagement() {
+  const { currentUser } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  
-  // Estado para los usuarios y filtros
+  const [error, setError] = useState('');
+  const [userType, setUserType] = useState('');
+  const [userDetails, setUserDetails] = useState(null);
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
-  
-  // Estado para el tipo de usuario y detalles
-  const [userType, setUserType] = useState(null);
-  const [userDetails, setUserDetails] = useState(null);
-  
-  // Estado para las pestañas
   const [tabValue, setTabValue] = useState(0);
-  
-  // Estado para el diálogo de membresía
-  const [openMembershipDialog, setOpenMembershipDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [openMembershipDialog, setOpenMembershipDialog] = useState(false);
   const [membershipData, setMembershipData] = useState({
     tipo: 'monthly',
     fechaInicio: new Date().toISOString().split('T')[0],
     fechaFin: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0],
     precio: '',
-    estado: 'activa'
+    estado: 'activa',
+    fechaFinModificada: false
   });
   
-  // Efecto para obtener el usuario actual
+  // Añadir estados para el diálogo de pausa
+  const [openPauseDialog, setOpenPauseDialog] = useState(false);
+  const [pauseData, setPauseData] = useState({
+    dias: 7,
+    motivo: '',
+    fechaInicio: new Date().toISOString().split('T')[0],
+    fechaFin: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString().split('T')[0]
+  });
+
+  // Determinar tipo de usuario al cargar
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(user => {
-      setCurrentUser(user);
-      if (!user) {
-        setLoading(false);
-        setError("No hay usuario autenticado");
-      }
-    });
-    return () => unsubscribe();
-  }, []);
-  
-  // Efecto para determinar el tipo de usuario
-  useEffect(() => {
+    if (!currentUser) {
+      setError('No hay usuario autenticado');
+      setLoading(false);
+      return;
+    }
+    
     const fetchUserType = async () => {
-      if (!currentUser) {
-        console.log("UserManagement - No hay usuario autenticado");
-        return;
-      }
-      
       try {
-        setLoading(true);
-        console.log("UserManagement - Usuario actual:", currentUser.uid, currentUser.email);
+        console.log("UserManagement - Determinando tipo de usuario para:", currentUser.uid);
         
         // Verificar si es super-administrador
         const adminQuery = query(
@@ -392,7 +380,8 @@ const UserManagement = () => {
         fechaInicio: startDate.toISOString().split('T')[0],
         fechaFin: endDateNew.toISOString().split('T')[0],
         precio: user.activeMembership.precio || '',
-        estado: 'activa'
+        estado: 'activa',
+        fechaFinModificada: false
       });
     } else {
       // Si no tiene membresía, usar valores predeterminados
@@ -405,7 +394,8 @@ const UserManagement = () => {
         fechaInicio: startDate.toISOString().split('T')[0],
         fechaFin: endDate.toISOString().split('T')[0],
         precio: '',
-        estado: 'activa'
+        estado: 'activa',
+        fechaFinModificada: false
       });
     }
     
@@ -417,44 +407,67 @@ const UserManagement = () => {
     const { name, value } = e.target;
     
     if (name === 'tipo') {
-      // Actualizar fecha de fin según el tipo de membresía
-      const startDate = new Date(membershipData.fechaInicio);
-      let endDate = new Date(startDate);
-      
-      if (value === 'monthly') {
-        endDate.setMonth(endDate.getMonth() + 1);
-      } else if (value === 'quarterly') {
-        endDate.setMonth(endDate.getMonth() + 3);
-      } else if (value === 'semiannual') {
-        endDate.setMonth(endDate.getMonth() + 6);
-      } else if (value === 'annual') {
-        endDate.setFullYear(endDate.getFullYear() + 1);
+      // Actualizar fecha de fin según el tipo de membresía solo si no ha sido modificada manualmente
+      if (!membershipData.fechaFinModificada) {
+        const startDate = new Date(membershipData.fechaInicio);
+        let endDate = new Date(startDate);
+        
+        if (value === 'monthly') {
+          endDate.setMonth(endDate.getMonth() + 1);
+        } else if (value === 'quarterly') {
+          endDate.setMonth(endDate.getMonth() + 3);
+        } else if (value === 'semiannual') {
+          endDate.setMonth(endDate.getMonth() + 6);
+        } else if (value === 'annual') {
+          endDate.setFullYear(endDate.getFullYear() + 1);
+        }
+        
+        setMembershipData({
+          ...membershipData,
+          tipo: value,
+          fechaFin: endDate.toISOString().split('T')[0]
+        });
+      } else {
+        // Si la fecha de fin fue modificada manualmente, solo actualizar el tipo
+        setMembershipData({
+          ...membershipData,
+          tipo: value
+        });
       }
-      
-      setMembershipData({
-        ...membershipData,
-        tipo: value,
-        fechaFin: endDate.toISOString().split('T')[0]
-      });
     } else if (name === 'fechaInicio') {
-      // Actualizar fecha de fin manteniendo la duración
-      const startDate = new Date(value);
-      let endDate = new Date(startDate);
-      
-      if (membershipData.tipo === 'monthly') {
-        endDate.setMonth(endDate.getMonth() + 1);
-      } else if (membershipData.tipo === 'quarterly') {
-        endDate.setMonth(endDate.getMonth() + 3);
-      } else if (membershipData.tipo === 'semiannual') {
-        endDate.setMonth(endDate.getMonth() + 6);
-      } else if (membershipData.tipo === 'annual') {
-        endDate.setFullYear(endDate.getFullYear() + 1);
+      // Actualizar fecha de fin manteniendo la duración solo si no ha sido modificada manualmente
+      if (!membershipData.fechaFinModificada) {
+        const startDate = new Date(value);
+        let endDate = new Date(startDate);
+        
+        if (membershipData.tipo === 'monthly') {
+          endDate.setMonth(endDate.getMonth() + 1);
+        } else if (membershipData.tipo === 'quarterly') {
+          endDate.setMonth(endDate.getMonth() + 3);
+        } else if (membershipData.tipo === 'semiannual') {
+          endDate.setMonth(endDate.getMonth() + 6);
+        } else if (membershipData.tipo === 'annual') {
+          endDate.setFullYear(endDate.getFullYear() + 1);
+        }
+        
+        setMembershipData({
+          ...membershipData,
+          fechaInicio: value,
+          fechaFin: endDate.toISOString().split('T')[0]
+        });
+      } else {
+        // Si la fecha de fin fue modificada manualmente, solo actualizar la fecha de inicio
+        setMembershipData({
+          ...membershipData,
+          fechaInicio: value
+        });
       }
-      
+    } else if (name === 'fechaFin') {
+      // Marcar que la fecha de fin ha sido modificada manualmente
       setMembershipData({
         ...membershipData,
-        fechaInicio: value,
-        fechaFin: endDate.toISOString().split('T')[0]
+        fechaFin: value,
+        fechaFinModificada: true
       });
     } else {
       setMembershipData({
@@ -569,18 +582,209 @@ const UserManagement = () => {
     }
   };
 
+  // Función para abrir el diálogo de pausa
+  const handleOpenPauseDialog = (user) => {
+    if (!user || !user.activeMembership) return;
+    
+    setSelectedUser(user);
+    
+    // Inicializar datos de pausa
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setDate(endDate.getDate() + 7); // Por defecto 7 días
+    
+    setPauseData({
+      dias: 7,
+      motivo: '',
+      fechaInicio: startDate.toISOString().split('T')[0],
+      fechaFin: endDate.toISOString().split('T')[0]
+    });
+    
+    setOpenPauseDialog(true);
+  };
+
+  // Manejar cambio en datos de pausa
+  const handlePauseChange = (e) => {
+    const { name, value } = e.target;
+    
+    if (name === 'dias') {
+      // Actualizar fecha de fin según los días
+      const startDate = new Date(pauseData.fechaInicio);
+      const endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + parseInt(value));
+      
+      setPauseData({
+        ...pauseData,
+        dias: value,
+        fechaFin: endDate.toISOString().split('T')[0]
+      });
+    } else if (name === 'fechaInicio') {
+      // Actualizar fecha de fin manteniendo la duración
+      const startDate = new Date(value);
+      const endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + parseInt(pauseData.dias));
+      
+      setPauseData({
+        ...pauseData,
+        fechaInicio: value,
+        fechaFin: endDate.toISOString().split('T')[0]
+      });
+    } else {
+      setPauseData({
+        ...pauseData,
+        [name]: value
+      });
+    }
+  };
+
+  // Guardar pausa de membresía
+  const handleSavePause = async () => {
+    if (!selectedUser || !selectedUser.activeMembership) return;
+    
+    try {
+      setLoading(true);
+      
+      // Calcular nueva fecha de fin de membresía (extender por los días de pausa)
+      const currentEndDate = new Date(selectedUser.activeMembership.fechaFin);
+      const newEndDate = new Date(currentEndDate);
+      newEndDate.setDate(newEndDate.getDate() + parseInt(pauseData.dias));
+      
+      // Actualizar membresía a estado pausado
+      await updateDoc(doc(db, 'membresias', selectedUser.activeMembership.id), {
+        estado: 'pausada',
+        pausaInicio: pauseData.fechaInicio,
+        pausaFin: pauseData.fechaFin,
+        pausaDias: parseInt(pauseData.dias),
+        pausaMotivo: pauseData.motivo,
+        fechaFin: newEndDate.toISOString().split('T')[0] // Extender fecha fin
+      });
+      
+      // Crear registro de pausa
+      await addDoc(collection(db, 'pausas'), {
+        membresiaId: selectedUser.activeMembership.id,
+        traineeId: selectedUser.id,
+        fechaInicio: pauseData.fechaInicio,
+        fechaFin: pauseData.fechaFin,
+        dias: parseInt(pauseData.dias),
+        motivo: pauseData.motivo,
+        fechaCreacion: new Date().toISOString()
+      });
+      
+      // Cerrar diálogo y recargar datos
+      setOpenPauseDialog(false);
+      
+      // Actualizar datos locales
+      const updatedUsers = [...users];
+      const userIndex = updatedUsers.findIndex(u => u.id === selectedUser.id);
+      
+      if (userIndex !== -1) {
+        // Actualizar membresías del usuario
+        if (updatedUsers[userIndex].memberships) {
+          const membershipIndex = updatedUsers[userIndex].memberships.findIndex(
+            m => m.id === selectedUser.activeMembership.id
+          );
+          
+          if (membershipIndex !== -1) {
+            updatedUsers[userIndex].memberships[membershipIndex].estado = 'pausada';
+            updatedUsers[userIndex].memberships[membershipIndex].pausaInicio = pauseData.fechaInicio;
+            updatedUsers[userIndex].memberships[membershipIndex].pausaFin = pauseData.fechaFin;
+            updatedUsers[userIndex].memberships[membershipIndex].pausaDias = parseInt(pauseData.dias);
+            updatedUsers[userIndex].memberships[membershipIndex].pausaMotivo = pauseData.motivo;
+            updatedUsers[userIndex].memberships[membershipIndex].fechaFin = newEndDate.toISOString().split('T')[0];
+          }
+        }
+        
+        // Actualizar membresía activa
+        if (updatedUsers[userIndex].activeMembership) {
+          updatedUsers[userIndex].activeMembership.estado = 'pausada';
+          updatedUsers[userIndex].activeMembership.pausaInicio = pauseData.fechaInicio;
+          updatedUsers[userIndex].activeMembership.pausaFin = pauseData.fechaFin;
+          updatedUsers[userIndex].activeMembership.pausaDias = parseInt(pauseData.dias);
+          updatedUsers[userIndex].activeMembership.pausaMotivo = pauseData.motivo;
+          updatedUsers[userIndex].activeMembership.fechaFin = newEndDate.toISOString().split('T')[0];
+        }
+        
+        setUsers(updatedUsers);
+      }
+      
+      setLoading(false);
+    } catch (err) {
+      console.error('Error al pausar membresía:', err);
+      setError('Error al pausar la membresía: ' + err.message);
+      setLoading(false);
+    }
+  };
+
+  // Reactivar membresía pausada
+  const handleReactivateMembership = async (user, membershipId) => {
+    if (!user || !membershipId) return;
+    
+    try {
+      setLoading(true);
+      
+      // Actualizar estado de la membresía a activa
+      await updateDoc(doc(db, 'membresias', membershipId), {
+        estado: 'activa',
+        pausaInicio: null,
+        pausaFin: null,
+        pausaDias: null,
+        pausaMotivo: null
+      });
+      
+      // Actualizar datos locales
+      const updatedUsers = [...users];
+      const userIndex = updatedUsers.findIndex(u => u.id === user.id);
+      
+      if (userIndex !== -1) {
+        // Actualizar membresías del usuario
+        if (updatedUsers[userIndex].memberships) {
+          const membershipIndex = updatedUsers[userIndex].memberships.findIndex(m => m.id === membershipId);
+          
+          if (membershipIndex !== -1) {
+            updatedUsers[userIndex].memberships[membershipIndex].estado = 'activa';
+            updatedUsers[userIndex].memberships[membershipIndex].pausaInicio = null;
+            updatedUsers[userIndex].memberships[membershipIndex].pausaFin = null;
+            updatedUsers[userIndex].memberships[membershipIndex].pausaDias = null;
+            updatedUsers[userIndex].memberships[membershipIndex].pausaMotivo = null;
+          }
+        }
+        
+        // Actualizar membresía activa si es la misma
+        if (updatedUsers[userIndex].activeMembership && updatedUsers[userIndex].activeMembership.id === membershipId) {
+          updatedUsers[userIndex].activeMembership.estado = 'activa';
+          updatedUsers[userIndex].activeMembership.pausaInicio = null;
+          updatedUsers[userIndex].activeMembership.pausaFin = null;
+          updatedUsers[userIndex].activeMembership.pausaDias = null;
+          updatedUsers[userIndex].activeMembership.pausaMotivo = null;
+        }
+        
+        setUsers(updatedUsers);
+      }
+      
+      setLoading(false);
+    } catch (err) {
+      console.error('Error al reactivar membresía:', err);
+      setError('Error al reactivar la membresía: ' + err.message);
+      setLoading(false);
+    }
+  };
+
   // Renderizar tabla de usuarios
   const renderUsersTable = () => {
     if (filteredUsers.length === 0) {
       return (
-        <Box sx={{ textAlign: 'center', mt: 4, p: 3, backgroundColor: '#1E1E1E', borderRadius: '4px' }}>
-          <Typography variant="h6" sx={{ color: '#FFFFFF', mb: 2 }}>
+        <Box sx={{ 
+          backgroundColor: '#1E1E1E', 
+          p: 3, 
+          borderRadius: '4px', 
+          textAlign: 'center',
+          color: '#FFFFFF'
+        }}>
+          <Typography variant="h6">
             No se encontraron usuarios
           </Typography>
-          <Typography variant="body1" sx={{ color: '#BBFF00' }}>
-            {searchTerm || filterType !== 'all' ? 
-              'Prueba con otros filtros de búsqueda' : 
-              'Aún no hay usuarios registrados en esta categoría'}
+          <Typography variant="body2" sx={{ mt: 1 }}>
+            Intenta cambiar los filtros o la búsqueda
           </Typography>
         </Box>
       );
@@ -690,11 +894,11 @@ const UserManagement = () => {
                       user.activeMembership ? (
                         <Box>
                           <Chip 
-                            icon={<CheckCircle />} 
-                            label="Activa" 
-                            color="success"
+                            icon={user.activeMembership.estado === 'pausada' ? <Warning /> : <CheckCircle />} 
+                            label={user.activeMembership.estado === 'pausada' ? 'Pausada' : 'Activa'} 
+                            color={user.activeMembership.estado === 'pausada' ? 'warning' : 'success'}
                             size="small"
-                            className="membership-chip active"
+                            className={`membership-chip ${user.activeMembership.estado}`}
                             sx={{ mb: 1 }}
                           />
                           <Typography variant="body2" className="membership-dates" sx={{ color: '#FFFFFF' }}>
@@ -708,7 +912,12 @@ const UserManagement = () => {
                              user.activeMembership.tipo === 'annual' ? 'Anual' : 
                              user.activeMembership.tipo}
                           </Typography>
-                          {new Date(user.activeMembership.fechaFin) <= new Date(new Date().setDate(new Date().getDate() + 7)) && (
+                          {user.activeMembership.estado === 'pausada' && (
+                            <Typography variant="body2" sx={{ color: '#ff9800', mt: 1 }}>
+                              Pausada hasta: {new Date(user.activeMembership.pausaFin).toLocaleDateString()}
+                            </Typography>
+                          )}
+                          {user.activeMembership.estado === 'activa' && new Date(user.activeMembership.fechaFin) <= new Date(new Date().setDate(new Date().getDate() + 7)) && (
                             <Chip 
                               icon={<Warning />} 
                               label="Por vencer" 
@@ -735,7 +944,6 @@ const UserManagement = () => {
                     )}
                   </TableCell>
                 )}
-                <TableCell></TableCell>
                 <TableCell>
                   <Box className="action-buttons" sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                     {user.userType === 'trainee' && (
@@ -753,6 +961,42 @@ const UserManagement = () => {
                         }}
                       >
                         {user.activeMembership ? 'Renovar' : 'Activar membresía'}
+                      </Button>
+                    )}
+                    {user.userType === 'trainee' && user.activeMembership && user.activeMembership.estado === 'activa' && (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => handleOpenPauseDialog(user)}
+                        className="pause-membership-button"
+                        sx={{ 
+                          borderColor: '#ff9800', 
+                          color: '#ff9800',
+                          '&:hover': {
+                            borderColor: '#f57c00',
+                            backgroundColor: 'rgba(255, 152, 0, 0.1)',
+                          }
+                        }}
+                      >
+                        Pausar membresía
+                      </Button>
+                    )}
+                    {user.userType === 'trainee' && user.activeMembership && user.activeMembership.estado === 'pausada' && (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => handleReactivateMembership(user, user.activeMembership.id)}
+                        className="reactivate-membership-button"
+                        sx={{ 
+                          borderColor: '#4caf50', 
+                          color: '#4caf50',
+                          '&:hover': {
+                            borderColor: '#388e3c',
+                            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                          }
+                        }}
+                      >
+                        Reactivar membresía
                       </Button>
                     )}
                     {user.userType === 'trainee' && user.activeMembership && (
@@ -939,6 +1183,7 @@ const UserManagement = () => {
                     <MenuItem value="active">Membresía Activa</MenuItem>
                     <MenuItem value="inactive">Sin Membresía</MenuItem>
                     <MenuItem value="expiring">Por Vencer</MenuItem>
+                    <MenuItem value="paused">Pausadas</MenuItem>
                   </>
                 )}
               </Select>
@@ -1002,9 +1247,9 @@ const UserManagement = () => {
                 }}>
                   <Typography variant="body2" sx={{ color: '#FFFFFF' }}>
                     Membresía actual: <Chip 
-                      label="Activa" 
+                      label={selectedUser.activeMembership.estado === 'pausada' ? 'Pausada' : 'Activa'} 
                       size="small" 
-                      color="success" 
+                      color={selectedUser.activeMembership.estado === 'pausada' ? 'warning' : 'success'} 
                       sx={{ ml: 1 }} 
                     />
                   </Typography>
@@ -1084,9 +1329,7 @@ const UserManagement = () => {
               type="date"
               name="fechaFin"
               value={membershipData.fechaFin}
-              InputProps={{
-                readOnly: true,
-              }}
+              onChange={handleMembershipChange}
               fullWidth
               InputLabelProps={{
                 shrink: true,
@@ -1095,6 +1338,12 @@ const UserManagement = () => {
                 '& .MuiOutlinedInput-root': {
                   '& fieldset': {
                     borderColor: 'rgba(187, 255, 0, 0.3)',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'rgba(187, 255, 0, 0.5)',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#BBFF00',
                   },
                 },
                 '& .MuiInputLabel-root': {
@@ -1151,6 +1400,224 @@ const UserManagement = () => {
           </Button>
           <Button 
             onClick={handleSaveMembership}
+            variant="contained"
+            sx={{ 
+              backgroundColor: '#BBFF00', 
+              color: '#000000',
+              '&:hover': {
+                backgroundColor: '#CCFF33',
+              }
+            }}
+          >
+            Guardar
+          </Button>
+        </DialogActions>
+      </Dialog>
+      
+      {/* Diálogo de pausa de membresía */}
+      <Dialog 
+        open={openPauseDialog} 
+        onClose={() => setOpenPauseDialog(false)}
+        className="pause-dialog"
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            backgroundColor: '#121212',
+            color: '#FFFFFF',
+          }
+        }}
+      >
+        <DialogTitle sx={{ borderBottom: '1px solid #333', color: '#BBFF00' }}>
+          Pausar Membresía
+        </DialogTitle>
+        <DialogContent sx={{ pt: 3 }}>
+          {selectedUser && (
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle1" sx={{ mb: 1, color: '#FFFFFF' }}>
+                Usuario: <span style={{ color: '#BBFF00' }}>{selectedUser.nombre}</span>
+              </Typography>
+              {selectedUser.activeMembership && (
+                <Box sx={{ 
+                  backgroundColor: '#1E1E1E', 
+                  p: 2, 
+                  borderRadius: '4px', 
+                  mb: 2 
+                }}>
+                  <Typography variant="body2" sx={{ color: '#FFFFFF' }}>
+                    Membresía actual: <Chip 
+                      label="Activa" 
+                      size="small" 
+                      color="success" 
+                      sx={{ ml: 1 }} 
+                    />
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#FFFFFF', mt: 1 }}>
+                    Vence el: <span style={{ color: '#BBFF00' }}>
+                      {new Date(selectedUser.activeMembership.fechaFin).toLocaleDateString()}
+                    </span>
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          )}
+          
+          <Typography variant="subtitle2" sx={{ mb: 2, color: '#BBFF00' }}>
+            Información de pausa
+          </Typography>
+          
+          <TextField
+            label="Días de pausa"
+            type="number"
+            name="dias"
+            value={pauseData.dias}
+            onChange={handlePauseChange}
+            fullWidth
+            sx={{ 
+              mb: 2,
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': {
+                  borderColor: 'rgba(187, 255, 0, 0.3)',
+                },
+                '&:hover fieldset': {
+                  borderColor: 'rgba(187, 255, 0, 0.5)',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: '#BBFF00',
+                },
+              },
+              '& .MuiInputLabel-root': {
+                color: '#FFFFFF',
+              },
+              '& .MuiInputBase-input': {
+                color: '#FFFFFF',
+              }
+            }}
+          />
+          
+          <TextField
+            label="Motivo de la pausa"
+            multiline
+            rows={3}
+            name="motivo"
+            value={pauseData.motivo}
+            onChange={handlePauseChange}
+            fullWidth
+            sx={{ 
+              mb: 2,
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': {
+                  borderColor: 'rgba(187, 255, 0, 0.3)',
+                },
+                '&:hover fieldset': {
+                  borderColor: 'rgba(187, 255, 0, 0.5)',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: '#BBFF00',
+                },
+              },
+              '& .MuiInputLabel-root': {
+                color: '#FFFFFF',
+              },
+              '& .MuiInputBase-input': {
+                color: '#FFFFFF',
+              }
+            }}
+          />
+          
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+            <TextField
+              label="Fecha de inicio"
+              type="date"
+              name="fechaInicio"
+              value={pauseData.fechaInicio}
+              onChange={handlePauseChange}
+              InputLabelProps={{
+                shrink: true,
+              }}
+              sx={{ 
+                width: '48%',
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    borderColor: 'rgba(187, 255, 0, 0.3)',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'rgba(187, 255, 0, 0.5)',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#BBFF00',
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  color: '#FFFFFF',
+                },
+                '& .MuiInputBase-input': {
+                  color: '#FFFFFF',
+                }
+              }}
+            />
+            <TextField
+              label="Fecha de fin"
+              type="date"
+              name="fechaFin"
+              value={pauseData.fechaFin}
+              disabled
+              InputLabelProps={{
+                shrink: true,
+              }}
+              sx={{ 
+                width: '48%',
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    borderColor: 'rgba(187, 255, 0, 0.3)',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'rgba(187, 255, 0, 0.5)',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#BBFF00',
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  color: '#FFFFFF',
+                },
+                '& .MuiInputBase-input': {
+                  color: '#FFFFFF',
+                }
+              }}
+            />
+          </Box>
+          
+          <Box sx={{ 
+            backgroundColor: '#1E1E1E', 
+            p: 2, 
+            borderRadius: '4px', 
+            mb: 2,
+            color: '#FFFFFF'
+          }}>
+            <Typography variant="body2" sx={{ mb: 1 }}>
+              <InfoOutlined fontSize="small" sx={{ color: '#BBFF00', mr: 1, verticalAlign: 'middle' }} />
+              La membresía se extenderá automáticamente por {pauseData.dias} días.
+            </Typography>
+            <Typography variant="body2">
+              Nueva fecha de vencimiento: <span style={{ color: '#BBFF00' }}>
+                {selectedUser?.activeMembership ? 
+                  new Date(new Date(selectedUser.activeMembership.fechaFin).setDate(
+                    new Date(selectedUser.activeMembership.fechaFin).getDate() + parseInt(pauseData.dias || 0)
+                  )).toLocaleDateString() : ''}
+              </span>
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ borderTop: '1px solid #333', p: 2 }}>
+          <Button 
+            onClick={() => setOpenPauseDialog(false)}
+            sx={{ color: '#FFFFFF' }}
+          >
+            Cancelar
+          </Button>
+          <Button 
+            onClick={handleSavePause}
             variant="contained"
             sx={{ 
               backgroundColor: '#BBFF00', 
