@@ -1,0 +1,119 @@
+.user-management-container {
+  min-height: 100vh;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+  color: #FFFFFF;
+}
+
+.page-title {
+  margin-bottom: 2rem;
+  color: #BBFF00;
+  font-weight: bold;
+  text-shadow: 0 0 10px rgba(187, 255, 0, 0.5);
+}
+
+.user-tabs {
+  margin-bottom: 2rem;
+}
+
+.user-tabs .MuiTab-root {
+  color: #FFFFFF;
+  opacity: 0.7;
+}
+
+.user-tabs .MuiTab-root.Mui-selected {
+  color: #BBFF00;
+  opacity: 1;
+}
+
+.user-tabs .MuiTabs-indicator {
+  background-color: #BBFF00;
+}
+
+.filters-container {
+  margin-bottom: 2rem;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.search-field {
+  flex-grow: 1;
+  min-width: 250px;
+}
+
+.filter-select {
+  min-width: 150px;
+}
+
+.users-table {
+  margin-bottom: 2rem;
+}
+
+.user-row:hover {
+  background-color: rgba(187, 255, 0, 0.05) !important;
+}
+
+.user-avatar {
+  width: 50px;
+  height: 50px;
+  border: 2px solid #BBFF00;
+}
+
+.user-name {
+  font-weight: bold;
+}
+
+.user-type-chip {
+  margin-top: 0.5rem;
+}
+
+.gimnasio-chip {
+  background-color: #3f51b5;
+  color: #FFFFFF;
+}
+
+.entrenador-chip {
+  background-color: #f50057;
+  color: #FFFFFF;
+}
+
+.trainee-chip {
+  background-color: #4caf50;
+  color: #FFFFFF;
+}
+
+.membership-chip {
+  margin-bottom: 0.5rem;
+}
+
+.membership-dates {
+  font-size: 0.8rem;
+  margin-bottom: 0.25rem;
+}
+
+.membership-type {
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.membership-dialog .MuiPaper-root {
+  background-color: #121212;
+  color: #FFFFFF;
+}
+
+@media (max-width: 600px) {
+  .filters-container {
+    flex-direction: column;
+  }
+  
+  .search-field, .filter-select {
+    width: 100%;
+  }
+}

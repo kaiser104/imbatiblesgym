@@ -6,6 +6,11 @@ import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import GroupIcon from '@mui/icons-material/Group';
 import EventIcon from '@mui/icons-material/Event';
 import './Dashboard.css'; // Importamos el CSS
+import { 
+  AdminPanelSettings,
+  PeopleAlt,
+  ManageAccounts
+} from '@mui/icons-material';
 
 function Dashboard() {
   return (

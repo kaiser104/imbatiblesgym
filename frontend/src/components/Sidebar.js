@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Drawer, 
   Box, 
@@ -7,13 +7,11 @@ import {
   Typography,
   Stack,
   ListItem,
-  ListItemButton,
   ListItemIcon,
   ListItemText,
-  Tooltip,
   IconButton
 } from '@mui/material';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
@@ -24,13 +22,137 @@ import BarChartIcon from '@mui/icons-material/BarChart';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import './Sidebar.css';
-import LocationOnIcon from '@mui/icons-material/LocationOn'; // Importar icono para Gimnasios
-import PeopleIcon from '@mui/icons-material/People'; // Import icon for Entrenadores
-import SchoolIcon from '@mui/icons-material/School'; // Importar icono para Trainees
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import PeopleIcon from '@mui/icons-material/People';
+import SchoolIcon from '@mui/icons-material/School';
+import RoomIcon from '@mui/icons-material/Room';
+import {
+  PeopleAlt,
+  ManageAccounts,
+  AdminPanelSettings
+} from '@mui/icons-material';
+import { auth, db } from '../firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 const Sidebar = ({ open, toggleSidebar }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [currentUser, setCurrentUser] = useState(null);
+  const [userRole, setUserRole] = useState(null);
+  const [loading, setLoading] = useState(true);
+  
+  // Escuchar cambios en el estado de autenticación - similar al Header
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async user => {
+      console.log("Sidebar - Usuario autenticado:", user);
+      setCurrentUser(user);
+
+      if (user) {
+        try {
+          console.log("Sidebar - Buscando en Firestore el usuario con UID:", user.uid);
+
+          // Buscar en trainees
+          const traineeQuery = query(collection(db, "trainees"), where("uid", "==", user.uid));
+          const traineeSnapshot = await getDocs(traineeQuery);
+          if (!traineeSnapshot.empty) {
+            console.log("Sidebar - Usuario encontrado en 'trainees'");
+            setUserRole('deportista');
+            setLoading(false);
+            return;
+          }
+
+          // Buscar en entrenadores
+          const trainerQuery = query(collection(db, "entrenadores"), where("uid", "==", user.uid));
+          const trainerSnapshot = await getDocs(trainerQuery);
+          if (!trainerSnapshot.empty) {
+            console.log("Sidebar - Usuario encontrado en 'entrenadores'");
+            setUserRole('entrenador');
+            setLoading(false);
+            return;
+          }
+
+          // Buscar en gimnasios - usando adminId en lugar de uid
+          const gymQuery = query(collection(db, "gimnasios"), where("adminId", "==", user.uid));
+          const gymSnapshot = await getDocs(gymQuery);
+          console.log("Sidebar - Resultado búsqueda gimnasios por adminId:", gymSnapshot.empty ? "No encontrado" : "Encontrado");
+          
+          if (!gymSnapshot.empty) {
+            console.log("Sidebar - Usuario encontrado en 'gimnasios' como administrador");
+            setUserRole('gimnasio');
+            setLoading(false);
+            return;
+          }
+          
+          // Buscar en gimnasios por uid (por si acaso)
+          const gymUidQuery = query(collection(db, "gimnasios"), where("uid", "==", user.uid));
+          const gymUidSnapshot = await getDocs(gymUidQuery);
+          if (!gymUidSnapshot.empty) {
+            console.log("Sidebar - Usuario encontrado en 'gimnasios' por uid");
+            setUserRole('gimnasio');
+            setLoading(false);
+            return;
+          }
+
+          // Buscar en usuarios
+          const userQuery = query(collection(db, "usuarios"), where("uid", "==", user.uid));
+          const userSnapshot = await getDocs(userQuery);
+          if (!userSnapshot.empty) {
+            const userData = userSnapshot.docs[0].data();
+            console.log("Sidebar - Usuario encontrado en 'usuarios':", userData);
+
+            // Determinar el rol basado en el campo "role"
+            if (userData.role) {
+              console.log("Sidebar - Rol encontrado:", userData.role);
+              setUserRole(userData.role.toLowerCase());
+            } else {
+              setUserRole('usuario');
+            }
+            setLoading(false);
+            return;
+          }
+
+          // Búsqueda adicional - listar todos los gimnasios para depuración
+          console.log("Sidebar - Realizando búsqueda adicional en gimnasios...");
+          try {
+            const allGymsQuery = query(collection(db, "gimnasios"));
+            const allGymsSnapshot = await getDocs(allGymsQuery);
+            
+            allGymsSnapshot.forEach(doc => {
+              const data = doc.data();
+              
+              // Verificar si algún campo coincide con el usuario actual
+              if (
+                doc.id === user.uid || 
+                data.adminId === user.uid || 
+                data.uid === user.uid || 
+                data.email === user.email ||
+                data.correo === user.email
+              ) {
+                console.log("Sidebar - ¡Coincidencia encontrada en gimnasio!");
+                setUserRole('gimnasio');
+                setLoading(false);
+                return;
+              }
+            });
+          } catch (error) {
+            console.error("Sidebar - Error al listar todos los gimnasios:", error);
+          }
+          
+          setUserRole('usuario');
+          setLoading(false);
+        } catch (error) {
+          console.error("Sidebar - Error al buscar el usuario en Firestore:", error);
+          setUserRole('usuario');
+          setLoading(false);
+        }
+      } else {
+        setUserRole(null);
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
   
   // Definir los elementos del menú
   const menuItems = [
@@ -74,12 +196,36 @@ const Sidebar = ({ open, toggleSidebar }) => {
       icon: <SchoolIcon />, 
       path: '/trainees' 
     },
+    // Nuevo elemento para Gestión de Salas (solo visible para gimnasios)
+    { 
+      text: 'Gestión de Salas', 
+      icon: <RoomIcon />, 
+      path: '/rooms-management',
+      roles: ['gimnasio'] // Solo visible para usuarios con rol de gimnasio
+    },
+    // Nuevo elemento para Gestión de Usuarios
+    {
+      text: 'Gestión de Usuarios',
+      icon: userRole === 'super-administrador' ? <AdminPanelSettings /> : 
+            userRole === 'gimnasio' ? <PeopleAlt /> : <ManageAccounts />,
+      path: '/gestion-usuarios',
+      roles: ['super-administrador', 'gimnasio', 'entrenador'],
+      className: 'admin-link'
+    },
     { 
       text: 'Estadísticas', 
       icon: <BarChartIcon />, 
       path: '/statistics' 
     }
   ];
+  
+  // Filtrar elementos del menú según el rol del usuario
+  const filteredMenuItems = menuItems.filter(item => 
+    !item.roles || (userRole && item.roles.includes(userRole))
+  );
+  
+  console.log("Sidebar - Rol del usuario:", userRole);
+  console.log("Sidebar - Elementos de menú filtrados:", filteredMenuItems.map(item => item.text));
   
   return (
     <>
@@ -89,16 +235,25 @@ const Sidebar = ({ open, toggleSidebar }) => {
         className="sidebar-toggle-button"
         sx={{
           position: 'fixed',
-          left: open ? '240px' : '10px',
-          top: '90px', // Cambiado de 70px a 90px para bajar un poco el botón
-          zIndex: 1200,
+          left: open ? '220px' : '10px',
+          top: '90px',
+          zIndex: 1300, // Aumentado el z-index para que esté por encima de la sidebar (que tiene 1200)
           backgroundColor: '#121212',
           color: '#BBFF00',
           border: '1px solid rgba(187, 255, 0, 0.3)',
-          transition: 'left 0.3s ease',
+          transition: 'left 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease',
+          width: '40px',
+          height: '40px',
+          borderRadius: '50%',
+          overflow: 'hidden', // Esto evita que el efecto se salga del círculo
           '&:hover': {
             backgroundColor: 'rgba(187, 255, 0, 0.1)',
-            boxShadow: '0 0 10px rgba(187, 255, 0, 0.5)'
+            boxShadow: '0 0 10px rgba(187, 255, 0, 0.5)',
+            transform: 'scale(1.1)', // Efecto de escala al hacer hover
+          },
+          // Eliminar el efecto de ripple cuadrado
+          '& .MuiTouchRipple-root': {
+            borderRadius: '50%'
           }
         }}
       >
@@ -135,7 +290,7 @@ const Sidebar = ({ open, toggleSidebar }) => {
         </Box>
         <Divider sx={{ backgroundColor: 'rgba(187, 255, 0, 0.2)' }} />
         <List>
-          {menuItems.map((item) => {
+          {filteredMenuItems.map((item) => {
             const isActive = location.pathname === item.path;
             
             return (
@@ -148,12 +303,26 @@ const Sidebar = ({ open, toggleSidebar }) => {
                   '&:hover': {
                     backgroundColor: 'rgba(187, 255, 0, 0.1)',
                   },
+                  ...(item.className && { 
+                    backgroundColor: item.className === 'admin-link' ? 'rgba(187, 255, 0, 0.1)' : 'transparent',
+                    borderLeft: item.className === 'admin-link' ? '3px solid #BBFF00' : 'none'
+                  })
                 }}
               >
-                <ListItemIcon sx={{ color: location.pathname === item.path ? '#BBFF00' : '#FFFFFF' }}>
+                <ListItemIcon 
+                  sx={{ 
+                    color: location.pathname === item.path ? '#BBFF00' : '#FFFFFF',
+                    ...(userRole === 'super-administrador' && item.path === '/gestion-usuarios' && { color: '#BBFF00' }),
+                    ...(userRole === 'gimnasio' && item.path === '/gestion-usuarios' && { color: '#3f51b5' }),
+                    ...(userRole === 'entrenador' && item.path === '/gestion-usuarios' && { color: '#f50057' })
+                  }}
+                >
                   {item.icon}
                 </ListItemIcon>
                 <ListItemText primary={item.text} />
+                {item.path === '/gestion-usuarios' && userRole !== 'super-administrador' && (
+                  <span className="notification-badge">Nuevo</span>
+                )}
               </ListItem>
             );
           })}

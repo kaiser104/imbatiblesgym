@@ -19,82 +19,112 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import Entrenadores from './pages/Entrenadores';
 import PrivateRoute from './components/PrivateRoute';
-import Trainees from './pages/Trainees'; // Añadir esta importación
-// Asegúrate de tener esta importación al principio del archivo
+import Trainees from './pages/Trainees';
 import Profile from './pages/Profile';
+import UserManagement from './pages/UserManagement';
 
-// Y en la sección de rutas, verifica que tengas:
-<Route path="/profile" element={<Profile />} />
+// Importar el componente RoomManagement
+import RoomManagement from './components/gym/RoomManagement';
 
 function App() {
-  // Estado para controlar la visibilidad de la sidebar
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  
-  // Función para alternar la visibilidad de la sidebar
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
+  const [userRole, setUserRole] = useState(null);
+  const [userId, setUserId] = useState(null);
 
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      console.log("Auth state changed:", user ? "User logged in" : "No user");
+      setIsAuthenticated(!!user);
+      // Guardar el ID del usuario
+      setUserId(user ? user.uid : null);
+      
+      // Aquí puedes verificar si el usuario es admin
+      if (user) {
+        // Por ejemplo, si tienes un claim de admin en el token
+        user.getIdTokenResult().then((idTokenResult) => {
+          setIsAdmin(idTokenResult.claims.admin === true);
+          // Aquí podrías establecer el rol del usuario si lo tienes en los claims
+          if (idTokenResult.claims.role) {
+            setUserRole(idTokenResult.claims.role);
+          }
+        });
+      } else {
+        setIsAdmin(false);
+        setUserRole(null);
+      }
+      setLoading(false);
     });
-    
+
     return () => unsubscribe();
   }, []);
-  
+
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
+  if (loading) {
+    return <div>Cargando...</div>;
+  }
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Routes>
-        {/* Ruta pública para login */}
-        <Route path="/login" element={<Login />} />
-        
-        {/* Rutas protegidas con layout completo */}
-        <Route 
-          path="/*" 
-          element={
-            <ProtectedRoute>
-              <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-                <Header />
-                <Box sx={{ display: 'flex', flex: 1, position: 'relative' }}>
-                  <Sidebar open={sidebarOpen} toggleSidebar={toggleSidebar} />
-                  
-                  <Box 
-                    component="main" 
-                    sx={{ 
-                      flexGrow: 1, 
-                      p: 3,
-                      transition: 'margin-left 0.3s ease',
-                      marginLeft: { sm: sidebarOpen ? '240px' : '0px' },
-                    }}
-                  >
-                    <Routes>
-                      <Route path="/" element={<Dashboard />} />
-                      <Route path="/gimnasios" element={<Gimnasios />} />
-                      <Route path="/entrenadores" element={<Entrenadores />} />
-                      <Route path="/training-plan-designer" element={<TrainingPlanDesigner />} />
-                      <Route path="/exercise-manager" element={<ExerciseManager />} />
-                      <Route path="/upload-exercise" element={<UploadExercise />} />
-                      // Luego, en la sección de rutas, asegúrate de tener esta ruta:
-                      <Route path="/profile" element={<Profile />} />
-                      <Route path="/statistics" element={<div>Estadísticas</div>} />
-                      {/* Asegúrate de que tengas una ruta como esta en tu App.js */}
-                      <Route path="/trainees" element={
-                        <PrivateRoute>
-                          <Trainees />
-                        </PrivateRoute>
-                      } />
-                    </Routes>
-                  </Box>
-                </Box>
-                <Footer />
-              </Box>
-            </ProtectedRoute>
-          } 
-        />
-      </Routes>
+      <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+        {isAuthenticated && <Header toggleSidebar={toggleSidebar} />}
+        <Box sx={{ display: 'flex', flex: 1 }}>
+          {isAuthenticated && <Sidebar open={sidebarOpen} toggleSidebar={toggleSidebar} userRole={userRole} />}
+          <Box 
+            component="main" 
+            sx={{ 
+              flexGrow: 1, 
+              p: 3,
+              marginLeft: isAuthenticated && sidebarOpen ? '240px' : 0,
+              marginTop: '64px',
+              transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+            }}
+          >
+            <Routes>
+              <Route path="/" element={
+                <ProtectedRoute isAuthenticated={isAuthenticated}>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/login" element={<Login />} />
+              <Route path="/gimnasios" element={
+                <PrivateRoute>
+                  <Gimnasios />
+                </PrivateRoute>
+              } />
+              <Route path="/entrenadores" element={
+                <PrivateRoute>
+                  <Entrenadores />
+                </PrivateRoute>
+              } />
+              <Route path="/training-plan-designer" element={<TrainingPlanDesigner />} />
+              <Route path="/exercise-manager" element={<ExerciseManager />} />
+              <Route path="/upload-exercise" element={<UploadExercise />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/statistics" element={<div>Estadísticas</div>} />
+              <Route path="/trainees" element={
+                <PrivateRoute>
+                  <Trainees />
+                </PrivateRoute>
+              } />
+              {/* Nueva ruta para la gestión de salas */}
+              <Route path="/rooms-management" element={
+                <PrivateRoute>
+                  <RoomManagement userId={userId} userType={userRole} />
+                </PrivateRoute>
+              } />
+              <Route path="/gestion-usuarios" element={<UserManagement />} />
+            </Routes>
+          </Box>
+        </Box>
+        {isAuthenticated && <Footer />}
+      </Box>
     </ThemeProvider>
   );
 }

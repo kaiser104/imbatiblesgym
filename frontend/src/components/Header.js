@@ -207,67 +207,58 @@ const Header = () => {
   };
 
   return (
-    <AppBar position="fixed" className="header" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+    <AppBar position="fixed">
       <Toolbar>
-        <Box className="logo-container">
-          <img src="/logo.png" alt="Logo" className="logo" />
-          <Typography variant="h6" component="div" className="title">
-            Imbatibles Gym
-          </Typography>
-        </Box>
+        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+          ImbatiblesGym
+        </Typography>
         
-        <Box sx={{ flexGrow: 1 }} />
-        
-        <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column' }}>
-          {currentUser && (
-            <>
-              <Chip
-                icon={getRoleIcon()}
-                label={getRoleText()}
-                size="small"
-                color="secondary"
-                sx={{ 
-                  mb: 0.5, 
-                  height: 24, 
-                  fontSize: '0.7rem', 
-                  fontWeight: 'bold',
-                  '& .MuiChip-icon': { fontSize: '0.9rem' }
-                }}
-              />
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <Typography variant="body2" sx={{ mr: 1 }}>
-                  {currentUser.displayName || currentUser.email || 'Usuario'}
-                </Typography>
-                
-                <IconButton
-                  edge="end"
-                  aria-label="cuenta del usuario"
-                  aria-controls="profile-menu"
-                  aria-haspopup="true"
-                  onClick={handleProfileMenuOpen}
-                  color="inherit"
-                >
-                  {currentUser && currentUser.photoURL ? (
-                    <Avatar 
-                      src={currentUser.photoURL} 
-                      alt={currentUser.displayName || 'Usuario'}
-                      sx={{ width: 32, height: 32, border: '2px solid white' }}
-                    />
-                  ) : (
-                    <Avatar sx={{ width: 32, height: 32, bgcolor: 'secondary.main', color: 'white', fontWeight: 'bold', border: '2px solid white' }}>
-                      {getUserInitials()}
-                    </Avatar>
-                  )}
-                </IconButton>
-              </Box>
-            </>
-          )}
-        </Box>
-        
-        <Menu id="profile-menu" anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={handleMenuClose}>
-          <MenuItem onClick={handleProfileClick}><Person sx={{ mr: 1 }} /> Perfil</MenuItem>
-          <MenuItem onClick={handleLogout}><Logout sx={{ mr: 1 }} /> Cerrar Sesión</MenuItem>
-        </Menu>
+        {currentUser && (
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Chip
+              icon={getRoleIcon()}
+              label={getRoleText()}
+              size="small"
+              color="secondary"
+              sx={{ marginRight: 2 }}
+            />
+            <IconButton
+              size="large"
+              edge="end"
+              aria-label="cuenta del usuario"
+              aria-controls="menu-appbar"
+              aria-haspopup="true"
+              onClick={handleProfileMenuOpen}
+              color="inherit"
+            >
+              <Avatar sx={{ width: 32, height: 32, bgcolor: 'secondary.main' }}>
+                {getUserInitials()}
+              </Avatar>
+            </IconButton>
+            <Menu
+              id="menu-appbar"
+              anchorEl={anchorEl}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'right',
+              }}
+              keepMounted
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+              }}
+              open={Boolean(anchorEl)}
+              onClose={handleMenuClose}
+            >
+              <MenuItem onClick={handleProfileClick}>
+                <Person sx={{ mr: 1 }} /> Perfil
+              </MenuItem>
+              <MenuItem onClick={handleLogout}>
+                <Logout sx={{ mr: 1 }} /> Cerrar sesión
+              </MenuItem>
+            </Menu>
+          </Box>
+        )}
       </Toolbar>
     </AppBar>
   );

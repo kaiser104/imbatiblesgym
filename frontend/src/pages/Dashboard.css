@@ -133,3 +133,33 @@
   background-color: #CCFF33;
   box-shadow: 0 0 15px rgba(187, 255, 0, 0.7);
 }
+
+.quick-access-card {
+  background-color: #1E1E1E;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  border-left: 4px solid #BBFF00;
+}
+
+.quick-access-button {
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+.quick-access-button.MuiButton-containedPrimary {
+  background-color: #BBFF00;
+  color: #121212;
+}
+
+.quick-access-button.MuiButton-containedPrimary:hover {
+  background-color: #a0d800;
+}
+
+.quick-access-button.MuiButton-outlined {
+  border-color: #BBFF00;
+  color: #BBFF00;
+}
+
+.quick-access-button.MuiButton-outlined:hover {
+  background-color: rgba(187, 255, 0, 0.1);
+}

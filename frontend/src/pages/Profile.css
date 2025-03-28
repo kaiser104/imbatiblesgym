@@ -1,22 +1,360 @@
-/* Profile.css */
+/* Profile.css - Versión mejorada */
 .profile-container {
   margin-top: 80px !important;
   padding-top: 20px !important;
+  padding-bottom: 40px !important;
 }
 
-/* Asegúrate de que el contenido principal tenga suficiente espacio */
-.profile-paper {
-  margin-bottom: 30px;
-}
-
+/* Estilos para la tarjeta principal */
 .profile-paper {
   background-color: #121212;
   border: 1px solid rgba(187, 255, 0, 0.2);
-  border-radius: 8px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  margin-bottom: 30px;
 }
 
-.profile-paper .MuiAvatar-root {
-  border: 3px solid #BBFF00;
+/* Imagen de portada */
+/* Convertir la sección de portada en contenedor de estadísticas */
+.profile-cover {
+  height: auto;
+  min-height: 120px;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2c2c2c 100%);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* Eliminar completamente los elementos de la imagen de portada */
+.profile-cover-image,
+.profile-cover-overlay,
+.profile-cover-edit {
+  display: none !important;
+}
+
+/* Estadísticas en la sección de portada */
+.stats-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  width: 100%;
+  justify-content: center;
+  z-index: 2;
+}
+
+.stat-item {
+  background-color: rgba(30, 30, 30, 0.8);
+  border-radius: 12px;
+  padding: 16px;
+  flex: 1;
+  min-width: 100px;
+  max-width: 150px;
+  text-align: center;
+  border: 1px solid rgba(187, 255, 0, 0.2);
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.stat-item:hover {
+  transform: translateY(-5px);
+  border-color: rgba(187, 255, 0, 0.5);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+.stat-value {
+  font-size: 2.5rem !important;
+  font-weight: 700 !important;
+  color: #BBFF00 !important;
+  margin-bottom: 8px !important;
+}
+
+.stat-label {
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-size: 1rem !important;
+  font-weight: 500 !important;
+}
+
+/* Ajustar el avatar para que no se superponga */
+.profile-avatar-container {
+  position: relative;
+  margin-top: 20px;
+  margin-bottom: 16px;
+  z-index: 2;
+}
+
+/* Botón de editar perfil debajo del nombre */
+.profile-name-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.profile-edit-button {
+  margin-top: 8px !important;
+  margin-bottom: 16px !important;
+  background-color: #BBFF00 !important;
+  color: #121212 !important;
+  border-radius: 20px !important;
+  padding: 6px 16px !important;
+  transition: all 0.3s ease !important;
+  font-size: 0.9rem !important;
+}
+
+.profile-edit-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(187, 255, 0, 0.3);
+}
+
+.profile-edit-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.profile-edit-buttons .MuiButton-contained {
+  background-color: #BBFF00 !important;
+  color: #121212 !important;
+  border-radius: 20px !important;
+  padding: 8px 24px !important;
+}
+
+.profile-edit-buttons .MuiButton-outlined {
+  border-color: #BBFF00 !important;
+  color: #BBFF00 !important;
+  border-radius: 20px !important;
+  padding: 8px 24px !important;
+}
+
+/* Pestañas */
+.profile-tabs-container {
+  border-bottom: 1px solid rgba(187, 255, 0, 0.2);
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Estilos para las pestañas */
+.MuiTabs-root {
+  min-height: 48px;
+  background-color: #1E1E1E;
+  border-radius: 4px;
+}
+
+.MuiTab-root {
+  color: #FFFFFF !important;
+  text-transform: none !important;
+  font-weight: 500 !important;
+  min-height: 48px !important;
+  transition: all 0.3s ease !important;
+}
+
+.MuiTab-root.Mui-selected {
+  color: #BBFF00 !important;
+}
+
+.MuiTabs-indicator {
+  background-color: #BBFF00 !important;
+  height: 3px !important;
+}
+
+/* Tarjetas de información */
+.info-card {
+  background-color: rgba(30, 30, 30, 0.6) !important;
+  border-radius: 12px !important;
+  padding: 16px !important;
+  margin-bottom: 16px !important;
+  border: 1px solid rgba(187, 255, 0, 0.1) !important;
+  transition: all 0.3s ease !important;
+}
+
+.info-card:hover {
+  border-color: rgba(187, 255, 0, 0.3) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+.info-card-title {
+  color: #BBFF00 !important;
+  font-size: 1.1rem !important;
+  margin-bottom: 12px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.info-card-title .MuiSvgIcon-root {
+  margin-right: 8px !important;
+}
+
+.info-card-content {
+  padding: 8px 0 !important;
+}
+
+.info-item {
+  display: flex;
+  margin-bottom: 12px;
+  align-items: center;
+}
+
+.info-label {
+  font-weight: 500 !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  width: 120px;
+  flex-shrink: 0;
+}
+
+.info-value {
+  color: #FFFFFF !important;
+  flex-grow: 1;
+}
+
+/* Estadísticas - Reposicionadas en la sección principal */
+.stats-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 24px;
+  margin-bottom: 16px;
+  width: 100%;
+  justify-content: center;
+}
+
+.stat-item {
+  background-color: rgba(30, 30, 30, 0.6);
+  border-radius: 12px;
+  padding: 16px;
+  flex: 1;
+  min-width: 100px;
+  max-width: 150px;
+  text-align: center;
+  border: 1px solid rgba(187, 255, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+  transform: translateY(-5px);
+  border-color: rgba(187, 255, 0, 0.3);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.stat-value {
+  font-size: 2rem !important;
+  font-weight: 700 !important;
+  color: #BBFF00 !important;
+  margin-bottom: 8px !important;
+}
+
+.stat-label {
+  color: rgba(255, 255, 255, 0.7) !important;
+  font-size: 0.9rem !important;
+}
+
+/* Iconos para la información personal */
+.info-icon {
+  margin-right: 12px !important;
+  color: #BBFF00 !important;
+  font-size: 1.3rem !important;
+}
+
+.info-item {
+  display: flex;
+  margin-bottom: 16px;
+  align-items: center;
+  padding: 8px;
+  background-color: rgba(30, 30, 30, 0.4);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.info-item:hover {
+  background-color: rgba(30, 30, 30, 0.6);
+}
+
+.info-label {
+  font-weight: 500 !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  width: 120px;
+  flex-shrink: 0;
+}
+
+.info-value {
+  color: #FFFFFF !important;
+  flex-grow: 1;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+/* Responsive */
+@media (max-width: 960px) {
+  .profile-avatar {
+    width: 120px !important;
+    height: 120px !important;
+  }
+  
+  .profile-cover {
+    height: 140px;
+  }
+  
+  .profile-avatar-container {
+    margin-top: -60px;
+  }
+}
+
+@media (max-width: 600px) {
+  .profile-avatar {
+    width: 100px !important;
+    height: 100px !important;
+  }
+  
+  .profile-cover {
+    height: 120px;
+  }
+  
+  .profile-avatar-container {
+    margin-top: -50px;
+  }
+  
+  .info-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .info-label {
+    width: 100%;
+    margin-bottom: 4px;
+  }
+}
+
+/* Estilos para el modo de no encontrado */
+.profile-not-found {
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.profile-user-email {
+  margin-top: 16px !important;
+  padding: 8px 16px !important;
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border-radius: 4px !important;
+  display: inline-block !important;
+}
+
+/* Estilos para el loading */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 300px;
 }
 
 .social-icons {
@@ -49,21 +387,23 @@
   margin-top: 8px;
 }
 
-/* Estilos para las pestañas */
-.MuiTabs-root {
-  background-color: #1E1E1E;
-  border-radius: 4px;
+/* Añadir estos estilos para mejorar la visualización de las pestañas */
+.profile-box {
+  position: relative;
+  z-index: 1;
 }
 
-.MuiTab-root {
-  color: #F5F5F5;
+.animate-fade-in {
+  position: relative;
+  z-index: 1;
 }
 
-.MuiTab-root.Mui-selected {
-  color: #BBFF00;
+/* Asegurar que el contenido de cada pestaña tenga un z-index adecuado */
+.tab-content {
+  position: relative;
+  z-index: 1;
 }
 
-/* Profile avatar and container styles */
 .profile-avatar-container {
   position: relative;
 }

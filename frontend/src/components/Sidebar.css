@@ -176,9 +176,39 @@
 /* Estilos para la sidebar */
 .MuiDrawer-paper {
   background-color: #121212 !important;
-  color: #FFFFFF !important;
-  border-right: 1px solid rgba(187, 255, 0, 0.2) !important;
-  transition: all 0.3s ease !important;
+  color: #ffffff !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Estilos para los elementos de la lista */
+.MuiListItem-root {
+  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.MuiListItem-root:hover {
+  background-color: rgba(187, 255, 0, 0.1);
+}
+
+/* Estilos para los iconos */
+.MuiListItemIcon-root {
+  color: #BBFF00 !important;
+}
+
+/* Animación para el botón de toggle */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(187, 255, 0, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(187, 255, 0, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(187, 255, 0, 0);
+  }
+}
+
+.sidebar-toggle-button:hover {
+  animation: pulse 1.5s infinite;
 }
 
 /* Efecto de hover con brillo neón para los elementos del menú */
@@ -269,4 +299,39 @@
 
 .MuiTooltip-arrow {
   color: #BBFF00 !important;
+}
+
+.sidebar-link.admin-link {
+  background-color: rgba(187, 255, 0, 0.1);
+  border-left: 3px solid #BBFF00;
+}
+
+.sidebar-link.admin-link:hover {
+  background-color: rgba(187, 255, 0, 0.2);
+}
+
+/* Estilos para el elemento de gestión de usuarios */
+.notification-badge {
+  background-color: #f50057;
+  color: white;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 10px;
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Estilos específicos según el rol */
+.super-admin-icon {
+  color: #BBFF00;
+}
+
+.gym-admin-icon {
+  color: #3f51b5;
+}
+
+.trainer-icon {
+  color: #f50057;
 }
