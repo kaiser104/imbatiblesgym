@@ -1,359 +1,153 @@
-/* TrainingPlanDesigner.css */
-
-/* Estilo del contenedor principal */
 .training-plan-container {
-  padding: 20px 0;
-  background-color: #000000;
-  color: #FFFFFF;
-  font-family: 'Rajdhani', sans-serif;
+  background-color: #1a1a1a;
+  color: #fff;
+  min-height: 100vh;
 }
 
-/* Estilo del encabezado */
-.training-plan-title {
-  margin-bottom: 30px;
+.page-title {
   color: #BBFF00;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
+  margin-bottom: 1.5rem;
+  text-align: center;
 }
 
-/* Estilo del contenedor Paper */
-.form-paper {
-  padding: 24px;
-  margin-bottom: 32px;
+.form-container, .results-container {
+  background-color: #222;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
   border-radius: 8px;
-  background: #121212;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(187, 255, 0, 0.2);
 }
 
-/* Encabezados de sección del formulario */
 .form-section-label {
   color: #BBFF00;
-  margin-bottom: 8px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
 }
 
-/* Botones de radio y casillas de verificación */
-.MuiRadio-root.Mui-checked,
-.MuiCheckbox-root.Mui-checked {
-  color: #BBFF00;
-}
-
-/* Espaciado de los controles del formulario */
 .form-control-group {
-  margin-bottom: 16px;
+  margin-bottom: 1rem;
 }
 
-/* Estilo del menú desplegable */
-.form-select {
-  width: 100%;
-  margin-bottom: 16px;
-}
-
-/* Estilo de los botones */
 .action-button {
-  margin-top: 16px;
-  text-transform: uppercase;
+  padding: 0.75rem 1.5rem;
   font-weight: 600;
-  font-family: 'Rajdhani', sans-serif;
-  letter-spacing: 0.04em;
-  transition: all 0.3s ease;
+  border-radius: 4px;
 }
 
 .generate-button {
   background-color: #BBFF00;
-  color: #000000;
-  border: none;
+  color: #000;
 }
 
 .generate-button:hover {
-  background-color: #CCFF33;
-  box-shadow: 0 0 15px rgba(187, 255, 0, 0.7);
+  background-color: #a0d800;
 }
 
 .save-button {
-  background-color: transparent;
-  color: #BBFF00;
-  border: 1px solid #BBFF00;
+  background-color: #00a0ff;
+  color: #fff;
 }
 
 .save-button:hover {
-  background-color: rgba(187, 255, 0, 0.2);
-  box-shadow: 0 0 10px rgba(187, 255, 0, 0.5);
-}
-
-/* Estilo del divisor */
-.section-divider {
-  margin: 16px 0;
-  background-color: rgba(187, 255, 0, 0.2);
-}
-
-/* Estilo de la tabla */
-.results-table-container {
-  margin-top: 32px;
-  padding: 16px;
-  border-radius: 8px;
-  background: #121212;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(187, 255, 0, 0.2);
-}
-
-.results-table-title {
-  margin-bottom: 16px;
-  font-weight: 600;
-  color: #BBFF00;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.table-header-cell {
-  font-weight: bold;
-  background-color: #BBFF00;
-  color: #000000;
-  font-size: 0.9rem;
-}
-
-/* Estilo de las filas de la tabla */
-.even-session-row {
-  background-color: rgba(232, 244, 253, 0.6);
-}
-
-.odd-session-row {
-  background-color: rgba(255, 243, 224, 0.4);
-}
-
-.even-session-row:hover {
-  background-color: rgba(232, 244, 253, 0.9);
-}
-
-.odd-session-row:hover {
-  background-color: rgba(255, 243, 224, 0.7);
-}
-
-.session-start-row {
-  border-top: 2px solid #BBFF00;
-}
-
-/* Estilo del popover de ejercicios */
-.exercise-popover-card {
-  max-width: 400px;
-  margin: 0;
-  background-color: #121212;
-  color: #FFFFFF;
-  border: 1px solid rgba(187, 255, 0, 0.2);
-}
-
-.exercise-image {
-  height: 200px;
-  object-fit: cover;
-}
-
-.exercise-details-title {
-  font-weight: 600;
-  color: #BBFF00;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.exercise-details-text {
-  margin-top: 8px;
-  color: #FFFFFF;
-}
-
-.exercise-details-label {
-  color: #33AAFF;
-  font-weight: 500;
-}
-
-/* Ajustes responsivos */
-@media (max-width: 600px) {
-  .form-paper {
-    padding: 16px;
-  }
-  
-  .muscle-checkbox {
-    width: 100%;
-  }
-  
-  .equipment-checkbox {
-    width: 100%;
-  }
-}
-
-@media (min-width: 601px) and (max-width: 960px) {
-  .muscle-checkbox {
-    width: 50%;
-  }
-  
-  .equipment-checkbox {
-    width: 50%;
-  }
-}
-
-@media (min-width: 961px) {
-  .muscle-checkbox {
-    width: 33%;
-  }
-  
-  .equipment-checkbox {
-    width: 33%;
-  }
-}
-
-/* Estilo personalizado para la selección de ejercicios */
-.exercise-select-container {
-  display: flex;
-  align-items: center;
-}
-
-.exercise-info-button {
-  margin-right: 8px;
-  color: #33AAFF;
-}
-
-.exercise-info-button:hover {
-  color: #BBFF00;
-  background-color: rgba(187, 255, 0, 0.1);
-}
-
-.exercise-select-option {
-  display: flex;
-  align-items: center;
-}
-
-.exercise-thumbnail {
-  width: 30px;
-  margin-right: 10px;
-}
-
-/* Clases adicionales para mejorar la consistencia visual */
-.form-label-block {
-  display: block;
-  margin-bottom: 8px;
-}
-
-.select-all-button {
-  margin-bottom: 16px;
-  border-color: #BBFF00;
-  color: #BBFF00;
-}
-
-.select-all-button:hover {
-  background-color: rgba(187, 255, 0, 0.1);
-  border-color: #BBFF00;
+  background-color: #0080cc;
 }
 
 .status-alert {
-  margin-bottom: 16px;
-  border-radius: 8px;
+  margin-top: 1rem;
 }
 
 .success-alert {
-  background-color: rgba(187, 255, 0, 0.1);
-  color: #BBFF00;
-  border: 1px solid rgba(187, 255, 0, 0.3);
+  background-color: rgba(0, 200, 83, 0.1);
+  color: #00c853;
 }
 
 .error-alert {
-  background-color: rgba(255, 85, 51, 0.1);
-  color: #FF5533;
-  border: 1px solid rgba(255, 85, 51, 0.3);
+  background-color: rgba(255, 82, 82, 0.1);
+  color: #ff5252;
 }
 
-/* Estilos para los componentes de Material UI */
-.MuiSelect-select, 
-.MuiMenuItem-root,
-.MuiInputBase-root {
-  color: #FFFFFF !important;
-  background-color: #121212 !important;
+.results-title {
+  color: #BBFF00;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  text-align: center;
 }
 
-.MuiOutlinedInput-notchedOutline {
-  border-color: rgba(187, 255, 0, 0.3) !important;
+.session-container {
+  margin-bottom: 2rem;
 }
 
-.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
-  border-color: #BBFF00 !important;
-}
-
-.MuiFormLabel-root {
-  color: #BBFF00 !important;
-}
-
-.MuiRadio-root, 
-.MuiCheckbox-root {
-  color: rgba(187, 255, 0, 0.5) !important;
-}
-
-.MuiRadio-root.Mui-checked, 
-.MuiCheckbox-root.Mui-checked {
-  color: #BBFF00 !important;
-}
-
-.MuiTableCell-root {
-  color: #FFFFFF !important;
-  border-bottom-color: rgba(187, 255, 0, 0.1) !important;
-}
-
-
-/* Mejorar la visualización de la tabla */
-.results-table-container {
-  margin-top: 20px;
-  overflow-x: auto;
-  background-color: #121212;
-  border-radius: 8px;
-}
-
-.table-header-cell {
-  font-weight: bold !important;
-  white-space: nowrap;
-}
-
-/* Estilos para filas alternadas por sesión */
-.even-session-row {
-  background-color: #1a1a1a !important;
-}
-
-.odd-session-row {
-  background-color: #2a2a2a !important;
-}
-
-.session-start-row {
-  border-top: 2px solid #BBFF00 !important;
-}
-
-/* Estilos para el método de entrenamiento */
-.method-select {
-  min-width: 120px;
-}
-
-/* Estilos para mejorar la responsividad */
-@media (max-width: 1200px) {
-  .results-table-container {
-    max-width: 100%;
-    overflow-x: scroll;
-  }
-}
-
-/* Asegurar que los textos en la tabla sean legibles */
-.MuiTableCell-root {
-  color: #FFFFFF !important;
-  border-bottom-color: rgba(187, 255, 0, 0.1) !important;
-}
-
-/* Estilo para los selects dentro de la tabla */
-.MuiTableCell-root .MuiSelect-select {
-  padding: 8px !important;
-}
-
-/* Mejorar la visualización de las miniaturas de ejercicios */
 .exercise-thumbnail {
-  width: 30px;
-  height: 30px;
-  margin-right: 8px;
-  object-fit: cover;
   border-radius: 4px;
+  background-color: #333;
+}
+
+/* Estilos para el botón de cambio de ejercicio */
+.change-exercise-button {
+  color: #00a0ff;
+  margin-left: 5px;
+}
+
+.change-exercise-button:hover {
+  color: #0080cc;
+  transform: scale(1.1);
+}
+
+/* Estilos para el menú de ejercicios alternativos */
+.exercise-alternatives-menu {
+  max-height: 300px;
+  overflow-y: auto;
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+}
+
+.exercise-alternative-item {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  border-bottom: 1px solid #333;
+  cursor: pointer;
+}
+
+.exercise-alternative-item:hover {
+  background-color: #333;
+}
+
+.exercise-alternative-thumbnail {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  margin-right: 10px;
+  border-radius: 4px;
+}
+
+.exercise-alternative-info {
+  flex: 1;
+}
+
+.exercise-alternative-name {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.exercise-alternative-details {
+  font-size: 0.8rem;
+  color: #aaa;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .form-container, .results-container {
+    padding: 1rem;
+  }
+  
+  .action-button {
+    margin-bottom: 0.5rem;
+  }
+  
+  .exercise-alternatives-menu {
+    max-height: 250px;
+  }
 }

@@ -56,7 +56,7 @@ const UploadExercise = () => {
   const equipmentOptions = [
     'Trineo', 'Suspensión', 'Rodillo de espuma', 'Polea', 'Peso Corporal',
     'Fit ball', 'Mancuernas', 'Landmine', 'Kettlebell', 'Disco',
-    'Cuerda de batida', 'Chaleco con peso', 'Bolsa de arena', 'Bola de lacrosse',
+    'Cuerda de batida', 'Ghd', 'Chaleco con peso', 'Bolsa de arena', 'Bola de lacrosse',
     'Barra', 'Power band', 'Balón medicinal', 'Otro'
   ];
   

@@ -1,137 +1,140 @@
-// frontend/src/pages/TrainingPlanDesigner.js
 import React, { useState, useEffect } from 'react';
-import { collection, addDoc, getDocs } from 'firebase/firestore';
-import { db, auth } from '../firebase';
-import './TrainingPlanDesigner.css';
-import { 
-  Typography, 
-  Paper, 
-  Grid, 
-  Radio, 
-  RadioGroup, 
-  FormControlLabel, 
-  FormControl, 
-  FormLabel, 
-  Select, 
-  MenuItem, 
-  Checkbox, 
-  Button, 
-  Box, 
-  Alert, 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableContainer, 
-  TableHead, 
-  TableRow,
-  CircularProgress,
-  Divider,
-  FormGroup,
-  Container,
-  Popover,
-  Card,
-  CardContent,
-  CardMedia,
-  IconButton,
-  Tooltip
-} from '@mui/material';
-import InfoIcon from '@mui/icons-material/Info';
-
-// Mapeo de la selección muscular a patrones de movimiento (ejemplo)
-const movementPatternMapping = {
-  "Empuje": ["Horizontal Push", "Upward Push"],
-  "Jalar": ["Horizontal Pull", "Upward Pull", "Downward Pull"],
-  "Piernas": ["Double Leg Push", "Single Leg Push", "Bent Leg Hip Extension", "Straight Leg Hip Extension"],
-  "Superior": ["Horizontal Push", "Upward Push", "Horizontal Pull", "Upward Pull", "Downward Pull"],
-  "Inferior": ["Double Leg Push", "Single Leg Push", "Bent Leg Hip Extension", "Straight Leg Hip Extension"],
-  "Cuerpo completo": ["Horizontal Push", "Upward Push", "Horizontal Pull", "Upward Pull", "Downward Pull", 
-                      "Double Leg Push", "Single Leg Push", "Bent Leg Hip Extension", "Straight Leg Hip Extension"]
-};
-
-const enfoqueOptions = [
-  "Multi-Generic Exercise",
-  "Isolation-Generic Exercise"
-];
-
-const methodOptions = [
-  "Standard",
-  "Drop Sets",
-  "Rest-Pause",
-  "Supersets",
-  "Cluster Sets",
-  "AMRAP",
-  "EMOM",
-  "Circuit Training",
-  "Tabata",
-  "Complex Training",
-  "Contrast Loading"
-];
-
-const equipmentOptions = [
-  'Trineo', 'Suspensión', 'Rodillo de espuma', 'Polea', 'Peso Corporal',
-  'Fit ball', 'Mancuernas', 'Landmine', 'Kettlebell', 'Disco',
-  'Cuerda de batida', 'Chaleco con peso', 'Bolsa de arena', 'Bola de lacrosse',
-  'Barra', 'Power band', 'Balón medicinal'
-];
-
-const muscleOptions = [
-  'Personalizado',
-  'Empuje, Jalar, Piernas',
-  'Empujar, Jalar, Piernas, Cuerpo completo',
-  'Empujar, Jalar, Piernas, Superior, Inferior',
-  'Superior, Inferior, Cuerpo completo',
-  'Cuerpo Completo',
-  'Bro Split'
-];
-
-const customMuscleOptions = [
-  'Pectorales', 'Espalda', 'Bíceps', 'Tríceps', 'Deltoides',
-  'Deltoides posterior', 'Glúteos', 'Abdominales', 'Lumbares',
-  'Cuádriceps', 'Isquiotibiales', 'Pantorrilla', 'Aductores',
-  'Abductores', 'Antebrazos', 'Trapecio'
-];
-
-// Agregamos la constante con todos los patrones de movimiento disponibles
-const allMovementPatterns = [
-  "Bent Leg Hip Extension",
-  "Cardio",
-  "Double Leg Push",
-  "Core Stability",
-  "Auxiliary",
-  "Mobility",
-  "Explosive",
-  "Horizontal Push",
-  "Straight Leg Hip Extension",
-  "Downward Pull",
-  "Upward Pull",
-  "Upward Push",
-  "Single Leg Push",
-  "Horizontal Pull"
-];
+import { Container, Typography, Alert } from '@mui/material';
+import { collection, getDocs, addDoc } from 'firebase/firestore';
+import { db } from '../firebase';
+import { useAuth } from '../contexts/AuthContext';
+import TrainingPlanForm from '../components/TrainingPlanForm';
+import TrainingPlanDisplay from '../components/TrainingPlanDisplay';
 
 const TrainingPlanDesigner = () => {
-  // Estados de selección
-  const [fitnessObjective, setFitnessObjective] = useState('muscleMass'); // muscleMass, conditioning, strength
-  const [duration, setDuration] = useState('1');
-  const [frequency, setFrequency] = useState('3');
-  const [timeAvailable, setTimeAvailable] = useState('30');
-  const [muscleSelection, setMuscleSelection] = useState('');
-  const [customMuscles, setCustomMuscles] = useState([]);
-  const [equipment, setEquipment] = useState([]);
-  const [trainingPlan, setTrainingPlan] = useState([]);
-  const [message, setMessage] = useState('');
+  const { currentUser } = useAuth();
+  const [allExercises, setAllExercises] = useState([]);
+  const [generatingPlan, setGeneratingPlan] = useState(false);
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
   
-  // Nuevo estado para la priorización: "diversidad" o "control"
-  const [prioritizacion, setPrioritizacion] = useState("diversidad");
-
-  // Estado para almacenar todos los ejercicios disponibles por patrón
-  const [allAvailableExercises, setAllAvailableExercises] = useState({});
-  
-  // Popover state variables y handlers
+  // Estados para el popover de detalles de ejercicio
   const [anchorEl, setAnchorEl] = useState(null);
   const [popoverExercise, setPopoverExercise] = useState(null);
+  const open = Boolean(anchorEl);
   
+  // Estados para el menú de ejercicios alternativos
+  const [alternativesAnchorEl, setAlternativesAnchorEl] = useState(null);
+  const [alternativeExercises, setAlternativeExercises] = useState([]);
+  const [selectedExerciseIndex, setSelectedExerciseIndex] = useState(null);
+  
+  // Opciones para los selectores
+  const muscleOptions = [
+    'Superior, Inferior, Cuerpo completo',
+    'Pecho, Espalda, Piernas, Hombros, Brazos',
+    'Pecho, Espalda, Piernas',
+    'Empuje, Tirón, Piernas',
+    'Personalizado'
+  ];
+  
+  const customMuscleOptions = [
+    'Pecho', 'Espalda', 'Hombros', 'Brazos', 'Piernas', 'Core',
+    'Superior', 'Inferior', 'Cuerpo completo', 'Empuje', 'Tirón'
+  ];
+  
+  const equipmentOptions = [
+    'Trineo', 'Suspensión', 'Rodillo de espuma', 'Polea', 'Peso Corporal',
+    'Fit ball', 'Mancuernas', 'Landmine', 'Kettlebell', 'Disco',
+    'Cuerda de batida', 'Chaleco con peso', 'Bolsa de arena', 'Bola de lacrosse',
+    'Barra', 'Power band', 'Balón medicinal', 'Máquinas', 'Bandas elásticas'
+  ];
+  const enfoqueOptions = [
+    'Multiarticular', 'Monoarticular'
+  ];
+  const methodOptions = [
+    'Standard', 'Superset', 'Drop Set', 'Rest-Pause', 'Pyramid', 
+    'AMRAP', 'EMOM', 'Tabata', 'Circuit'
+  ];
+  const allMovementPatterns = [
+    'Horizontal Push', 'Upward Push', 'Horizontal Pull', 'Upward Pull', 
+    'Downward Pull', 'Double Leg Push', 'Single Leg Push', 
+    'Bent Leg Hip Extension', 'Straight Leg Hip Extension',
+    'Auxiliary', 'Core Stability', 'Mobility', 'Explosive', 'Cardio'
+  ];
+  const movementPatternMapping = {
+    'Pecho': ['Horizontal Push', 'Upward Push'],
+    'Espalda': ['Horizontal Pull', 'Upward Pull', 'Downward Pull'],
+    'Hombros': ['Upward Push', 'Auxiliary'],
+    'Brazos': ['Auxiliary'],
+    'Piernas': ['Double Leg Push', 'Single Leg Push', 'Bent Leg Hip Extension', 'Straight Leg Hip Extension'],
+    'Core': ['Core Stability'],
+    'Superior': ['Horizontal Push', 'Upward Push', 'Horizontal Pull', 'Upward Pull', 'Downward Pull', 'Auxiliary'],
+    'Inferior': ['Double Leg Push', 'Single Leg Push', 'Bent Leg Hip Extension', 'Straight Leg Hip Extension'],
+    'Cuerpo completo': allMovementPatterns,
+    'Empuje': ['Horizontal Push', 'Upward Push', 'Double Leg Push', 'Single Leg Push'],
+    'Tirón': ['Horizontal Pull', 'Upward Pull', 'Downward Pull', 'Bent Leg Hip Extension', 'Straight Leg Hip Extension']
+  };
+  
+  // Estado del formulario
+  const [formData, setFormData] = useState({
+    fitnessObjective: 'muscleMass',
+    prioritizacion: 'diversidad',
+    duration: '3',
+    frequency: '3',
+    timeAvailable: '60',
+    muscleSelection: 'Superior, Inferior, Cuerpo completo',
+    customMuscles: [],
+    equipment: [],
+    planName: '',
+    trainingPlan: []
+  });
+  
+  // Handlers para el formulario
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+  const handleCustomMuscleChange = (e) => {
+    const { value, checked } = e.target;
+    setFormData(prev => {
+      if (checked) {
+        return {
+          ...prev,
+          customMuscles: [...prev.customMuscles, value]
+        };
+      } else {
+        return {
+          ...prev,
+          customMuscles: prev.customMuscles.filter(muscle => muscle !== value)
+        };
+      }
+    });
+  };
+  
+  const handleEquipmentChange = (e) => {
+    const { value, checked } = e.target;
+    setFormData(prev => {
+      if (checked) {
+        return {
+          ...prev,
+          equipment: [...prev.equipment, value]
+        };
+      } else {
+        return {
+          ...prev,
+          equipment: prev.equipment.filter(eq => eq !== value)
+        };
+      }
+    });
+  };
+  
+  const selectAllEquipment = () => {
+    setFormData(prev => ({
+      ...prev,
+      equipment: [...equipmentOptions]
+    }));
+  };
+  
+  // Handlers para el popover y menú de alternativas
   const handlePopoverOpen = (event, exercise) => {
     setAnchorEl(event.currentTarget);
     setPopoverExercise(exercise);
@@ -142,317 +145,419 @@ const TrainingPlanDesigner = () => {
     setPopoverExercise(null);
   };
   
-  const open = Boolean(anchorEl);
-
-  // HANDLERS DE CAMBIO
-  const handleFitnessObjectiveChange = (e) => setFitnessObjective(e.target.value);
-  const handleDurationChange = (e) => setDuration(e.target.value);
-  
-  const handleFrequencyChange = (e) => {
-    const newFreq = parseInt(e.target.value, 10);
-    setFrequency(e.target.value);
-    if(newFreq <= 2) setMuscleSelection("Cuerpo Completo");
-    else if(newFreq === 3) setMuscleSelection("Empuje, Jalar, Piernas");
-    else if(newFreq === 4) setMuscleSelection("Empujar, Jalar, Piernas, Cuerpo completo");
-    else if(newFreq === 5) setMuscleSelection("Empujar, Jalar, Piernas, Superior, Inferior");
-    else if(newFreq >= 6) setMuscleSelection("Bro Split");
-  };
-
-  const handleTimeAvailableChange = (e) => setTimeAvailable(e.target.value);
-  const handleMuscleSelectionChange = (e) => {
-    setMuscleSelection(e.target.value);
-    if(e.target.value !== 'Personalizado'){
-      setCustomMuscles([]);
-    }
-  };
-
-  const handleCustomMuscleChange = (e) => {
-    const { value, checked } = e.target;
-    if(checked) setCustomMuscles(prev => [...prev, value]);
-    else setCustomMuscles(prev => prev.filter(m => m !== value));
-  };
-
-  const handleEquipmentChange = (e) => {
-    const { value, checked } = e.target;
-    if(checked) setEquipment(prev => [...prev, value]);
-    else setEquipment(prev => prev.filter(eq => eq !== value));
-  };
-
-  const selectAllEquipment = () => setEquipment(equipmentOptions);
-
-  // Handler para priorización
-  const handlePrioritizacionChange = (e) => {
-    setPrioritizacion(e.target.value);
-  };
-
-  // Función de utilidad para encontrar el índice de un ejercicio en el plan
-  const findExerciseIndex = (sessionNumber, exerciseNumber) => {
-    return trainingPlan.findIndex(ex => 
-      ex.sessionNumber === sessionNumber && ex.exerciseNumber === exerciseNumber
+  const handleAlternativesOpen = (event, exercise, index) => {
+    setAlternativesAnchorEl(event.currentTarget);
+    setSelectedExerciseIndex(index);
+    
+    // Filtrar ejercicios alternativos con el mismo patrón de movimiento
+    const alternatives = allExercises.filter(ex => 
+      ex.movementCategory === exercise.patronMovimiento && 
+      ex.id !== exercise.exerciseId
     );
+    
+    setAlternativeExercises(alternatives);
   };
-
-  // Función para obtener cantidad de ejercicios según objetivo y tiempo disponible
-  const getExercisesCountByObjectiveTime = (obj, t) => {
-    const timeNum = parseInt(t, 10);
-    let total = 0, multi = 0, iso = 0;
-    if(obj === 'muscleMass') {
-      if(timeNum === 30) { total = 4; multi = 2; iso = 2; }
-      else if(timeNum === 45) { total = 6; multi = 3; iso = 3; }
-      else if(timeNum === 60) { total = 8; multi = 4; iso = 4; }
-      else if(timeNum === 90) { total = 10; multi = 5; iso = 5; }
-    } else if(obj === 'conditioning') {
-      if(timeNum === 30) { total = 6; multi = 3; iso = 3; }
-      else if(timeNum === 45) { total = 8; multi = 4; iso = 4; }
-      else if(timeNum === 60) { total = 10; multi = 5; iso = 5; }
-      else if(timeNum === 90) { total = 12; multi = 6; iso = 6; }
-    } else if(obj === 'strength') {
-      if(timeNum === 30) { total = 3; multi = 2; iso = 1; }
-      else if(timeNum === 45) { total = 4; multi = 2; iso = 2; }
-      else if(timeNum === 60) { total = 5; multi = 3; iso = 2; }
-      else if(timeNum === 90) { total = 6; multi = 3; iso = 3; }
+  
+  const handleAlternativesClose = () => {
+    setAlternativesAnchorEl(null);
+    setSelectedExerciseIndex(null);
+  };
+  
+  const handleSelectAlternative = (exercise) => {
+    handleSelectExerciseOption(exercise, formData.trainingPlan.indexOf(popoverExercise));
+    handleAlternativesClose();
+  };
+  
+  // Funciones para generar el plan
+  const getExercisesCountByObjectiveTime = (objective, time) => {
+    const timeInt = parseInt(time, 10);
+    
+    let total, multi, iso;
+    
+    if (objective === 'muscleMass') {
+      if (timeInt <= 30) {
+        total = 4; multi = 3; iso = 1;
+      } else if (timeInt <= 45) {
+        total = 5; multi = 4; iso = 1;
+      } else if (timeInt <= 60) {
+        total = 6; multi = 4; iso = 2;
+      } else {
+        total = 8; multi = 5; iso = 3;
+      }
+    } else if (objective === 'strength') {
+      if (timeInt <= 30) {
+        total = 3; multi = 3; iso = 0;
+      } else if (timeInt <= 45) {
+        total = 4; multi = 3; iso = 1;
+      } else if (timeInt <= 60) {
+        total = 5; multi = 4; iso = 1;
+      } else {
+        total = 6; multi = 5; iso = 1;
+      }
+    } else { // conditioning
+      if (timeInt <= 30) {
+        total = 5; multi = 3; iso = 2;
+      } else if (timeInt <= 45) {
+        total = 7; multi = 4; iso = 3;
+      } else if (timeInt <= 60) {
+        total = 8; multi = 5; iso = 3;
+      } else {
+        total = 10; multi = 6; iso = 4;
+      }
     }
+    
     return { total, multi, iso };
   };
-
+  
   const getRecommendedRest = () => {
-    if(fitnessObjective === 'muscleMass') return 90;
-    else if(fitnessObjective === 'conditioning') return 60;
-    else if(fitnessObjective === 'strength') return 180;
-    return 60;
-  };
-
-  // Función para obtener ejercicios desde Firebase
-  const fetchExercises = async () => {
-    try {
-      const snapshot = await getDocs(collection(db, "exercises"));
-      const allExercises = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          nombre: data.nombre || data.name || "",
-          movementCategory: data.movementCategory || data.patron || data["patrón"] || "",
-          equipo: data.equipo || data.equipment || data.equipamiento || "",
-          previewURL: data.fileURL || data.previewURL || ""
-        };
-      });
-      
-      // Filtrar según equipamiento disponible
-      const filtered = allExercises.filter(ex => {
-        if(equipment.length === 0) return true;
-        if (typeof ex.equipo === 'string') {
-          return equipment.some(eq => ex.equipo.includes(eq));
-        }
-        if (Array.isArray(ex.equipo)) {
-          return equipment.some(eq => ex.equipo.includes(eq));
-        }
-        return false;
-      });
-  
-      // Organizar ejercicios por patrón de movimiento
-      const exercisesByPattern = {};
-      filtered.forEach(ex => {
-        const pattern = ex.movementCategory || "Unknown";
-        if (!exercisesByPattern[pattern]) {
-          exercisesByPattern[pattern] = [];
-        }
-        exercisesByPattern[pattern].push(ex);
-      });
-  
-      setAllAvailableExercises(exercisesByPattern);
-      return filtered;
-    } catch (err) {
-      console.error("Error fetching exercises:", err);
-      return [];
+    switch (formData.fitnessObjective) {
+      case 'muscleMass':
+        return 90; // 90 segundos para hipertrofia
+      case 'strength':
+        return 180; // 180 segundos (3 min) para fuerza
+      case 'conditioning':
+        return 45; // 45 segundos para acondicionamiento
+      default:
+        return 60;
     }
   };
   
-  // Cargar ejercicios al inicio o cuando cambie el equipamiento
+  // Cargar ejercicios de Firebase
   useEffect(() => {
-    fetchExercises();
-  }, [equipment]);
+    const fetchAllExercises = async () => {
+      try {
+        const exercisesCollection = collection(db, "exercises");
+        const exercisesSnapshot = await getDocs(exercisesCollection);
+        const exercises = exercisesSnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            nombre: data.name || "",
+            movementCategory: data.movementCategory || "",
+            previewURL: data.fileURL || "",
+            equipo: data.equipment || "Sin equipo",
+            mainMuscle: data.mainMuscle || "",
+            secondaryMuscle: data.secondaryMuscle || ""
+          };
+        });
+        setAllExercises(exercises);
+      } catch (err) {
+        console.error("Error fetching exercises:", err);
+      }
+    };
+    
+    fetchAllExercises();
+  }, []);
   
-  const [generatingPlan, setGeneratingPlan] = useState(false);
+  // Función para obtener ejercicios por patrón de movimiento
+  const getExercisesByMovementPattern = (pattern) => {
+    return allExercises.filter(ex => ex.movementCategory === pattern);
+  };
   
+  // Función para generar el plan de entrenamiento
   const generatePlan = async () => {
-    setMessage('');
-    setError('');
-    setGeneratingPlan(true);
-    
-    if (muscleSelection === 'Personalizado' && customMuscles.length === 0) {
-      setError('Por favor selecciona al menos un grupo muscular');
-      setGeneratingPlan(false);
-      return;
-    }
-    
-    if (equipment.length === 0) {
-      setError('Por favor selecciona al menos un equipamiento disponible');
-      setGeneratingPlan(false);
-      return;
-    }
-    
     try {
-      const exercises = await fetchExercises();
+      setGeneratingPlan(true);
+      setError('');
+      setMessage('');
       
-      if (exercises.length === 0) {
-        setError('No se encontraron ejercicios con el equipamiento seleccionado');
+      if (formData.equipment.length === 0) {
+        setError("Por favor, selecciona al menos un tipo de equipamiento disponible");
         setGeneratingPlan(false);
         return;
       }
       
-      // Separar ejercicios en compuestos (multi) y de aislamiento (iso)
-      const multiExercises = exercises.filter(ex => 
-        ["Horizontal Push", "Upward Push", "Horizontal Pull", "Upward Pull", "Downward Pull", 
-         "Double Leg Push", "Single Leg Push", "Bent Leg Hip Extension", "Straight Leg Hip Extension"].includes(ex.movementCategory)
-      );
+      // Determinar los patrones de movimiento según la selección de músculos
+      let selectedPatterns = [];
       
-      const isoExercises = exercises.filter(ex => 
-        ["Auxiliary", "Core Stability", "Mobility", "Explosive", "Cardio"].includes(ex.movementCategory)
-      );
-      
-      const durationMonths = parseInt(duration, 10);
-      const frequencyPerWeek = parseInt(frequency, 10);
-      const weeks = durationMonths * 4;
-      const totalSessions = frequencyPerWeek * weeks;
-      
-      const { total, multi, iso } = getExercisesCountByObjectiveTime(fitnessObjective, timeAvailable);
-      
-      const defaultSeries = fitnessObjective === 'strength' ? 5 : (fitnessObjective === 'muscleMass' ? 4 : 3);
-      const restDefault = getRecommendedRest();
-  
-      let muscleCycle = [];
-      if (muscleSelection) {
-        if(muscleSelection === 'Personalizado'){
-          muscleCycle = customMuscles;
-        } else if(muscleSelection === 'Superior, Inferior, Cuerpo completo') {
-          muscleCycle = ['Superior', 'Inferior', 'Cuerpo completo'];
-        } else {
-          muscleCycle = muscleSelection.split(',').map(g => g.trim());
+      if (formData.muscleSelection === 'Personalizado') {
+        if (formData.customMuscles.length === 0) {
+          setError("Por favor, selecciona al menos un grupo muscular personalizado");
+          setGeneratingPlan(false);
+          return;
         }
+        
+        formData.customMuscles.forEach(muscle => {
+          if (movementPatternMapping[muscle]) {
+            selectedPatterns = [...selectedPatterns, ...movementPatternMapping[muscle]];
+          }
+        });
+      } else {
+        const muscleGroups = formData.muscleSelection.split(', ');
+        muscleGroups.forEach(muscle => {
+          if (movementPatternMapping[muscle]) {
+            selectedPatterns = [...selectedPatterns, ...movementPatternMapping[muscle]];
+          }
+        });
       }
-  
-      let plan = [];
       
-      if(prioritizacion === "control") {
-        // Modo "Control": Generamos la misma estructura de sesiones para cada semana
-        let weekPlan = [];
-        for (let s = 1; s <= frequencyPerWeek; s++) {
-          const seleccionMuscular = muscleCycle.length > 0 ? muscleCycle[(s - 1) % muscleCycle.length] : "";
-          const allowedPatterns = movementPatternMapping[seleccionMuscular] || [];
-          
-          let sessionExercises = [];
-          for (let m = 0; m < multi; m++) {
-            let filteredMulti = multiExercises;
-            if (allowedPatterns.length > 0) {
-              filteredMulti = multiExercises.filter(ex => allowedPatterns.includes(ex.movementCategory));
-              if(filteredMulti.length === 0) filteredMulti = multiExercises;
+      // Eliminar duplicados
+      selectedPatterns = [...new Set(selectedPatterns)];
+      
+      // Calcular número de sesiones totales
+      const monthsCount = parseInt(formData.duration, 10);
+      const weeklyFrequency = parseInt(formData.frequency, 10);
+      const totalSessions = monthsCount * 4 * weeklyFrequency; // 4 semanas por mes
+      
+      // Determinar número de ejercicios por sesión según objetivo y tiempo
+      const { total, multi, iso } = getExercisesCountByObjectiveTime(
+        formData.fitnessObjective, 
+        formData.timeAvailable
+      );
+      
+      // Crear el plan de entrenamiento
+      const newPlan = [];
+      
+      // Determinar series y descanso según objetivo
+      let defaultSeries = 3;
+      if (formData.fitnessObjective === 'muscleMass') defaultSeries = 4;
+      if (formData.fitnessObjective === 'strength') defaultSeries = 5;
+      
+      const defaultRest = getRecommendedRest();
+      
+      // Generar ejercicios para cada sesión
+      if (formData.prioritizacion === 'control') {
+        // Modo control: repetir ejercicios cada semana durante 4 semanas
+        const sessionsPerWeek = weeklyFrequency;
+        const weeksPerCycle = 4; // Ciclo de 4 semanas
+        const totalCycles = Math.ceil(totalSessions / (sessionsPerWeek * weeksPerCycle));
+        
+        // Generar ejercicios para el primer ciclo (4 semanas)
+        for (let cycle = 0; cycle < totalCycles; cycle++) {
+          // Generar ejercicios para la primera semana de cada ciclo
+          for (let weekSession = 1; weekSession <= sessionsPerWeek; weekSession++) {
+            let sessionPatterns = [...selectedPatterns];
+            
+            // Mezclar patrones para variedad (solo al inicio de cada ciclo)
+            sessionPatterns.sort(() => Math.random() - 0.5);
+            
+            // Asegurarse de que hay suficientes patrones
+            while (sessionPatterns.length < total) {
+              sessionPatterns.push(sessionPatterns[Math.floor(Math.random() * sessionPatterns.length)]);
             }
-            const randIndex = Math.floor(Math.random() * filteredMulti.length);
-            sessionExercises.push({
-              isMulti: true,
-              suggestedExercise: filteredMulti[randIndex]
-            });
-          }
-          for (let i = 0; i < iso; i++) {
-            let filteredIso = isoExercises;
-            if (allowedPatterns.length > 0) {
-              filteredIso = isoExercises.filter(ex => allowedPatterns.includes(ex.movementCategory));
-              if(filteredIso.length === 0) filteredIso = isoExercises;
-            }
-            const randIndex = Math.floor(Math.random() * filteredIso.length);
-            sessionExercises.push({
-              isMulti: false,
-              suggestedExercise: filteredIso[randIndex]
-            });
-          }
-          if (sessionExercises.length > total) {
-            sessionExercises = sessionExercises.slice(0, total);
-          }
-          let sessionPlan = [];
-          sessionExercises.forEach((exObj, idx) => {
-            sessionPlan.push({
-              sessionNumber: s, // número de sesión dentro de la semana
-              exerciseNumber: idx + 1,
-              preview: exObj.suggestedExercise.previewURL || "",
-              exerciseId: exObj.suggestedExercise.id,
-              enfoque: exObj.isMulti ? "Multi-Generic Exercise" : "Isolation-Generic Exercise",
-              seleccionMuscular: seleccionMuscular,
-              nombreEjercicio: exObj.suggestedExercise.nombre || (exObj.isMulti ? "Multi-Generic Exercise" : "Isolation-Generic Exercise"),
-              patronMovimiento: exObj.suggestedExercise.movementCategory || "",
-              equipmentUsed: exObj.suggestedExercise.equipo || "Sin equipo",
-              series: defaultSeries,
-              rest: restDefault,
-              metodo: "Standard"
-            });
-          });
-          weekPlan.push(sessionPlan);
-        }
-        // Replicar la misma semana para cada semana del programa
-        for (let w = 0; w < weeks; w++) {
-          weekPlan.forEach(session => {
-            session.forEach(ex => {
-              plan.push({
-                ...ex,
-                sessionNumber: (w * frequencyPerWeek) + ex.sessionNumber
+            
+            // Limitar a la cantidad necesaria
+            sessionPatterns = sessionPatterns.slice(0, total);
+            
+            // Generar ejercicios para esta sesión
+            const sessionExercises = [];
+            for (let i = 0; i < total; i++) {
+              const enfoque = i < multi ? 'Multiarticular' : 'Monoarticular';
+              const pattern = sessionPatterns[i];
+              
+              // Obtener ejercicios disponibles para este patrón
+              let availableExercises = getExercisesByMovementPattern(pattern);
+              
+              // Filtrar por equipamiento disponible
+              availableExercises = availableExercises.filter(ex => {
+                if (!ex.equipo) return true;
+                if (typeof ex.equipo === 'string') {
+                  return formData.equipment.includes(ex.equipo) || ex.equipo === 'Sin equipo';
+                }
+                if (Array.isArray(ex.equipo)) {
+                  return ex.equipo.some(eq => formData.equipment.includes(eq)) || ex.equipo.includes('Sin equipo');
+                }
+                return false;
               });
-            });
-          });
+              
+              // Si no hay ejercicios disponibles, usar cualquier otro patrón
+              if (availableExercises.length === 0) {
+                for (const altPattern of selectedPatterns) {
+                  availableExercises = getExercisesByMovementPattern(altPattern).filter(ex => {
+                    if (!ex.equipo) return true;
+                    if (typeof ex.equipo === 'string') {
+                      return formData.equipment.includes(ex.equipo) || ex.equipo === 'Sin equipo';
+                    }
+                    if (Array.isArray(ex.equipo)) {
+                      return ex.equipo.some(eq => formData.equipment.includes(eq)) || ex.equipo.includes('Sin equipo');
+                    }
+                    return false;
+                  });
+                  
+                  if (availableExercises.length > 0) break;
+                }
+              }
+              
+              // Si aún no hay ejercicios, usar cualquiera
+              if (availableExercises.length === 0) {
+                availableExercises = allExercises.filter(ex => {
+                  if (!ex.equipo) return true;
+                  if (typeof ex.equipo === 'string') {
+                    return formData.equipment.includes(ex.equipo) || ex.equipo === 'Sin equipo';
+                  }
+                  if (Array.isArray(ex.equipo)) {
+                    return ex.equipo.some(eq => formData.equipment.includes(eq)) || ex.equipo.includes('Sin equipo');
+                  }
+                  return false;
+                });
+              }
+              
+              // Seleccionar un ejercicio aleatorio
+              const selectedExercise = availableExercises[Math.floor(Math.random() * availableExercises.length)];
+              
+              // Determinar método según objetivo
+              let method = 'Standard';
+              if (formData.fitnessObjective === 'muscleMass') {
+                const methods = ['Standard', 'Superset', 'Drop Set', 'Rest-Pause'];
+                method = 'Standard'; // Set default to Standard instead of random
+              } else if (formData.fitnessObjective === 'strength') {
+                const methods = ['Standard', 'Pyramid'];
+                method = 'Standard'; // Set default to Standard instead of random
+              } else { // conditioning
+                const methods = ['AMRAP', 'EMOM', 'Tabata', 'Circuit'];
+                method = 'Standard'; // Set default to Standard instead of random
+              }
+              
+              // Crear el ejercicio base para esta posición en la semana
+              const baseExercise = {
+                exerciseNumber: i + 1,
+                nombreEjercicio: selectedExercise?.nombre || "Ejercicio no disponible",
+                seleccionMuscular: selectedExercise?.mainMuscle || pattern,
+                patronMovimiento: pattern,
+                equipmentUsed: selectedExercise?.equipo || "Sin equipo",
+                enfoque: enfoque,
+                series: defaultSeries,
+                rest: defaultRest,
+                metodo: method,
+                preview: selectedExercise?.previewURL || "",
+                exerciseId: selectedExercise?.id || ""
+              };
+              
+              // Añadir este ejercicio a todas las semanas del ciclo
+              for (let week = 0; week < weeksPerCycle; week++) {
+                // Calcular el número de sesión global
+                const sessionNumber = cycle * (sessionsPerWeek * weeksPerCycle) + week * sessionsPerWeek + weekSession;
+                
+                // Solo añadir si está dentro del rango total de sesiones
+                if (sessionNumber <= totalSessions) {
+                  sessionExercises.push({
+                    ...baseExercise,
+                    sessionNumber: sessionNumber
+                  });
+                }
+              }
+            }
+            
+            // Añadir ejercicios de la sesión al plan
+            newPlan.push(...sessionExercises);
+          }
         }
       } else {
-        // Modo "Diversidad": Se genera aleatoriamente para cada sesión
-        for (let s = 1; s <= totalSessions; s++) {
-          const seleccionMuscular = muscleCycle.length > 0 ? muscleCycle[(s - 1) % muscleCycle.length] : "";
-          const allowedPatterns = movementPatternMapping[seleccionMuscular] || [];
+        // Modo diversidad (código original)
+        for (let session = 1; session <= totalSessions; session++) {
+          let sessionPatterns = [...selectedPatterns];
           
-          let sessionExercises = [];
-          for (let m = 0; m < multi; m++) {
-            let filteredMulti = multiExercises;
-            if (allowedPatterns.length > 0) {
-              filteredMulti = multiExercises.filter(ex => allowedPatterns.includes(ex.movementCategory));
-              if(filteredMulti.length === 0) filteredMulti = multiExercises;
-            }
-            const randIndex = Math.floor(Math.random() * filteredMulti.length);
-            sessionExercises.push({
-              isMulti: true,
-              suggestedExercise: filteredMulti[randIndex]
+          // Mezclar patrones para variedad
+          sessionPatterns.sort(() => Math.random() - 0.5);
+          
+          // Asegurarse de que hay suficientes patrones
+          while (sessionPatterns.length < total) {
+            sessionPatterns.push(sessionPatterns[Math.floor(Math.random() * sessionPatterns.length)]);
+          }
+          
+          // Limitar a la cantidad necesaria
+          sessionPatterns = sessionPatterns.slice(0, total);
+          
+          // Asignar enfoque (multi o aislamiento) a cada patrón
+          const sessionExercises = [];
+          for (let i = 0; i < total; i++) {
+            const enfoque = i < multi ? 'Multiarticular' : 'Monoarticular';
+            const pattern = sessionPatterns[i];
+            
+            // Obtener ejercicios disponibles para este patrón
+            let availableExercises = getExercisesByMovementPattern(pattern);
+            
+            // Filtrar por equipamiento disponible
+            availableExercises = availableExercises.filter(ex => {
+              if (!ex.equipo) return true;
+              if (typeof ex.equipo === 'string') {
+                return formData.equipment.includes(ex.equipo) || ex.equipo === 'Sin equipo';
+              }
+              if (Array.isArray(ex.equipo)) {
+                return ex.equipo.some(eq => formData.equipment.includes(eq)) || ex.equipo.includes('Sin equipo');
+              }
+              return false;
             });
-          }
-          for (let i = 0; i < iso; i++) {
-            let filteredIso = isoExercises;
-            if (allowedPatterns.length > 0) {
-              filteredIso = isoExercises.filter(ex => allowedPatterns.includes(ex.movementCategory));
-              if(filteredIso.length === 0) filteredIso = isoExercises;
+            
+            // Si no hay ejercicios disponibles, usar cualquier otro patrón
+            if (availableExercises.length === 0) {
+              for (const altPattern of selectedPatterns) {
+                availableExercises = getExercisesByMovementPattern(altPattern).filter(ex => {
+                  if (!ex.equipo) return true;
+                  if (typeof ex.equipo === 'string') {
+                    return formData.equipment.includes(ex.equipo) || ex.equipo === 'Sin equipo';
+                  }
+                  if (Array.isArray(ex.equipo)) {
+                    return ex.equipo.some(eq => formData.equipment.includes(eq)) || ex.equipo.includes('Sin equipo');
+                  }
+                  return false;
+                });
+                
+                if (availableExercises.length > 0) break;
+              }
             }
-            const randIndex = Math.floor(Math.random() * filteredIso.length);
+            
+            // Si aún no hay ejercicios, usar cualquiera
+            if (availableExercises.length === 0) {
+              availableExercises = allExercises.filter(ex => {
+                if (!ex.equipo) return true;
+                if (typeof ex.equipo === 'string') {
+                  return formData.equipment.includes(ex.equipo) || ex.equipo === 'Sin equipo';
+                }
+                if (Array.isArray(ex.equipo)) {
+                  return ex.equipo.some(eq => formData.equipment.includes(eq)) || ex.equipo.includes('Sin equipo');
+                }
+                return false;
+              });
+            }
+            
+            // Seleccionar un ejercicio aleatorio
+            const selectedExercise = availableExercises[Math.floor(Math.random() * availableExercises.length)];
+            
+            // Determinar método según objetivo
+            let method = 'Standard';
+            if (formData.fitnessObjective === 'muscleMass') {
+              const methods = ['Standard', 'Superset', 'Drop Set', 'Rest-Pause'];
+              method = 'Standard'; // Set default to Standard instead of random
+            } else if (formData.fitnessObjective === 'strength') {
+              const methods = ['Standard', 'Pyramid'];
+              method = 'Standard'; // Set default to Standard instead of random
+            } else { // conditioning
+              const methods = ['AMRAP', 'EMOM', 'Tabata', 'Circuit'];
+              method = 'Standard'; // Set default to Standard instead of random
+            }
+            
+            // Añadir ejercicio al plan
             sessionExercises.push({
-              isMulti: false,
-              suggestedExercise: filteredIso[randIndex]
-            });
-          }
-          if (sessionExercises.length > total) {
-            sessionExercises = sessionExercises.slice(0, total);
-          }
-          sessionExercises.forEach((exObj, idx) => {
-            plan.push({
-              sessionNumber: s,
-              exerciseNumber: idx + 1,
-              preview: exObj.suggestedExercise.previewURL || "",
-              exerciseId: exObj.suggestedExercise.id,
-              enfoque: exObj.isMulti ? "Multi-Generic Exercise" : "Isolation-Generic Exercise",
-              seleccionMuscular: seleccionMuscular,
-              nombreEjercicio: exObj.suggestedExercise.nombre || (exObj.isMulti ? "Multi-Generic Exercise" : "Isolation-Generic Exercise"),
-              patronMovimiento: exObj.suggestedExercise.movementCategory || "",
-              equipmentUsed: exObj.suggestedExercise.equipo || "Sin equipo",
+              sessionNumber: session,
+              exerciseNumber: i + 1,
+              nombreEjercicio: selectedExercise?.nombre || "Ejercicio no disponible",
+              seleccionMuscular: selectedExercise?.mainMuscle || pattern,
+              patronMovimiento: pattern,
+              equipmentUsed: selectedExercise?.equipo || "Sin equipo",
+              enfoque: enfoque,
               series: defaultSeries,
-              rest: restDefault,
-              metodo: "Standard"
+              rest: defaultRest,
+              metodo: method,
+              preview: selectedExercise?.previewURL || "",
+              exerciseId: selectedExercise?.id || ""
             });
-          });
+          }
+          
+          // Añadir ejercicios de la sesión al plan
+          newPlan.push(...sessionExercises);
         }
       }
-  
-      setTrainingPlan(plan);
-      setMessage("Plan generado exitosamente. Puedes editarlo en la tabla.");
+      
+      // Ordenar el plan por número de sesión
+      newPlan.sort((a, b) => a.sessionNumber - b.sessionNumber || a.exerciseNumber - b.exerciseNumber);
+      
+      setFormData(prev => ({
+        ...prev,
+        trainingPlan: newPlan
+      }));
+      
+      setMessage("Plan generado exitosamente");
     } catch (error) {
       console.error("Error al generar el plan:", error);
       setError("Ocurrió un error al generar el plan. Por favor intenta de nuevo.");
@@ -461,788 +566,336 @@ const TrainingPlanDesigner = () => {
     }
   };
   
-  // Estado para almacenar el usuario actual y el nombre del plan
-  const [currentUser, setCurrentUser] = useState(null);
-  const [planName, setPlanName] = useState('');
-  
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(user => {
-      setCurrentUser(user);
-    });
-    return () => unsubscribe();
-  }, []);
-  
-  // HANDLERS PARA EDITAR LA TABLA CON PROPAGACIÓN EN MODO "CONTROL"
+  // Handlers para modificar ejercicios
   const handleExerciseChange = (e, index) => {
-    const newPlan = [...trainingPlan];
+    const { value } = e.target;
+    const newPlan = [...formData.trainingPlan];
     const currentExercise = newPlan[index];
-    newPlan[index].enfoque = e.target.value;
+    newPlan[index].enfoque = value;
     
-    if (prioritizacion === 'control') {
+    if (formData.prioritizacion === 'control') {
       const sessionNumber = currentExercise.sessionNumber;
       const exerciseNumber = currentExercise.exerciseNumber;
-      const weeklyFrequency = parseInt(frequency, 10);
+      const weeklyFrequency = parseInt(formData.frequency, 10);
       
       newPlan.forEach((ex, i) => {
         if (i !== index &&
             ex.exerciseNumber === exerciseNumber &&
             (ex.sessionNumber - sessionNumber) % weeklyFrequency === 0 &&
             ex.sessionNumber > sessionNumber) {
-          ex.enfoque = e.target.value;
+          ex.enfoque = value;
         }
       });
     }
-    setTrainingPlan(newPlan);
-  };
-
-  const handleSeriesChange = (e, index) => {
-    const newPlan = [...trainingPlan];
-    const currentExercise = newPlan[index];
-    newPlan[index].series = e.target.value;
     
-    if (prioritizacion === 'control') {
-      const sessionNumber = currentExercise.sessionNumber;
-      const exerciseNumber = currentExercise.exerciseNumber;
-      const weeklyFrequency = parseInt(frequency, 10);
-      
-      newPlan.forEach((ex, i) => {
-        if (i !== index &&
-            ex.exerciseNumber === exerciseNumber &&
-            (ex.sessionNumber - sessionNumber) % weeklyFrequency === 0 &&
-            ex.sessionNumber > sessionNumber) {
-          ex.series = e.target.value;
-        }
-      });
-    }
-    setTrainingPlan(newPlan);
+    setFormData(prev => ({
+      ...prev,
+      trainingPlan: newPlan
+    }));
   };
-
-  const handleRestChange = (e, index) => {
-    const newPlan = [...trainingPlan];
-    const currentExercise = newPlan[index];
-    newPlan[index].rest = e.target.value;
-    
-    if (prioritizacion === 'control') {
-      const sessionNumber = currentExercise.sessionNumber;
-      const exerciseNumber = currentExercise.exerciseNumber;
-      const weeklyFrequency = parseInt(frequency, 10);
-      
-      newPlan.forEach((ex, i) => {
-        if (i !== index &&
-            ex.exerciseNumber === exerciseNumber &&
-            (ex.sessionNumber - sessionNumber) % weeklyFrequency === 0 &&
-            ex.sessionNumber > sessionNumber) {
-          ex.rest = e.target.value;
-        }
-      });
-    }
-    setTrainingPlan(newPlan);
-  };
-
+  
   const handlePatternMovementChange = (e, index) => {
-    const newPlan = [...trainingPlan];
+    const { value } = e.target;
+    const newPlan = [...formData.trainingPlan];
     const currentExercise = newPlan[index];
-    const newPattern = e.target.value;
-    newPlan[index].patronMovimiento = newPattern;
+    newPlan[index].patronMovimiento = value;
     
-    if (allAvailableExercises[newPattern] && allAvailableExercises[newPattern].length > 0) {
-      const randomIndex = Math.floor(Math.random() * allAvailableExercises[newPattern].length);
-      const newExercise = allAvailableExercises[newPattern][randomIndex];
+    if (formData.prioritizacion === 'control') {
+      const sessionNumber = currentExercise.sessionNumber;
+      const exerciseNumber = currentExercise.exerciseNumber;
+      const weeklyFrequency = parseInt(formData.frequency, 10);
       
-      newPlan[index].nombreEjercicio = newExercise.nombre || "";
-      newPlan[index].preview = newExercise.previewURL || "";
-      newPlan[index].equipmentUsed = newExercise.equipo || "Sin equipo";
-      newPlan[index].exerciseId = newExercise.id;
-      
-      if (prioritizacion === 'control') {
-        const sessionNumber = currentExercise.sessionNumber;
-        const exerciseNumber = currentExercise.exerciseNumber;
-        const weeklyFrequency = parseInt(frequency, 10);
-        
-        newPlan.forEach((ex, i) => {
-          if (i !== index &&
-              ex.exerciseNumber === exerciseNumber &&
-              (ex.sessionNumber - sessionNumber) % weeklyFrequency === 0 &&
-              ex.sessionNumber > sessionNumber) {
-            ex.patronMovimiento = newPattern;
-            ex.nombreEjercicio = newExercise.nombre || "";
-            ex.preview = newExercise.previewURL || "";
-            ex.equipmentUsed = newExercise.equipo || "Sin equipo";
-            ex.exerciseId = newExercise.id;
-          }
-        });
-      }
+      newPlan.forEach((ex, i) => {
+        if (i !== index &&
+            ex.exerciseNumber === exerciseNumber &&
+            (ex.sessionNumber - sessionNumber) % weeklyFrequency === 0 &&
+            ex.sessionNumber > sessionNumber) {
+          ex.patronMovimiento = value;
+        }
+      });
     }
-    setTrainingPlan(newPlan);
+    
+    setFormData(prev => ({
+      ...prev,
+      trainingPlan: newPlan
+    }));
+  };
+  
+  const handleSeriesChange = (e, index) => {
+    const { value } = e.target;
+    const newPlan = [...formData.trainingPlan];
+    const currentExercise = newPlan[index];
+    newPlan[index].series = value;
+    
+    if (formData.prioritizacion === 'control') {
+      const sessionNumber = currentExercise.sessionNumber;
+      const exerciseNumber = currentExercise.exerciseNumber;
+      const weeklyFrequency = parseInt(formData.frequency, 10);
+      
+      newPlan.forEach((ex, i) => {
+        if (i !== index &&
+            ex.exerciseNumber === exerciseNumber &&
+            (ex.sessionNumber - sessionNumber) % weeklyFrequency === 0 &&
+            ex.sessionNumber > sessionNumber) {
+          ex.series = value;
+        }
+      });
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      trainingPlan: newPlan
+    }));
+  };
+  
+  const handleRestChange = (e, index) => {
+    const { value } = e.target;
+    const newPlan = [...formData.trainingPlan];
+    const currentExercise = newPlan[index];
+    newPlan[index].rest = value;
+    
+    if (formData.prioritizacion === 'control') {
+      const sessionNumber = currentExercise.sessionNumber;
+      const exerciseNumber = currentExercise.exerciseNumber;
+      const weeklyFrequency = parseInt(formData.frequency, 10);
+      
+      newPlan.forEach((ex, i) => {
+        if (i !== index &&
+            ex.exerciseNumber === exerciseNumber &&
+            (ex.sessionNumber - sessionNumber) % weeklyFrequency === 0 &&
+            ex.sessionNumber > sessionNumber) {
+          ex.rest = value;
+        }
+      });
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      trainingPlan: newPlan
+    }));
   };
 
   const handleExerciseNameChange = (e, index) => {
-    const newPlan = [...trainingPlan];
+    const { value } = e.target;
+    const newPlan = [...formData.trainingPlan];
     const currentExercise = newPlan[index];
-    newPlan[index].nombreEjercicio = e.target.value;
+    newPlan[index].nombreEjercicio = value;
     
-    if (prioritizacion === 'control') {
+    if (formData.prioritizacion === 'control') {
       const sessionNumber = currentExercise.sessionNumber;
       const exerciseNumber = currentExercise.exerciseNumber;
-      const weeklyFrequency = parseInt(frequency, 10);
+      const weeklyFrequency = parseInt(formData.frequency, 10);
+      
       newPlan.forEach((ex, i) => {
         if (i !== index &&
             ex.exerciseNumber === exerciseNumber &&
             (ex.sessionNumber - sessionNumber) % weeklyFrequency === 0 &&
             ex.sessionNumber > sessionNumber) {
-          ex.nombreEjercicio = e.target.value;
+          ex.nombreEjercicio = value;
         }
       });
     }
-    setTrainingPlan(newPlan);
+    
+    setFormData(prev => ({
+      ...prev,
+      trainingPlan: newPlan
+    }));
   };
 
   const handleMuscleGroupChange = (e, index) => {
-    const newPlan = [...trainingPlan];
+    const { value } = e.target;
+    const newPlan = [...formData.trainingPlan];
     const currentExercise = newPlan[index];
-    newPlan[index].seleccionMuscular = e.target.value;
+    newPlan[index].seleccionMuscular = value;
     
-    if (prioritizacion === 'control') {
+    if (formData.prioritizacion === 'control') {
       const sessionNumber = currentExercise.sessionNumber;
       const exerciseNumber = currentExercise.exerciseNumber;
-      const weeklyFrequency = parseInt(frequency, 10);
+      const weeklyFrequency = parseInt(formData.frequency, 10);
+      
       newPlan.forEach((ex, i) => {
         if (i !== index &&
             ex.exerciseNumber === exerciseNumber &&
             (ex.sessionNumber - sessionNumber) % weeklyFrequency === 0 &&
             ex.sessionNumber > sessionNumber) {
-          ex.seleccionMuscular = e.target.value;
+          ex.seleccionMuscular = value;
         }
       });
     }
-    setTrainingPlan(newPlan);
+    
+    setFormData(prev => ({
+      ...prev,
+      trainingPlan: newPlan
+    }));
   };
 
   const handleMethodChange = (e, index) => {
-    const newPlan = [...trainingPlan];
+    const { value } = e.target;
+    const newPlan = [...formData.trainingPlan];
     const currentExercise = newPlan[index];
-    newPlan[index].metodo = e.target.value;
+    newPlan[index].metodo = value;
     
-    if (prioritizacion === 'control') {
+    if (formData.prioritizacion === 'control') {
       const sessionNumber = currentExercise.sessionNumber;
       const exerciseNumber = currentExercise.exerciseNumber;
-      const weeklyFrequency = parseInt(frequency, 10);
+      const weeklyFrequency = parseInt(formData.frequency, 10);
+      
       newPlan.forEach((ex, i) => {
         if (i !== index &&
             ex.exerciseNumber === exerciseNumber &&
             (ex.sessionNumber - sessionNumber) % weeklyFrequency === 0 &&
             ex.sessionNumber > sessionNumber) {
-          ex.metodo = e.target.value;
+          ex.metodo = value;
         }
       });
     }
-    setTrainingPlan(newPlan);
-  };
-
-  // Modificar el onClick de la selección de ejercicio en el menú desplegable
-  // para propagar el cambio en modo "control"
-  const handleSelectExerciseOption = (ex, index) => {
-    const newPlan = [...trainingPlan];
-    const currentExercise = newPlan[index];
-    newPlan[index].nombreEjercicio = ex.nombre;
-    newPlan[index].preview = ex.previewURL;
-    newPlan[index].equipmentUsed = ex.equipo;
-    newPlan[index].exerciseId = ex.id;
     
-    if (prioritizacion === 'control') {
+    setFormData(prev => ({
+      ...prev,
+      trainingPlan: newPlan
+    }));
+  };
+  
+  // Función para seleccionar un ejercicio alternativo
+  const handleSelectExerciseOption = (exercise, index) => {
+    const newPlan = [...formData.trainingPlan];
+    const currentExercise = newPlan[index];
+    
+    newPlan[index].nombreEjercicio = exercise.nombre || "";
+    newPlan[index].preview = exercise.previewURL || "";
+    newPlan[index].equipmentUsed = exercise.equipo || "Sin equipo";
+    newPlan[index].exerciseId = exercise.id;
+    
+    if (formData.prioritizacion === 'control') {
       const sessionNumber = currentExercise.sessionNumber;
       const exerciseNumber = currentExercise.exerciseNumber;
-      const weeklyFrequency = parseInt(frequency, 10);
+      const weeklyFrequency = parseInt(formData.frequency, 10);
       
-      newPlan.forEach((planEx, i) => {
+      newPlan.forEach((ex, i) => {
         if (i !== index &&
-            planEx.exerciseNumber === exerciseNumber &&
-            (planEx.sessionNumber - sessionNumber) % weeklyFrequency === 0 &&
-            planEx.sessionNumber > sessionNumber) {
-          planEx.nombreEjercicio = ex.nombre;
-          planEx.preview = ex.previewURL;
-          planEx.equipmentUsed = ex.equipo;
-          planEx.exerciseId = ex.id;
+            ex.exerciseNumber === exerciseNumber &&
+            (ex.sessionNumber - sessionNumber) % weeklyFrequency === 0 &&
+            ex.sessionNumber > sessionNumber) {
+          ex.nombreEjercicio = exercise.nombre || "";
+          ex.preview = exercise.previewURL || "";
+          ex.equipmentUsed = exercise.equipo || "Sin equipo";
+          ex.exerciseId = exercise.id;
         }
       });
     }
-    setTrainingPlan(newPlan);
+    
+    setFormData(prev => ({
+      ...prev,
+      trainingPlan: newPlan
+    }));
   };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (trainingPlan.length === 0) {
-      setError("Por favor genera un plan antes de guardar");
-      return;
-    }
-    
-    if (!planName.trim()) {
-      setError("Por favor ingresa un nombre para el plan");
-      return;
-    }
-    
+  
+  // Guardar plan en Firebase
+  const savePlan = async () => {
     try {
+      if (!formData.planName.trim()) {
+        setError("Por favor, ingresa un nombre para el plan");
+        return;
+      }
+      
+      if (formData.trainingPlan.length === 0) {
+        setError("No hay un plan para guardar. Por favor genera uno primero.");
+        return;
+      }
+      
+      setError('');
+      setMessage('');
+      
       const planData = {
-        name: planName,
-        plan: trainingPlan,
-        fitnessObjective,
-        duration,
-        frequency,
-        timeAvailable,
-        muscleSelection,
-        customMuscles,
-        equipment,
-        prioritizacion,
-        createdAt: new Date(),
-        creator: {
-          uid: currentUser ? currentUser.uid : 'anonymous',
-          email: currentUser ? currentUser.email : 'anonymous',
-          displayName: currentUser ? currentUser.displayName : 'Usuario Anónimo'
-        }
+        userId: currentUser.uid,
+        name: formData.planName,
+        fitnessObjective: formData.fitnessObjective,
+        duration: formData.duration,
+        frequency: formData.frequency,
+        timeAvailable: formData.timeAvailable,
+        muscleSelection: formData.muscleSelection,
+        customMuscles: formData.customMuscles,
+        equipment: formData.equipment,
+        prioritizacion: formData.prioritizacion,
+        trainingPlan: formData.trainingPlan,
+        createdAt: new Date()
       };
       
       await addDoc(collection(db, "trainingPlans"), planData);
-      setMessage("Plan de entrenamiento guardado correctamente.");
-      setPlanName('');
-    } catch (err) {
-      console.error("Error al guardar plan de entrenamiento:", err);
-      setError("Error al guardar plan de entrenamiento: " + err.message);
+      setMessage("Plan guardado exitosamente");
+    } catch (error) {
+      console.error("Error al guardar el plan:", error);
+      setError("Ocurrió un error al guardar el plan. Por favor intenta de nuevo.");
     }
   };
-
+  
+  // Agrupar ejercicios por sesión para mostrarlos
+  const groupExercisesBySession = () => {
+    const sessions = {};
+    formData.trainingPlan.forEach(exercise => {
+      const sessionKey = `Sesión ${exercise.sessionNumber}`;
+      if (!sessions[sessionKey]) {
+        sessions[sessionKey] = [];
+      }
+      sessions[sessionKey].push(exercise);
+    });
+    return sessions;
+  };
+  
   return (
-    <Container maxWidth="lg" className="training-plan-container" sx={{ paddingTop: '100px' }}>
-      <Box sx={{ py: 4 }}>
-        <Typography 
-          variant="h4" 
-          component="h1"           
-          gutterBottom 
-          className="training-plan-title"
-          sx={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600 }}
-        >
-          Diseñador de Entrenamientos
-        </Typography>
-        
-        <Paper elevation={3} className="form-paper">
-          <form onSubmit={handleSubmit}>
-            <Grid container spacing={4}>
-              {/* Objetivo Fitness */}
-              <Grid item xs={12} md={6}>
-                <FormControl component="fieldset" fullWidth className="form-control-group">
-                  <FormLabel component="legend" className="form-section-label">
-                    Objetivo Fitness
-                  </FormLabel>
-                  <RadioGroup
-                    name="fitnessObjective"
-                    value={fitnessObjective}
-                    onChange={handleFitnessObjectiveChange}
-                  >
-                    <FormControlLabel 
-                      value="muscleMass" 
-                      control={<Radio />} 
-                      label="Incrementar masa muscular" 
-                    />
-                    <FormControlLabel 
-                      value="conditioning" 
-                      control={<Radio />} 
-                      label="Acondicionamiento físico y definición" 
-                    />
-                    <FormControlLabel 
-                      value="strength" 
-                      control={<Radio />} 
-                      label="Incremento de fuerza" 
-                    />
-                  </RadioGroup>
-                </FormControl>
-              </Grid>
-
-              {/* Duración y Frecuencia */}
-              <Grid item xs={12} md={6}>
-                <Grid container spacing={3}>
-                  <Grid item xs={12}>
-                    <FormControl fullWidth className="form-control-group">
-                      <FormLabel className="form-section-label">
-                        Duración del Programa (meses)
-                      </FormLabel>
-                      <Select
-                        value={duration}
-                        onChange={handleDurationChange}
-                        variant="outlined"
-                        className="form-select"
-                      >
-                        {[...Array(6)].map((_, i) => (
-                          <MenuItem key={i} value={i+1}>
-                            {i+1} {(i+1) === 1 ? 'mes' : 'meses'}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                  
-                  <Grid item xs={12}>
-                    <FormControl fullWidth className="form-control-group">
-                      <FormLabel className="form-section-label">
-                        Frecuencia Semanal de Entrenamiento
-                      </FormLabel>
-                      <Select
-                        value={frequency}
-                        onChange={handleFrequencyChange}
-                        variant="outlined"
-                        className="form-select"
-                      >
-                        {[...Array(7)].map((_, i) => (
-                          <MenuItem key={i} value={i+1}>
-                            {i+1} {(i+1) === 1 ? 'día' : 'días'} por semana
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                  
-                  <Grid item xs={12}>
-                    <FormControl fullWidth className="form-control-group">
-                      <FormLabel className="form-section-label">
-                        Tiempo disponible por sesión
-                      </FormLabel>
-                      <Select
-                        value={timeAvailable}
-                        onChange={handleTimeAvailableChange}
-                        variant="outlined"
-                        className="form-select"
-                      >
-                        <MenuItem value="30">30 minutos</MenuItem>
-                        <MenuItem value="45">45 minutos</MenuItem>
-                        <MenuItem value="60">60 minutos</MenuItem>
-                        <MenuItem value="90">90 minutos</MenuItem>
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                </Grid>
-              </Grid>
-
-              {/* Nueva sección: Prioritización con indicador visual */}
-              <Grid item xs={12}>
-                <FormControl component="fieldset" fullWidth className="form-control-group">
-                  <FormLabel component="legend" className="form-section-label">
-                    Prioritización del Plan
-                  </FormLabel>
-                  <RadioGroup
-                    name="prioritizacion"
-                    value={prioritizacion}
-                    onChange={handlePrioritizacionChange}
-                  >
-                    <FormControlLabel 
-                      value="diversidad" 
-                      control={<Radio />} 
-                      label="Diversidad (entrenamientos variados)" 
-                    />
-                    <FormControlLabel 
-                      value="control" 
-                      control={<Radio />} 
-                      label="Control (entrenamiento con mayor control de cargas)" 
-                    />
-                  </RadioGroup>
-                  {prioritizacion === 'control' && (
-                    <Alert severity="info" sx={{ mt: 1 }}>
-                      Modo Control: Los cambios en un ejercicio se aplicarán automáticamente a las semanas siguientes.
-                    </Alert>
-                  )}
-                </FormControl>
-              </Grid>
-
-              {/* Selección Muscular */}
-              <Grid item xs={12}>
-                <FormControl fullWidth className="form-control-group">
-                  <FormLabel className="form-section-label">
-                    Selección Muscular
-                  </FormLabel>
-                  <Select
-                    value={muscleSelection}
-                    onChange={handleMuscleSelectionChange}
-                    variant="outlined"
-                    className="form-select"
-                  >
-                    {muscleOptions.map((option, idx) => (
-                      <MenuItem key={idx} value={option}>{option}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              {/* Músculos Personalizados */}
-              {muscleSelection === 'Personalizado' && (
-                <Grid item xs={12}>
-                  <FormLabel className="form-section-label" style={{ display: 'block' }}>
-                    Selecciona los grupos musculares
-                  </FormLabel>
-                  <FormGroup row>
-                    {customMuscleOptions.map((muscle, idx) => (
-                      <FormControlLabel
-                        key={idx}
-                        control={
-                          <Checkbox 
-                            checked={customMuscles.includes(muscle)}
-                            onChange={handleCustomMuscleChange}
-                            value={muscle}
-                          />
-                        }
-                        label={muscle}
-                        className="muscle-checkbox"
-                      />
-                    ))}
-                  </FormGroup>
-                </Grid>
-              )}
-
-              {/* Equipamiento Disponible */}
-              <Grid item xs={12}>
-                <FormLabel className="form-section-label">
-                  Equipamiento Disponible
-                </FormLabel>
-                <Button 
-                  variant="outlined" 
-                  size="small" 
-                  onClick={selectAllEquipment}
-                  className="action-button select-all-button"
-                >
-                  Seleccionar Todo
-                </Button>
-                <FormGroup row>
-                  {equipmentOptions.map((eq, idx) => (
-                    <FormControlLabel
-                      key={idx}
-                      control={
-                        <Checkbox 
-                          checked={equipment.includes(eq)}
-                          onChange={handleEquipmentChange}
-                          value={eq}
-                        />
-                      }
-                      label={eq}
-                      className="equipment-checkbox"
-                    />
-                  ))}
-                </FormGroup>
-              </Grid>
-
-              {/* Botones de Acción */}
-              <Grid item xs={12}>
-                <Divider className="section-divider" />
-                
-                {/* Campo para el nombre del plan */}
-                <Box sx={{ mb: 2 }}>
-                  <FormControl fullWidth>
-                    <FormLabel className="form-section-label">
-                      Nombre del Plan de Entrenamiento
-                    </FormLabel>
-                    <input
-                      type="text"
-                      value={planName}
-                      onChange={(e) => setPlanName(e.target.value)}
-                      placeholder="Ingresa un nombre para tu plan"
-                      className="form-input"
-                      style={{
-                        padding: '10px',
-                        fontSize: '16px',
-                        width: '100%',
-                        backgroundColor: '#333',
-                        color: 'white',
-                        border: '1px solid #555',
-                        borderRadius: '4px',
-                        marginTop: '8px'
-                      }}
-                    />
-                  </FormControl>
-                </Box>
-                
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-                  <Button 
-                    variant="contained" 
-                    onClick={generatePlan}
-                    disabled={generatingPlan}
-                    className="action-button generate-button"
-                  >
-                    {generatingPlan ? (
-                      <>
-                        <CircularProgress size={24} sx={{ mr: 1 }} color="inherit" />
-                        Generando plan...
-                      </>
-                    ) : (
-                      "Generar Plan"
-                    )}
-                  </Button>
-                  <Button 
-                    variant="contained" 
-                    type="submit"
-                    disabled={trainingPlan.length === 0}
-                    className="action-button save-button"
-                  >
-                    Guardar Plan de Entrenamiento
-                  </Button>
-                </Box>
-              </Grid>
-            </Grid>
-          </form>
-        </Paper>
-        
-        {/* Mensajes de estado */}
-        {message && (
-          <Alert severity="success" className="status-alert success-alert">{message}</Alert>
-        )}
-        {error && (
-          <Alert severity="error" className="status-alert error-alert">{error}</Alert>
-        )}
-        
-        {/* Tabla de resultados */}
-        {trainingPlan.length > 0 && (
-          <Paper elevation={3} className="results-container">
-            <Typography 
-              variant="h5" 
-              gutterBottom 
-              className="results-title"
-              sx={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600, p: 2 }}
-            >
-              Plan de Entrenamiento Generado
-            </Typography>
-            
-            {/* Agrupamos los ejercicios por sesión */}
-            {Array.from(new Set(trainingPlan.map(ex => ex.sessionNumber))).map(sessionNum => (
-              <Box key={sessionNum} className="session-container" sx={{ mb: 4, p: 2, backgroundColor: sessionNum % 2 === 0 ? '#1a1a1a' : '#2a2a2a' }}>
-                <Typography variant="h6" sx={{ color: '#BBFF00', mb: 2, fontWeight: 'bold' }}>
-                  Sesión {sessionNum}
-                </Typography>
-                
-                <Grid container spacing={2}>
-                  {trainingPlan.filter(ex => ex.sessionNumber === sessionNum).map((exercise, index) => (
-                    <Grid item xs={12} sm={6} md={4} key={index}>
-                      <Card sx={{ height: '100%', backgroundColor: '#333', color: 'white', position: 'relative' }}>
-                        <Box sx={{ position: 'absolute', top: 8, right: 8, zIndex: 2 }}>
-                          <Tooltip title="Ver detalles">
-                            <IconButton 
-                              size="small" 
-                              color="primary"
-                              onClick={(e) => handlePopoverOpen(e, exercise)}
-                            >
-                              <InfoIcon />
-                            </IconButton>
-                          </Tooltip>
-                        </Box>
-                        
-                        {exercise.preview && (
-                          <CardMedia
-                            component="img"
-                            height="140"
-                            image={exercise.preview}
-                            alt={exercise.nombreEjercicio}
-                            sx={{ objectFit: 'contain', backgroundColor: '#222' }}
-                          />
-                        )}
-                        
-                        <CardContent>
-                          <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1 }}>
-                            Ejercicio #{exercise.exerciseNumber}
-                          </Typography>
-                          
-                          <Grid container spacing={1}>
-                            <Grid item xs={12}>
-                              <Typography variant="body2" sx={{ color: '#aaa', fontSize: '0.8rem' }}>Nombre:</Typography>
-                              <Select
-                                value={exercise.nombreEjercicio || ""}
-                                onChange={(e) => handleExerciseNameChange(e, index)}
-                                size="small"
-                                fullWidth
-                                sx={{ mb: 1 }}
-                              >
-                                {allAvailableExercises[exercise.patronMovimiento] ? 
-                                  allAvailableExercises[exercise.patronMovimiento].map((ex, idx) => (
-                                    <MenuItem 
-                                      key={idx} 
-                                      value={ex.nombre}
-                                      onClick={() => handleSelectExerciseOption(ex, index)}
-                                    >
-                                      {ex.previewURL && (
-                                        <img 
-                                          src={ex.previewURL} 
-                                          alt={ex.nombre} 
-                                          className="exercise-thumbnail"
-                                          style={{ width: '30px', height: '30px', marginRight: '8px' }}
-                                        />
-                                      )}
-                                      {ex.nombre}
-                                    </MenuItem>
-                                  )) : (
-                                    <MenuItem value={exercise.nombreEjercicio}>{exercise.nombreEjercicio}</MenuItem>
-                                  )
-                                }
-                              </Select>
-                            </Grid>
-                            
-                            <Grid item xs={6}>
-                              <Typography variant="body2" sx={{ color: '#aaa', fontSize: '0.8rem' }}>Grupo Muscular:</Typography>
-                              <Select
-                                value={exercise.seleccionMuscular || ""}
-                                onChange={(e) => handleMuscleGroupChange(e, index)}
-                                size="small"
-                                fullWidth
-                                sx={{ mb: 1 }}
-                              >
-                                {muscleOptions.flatMap(option => 
-                                  option === 'Personalizado' 
-                                    ? customMuscleOptions.map(muscle => (
-                                        <MenuItem key={muscle} value={muscle}>{muscle}</MenuItem>
-                                      ))
-                                    : option.split(',').map(g => (
-                                        <MenuItem key={g.trim()} value={g.trim()}>{g.trim()}</MenuItem>
-                                      ))
-                                )}
-                              </Select>
-                            </Grid>
-                            
-                            <Grid item xs={6}>
-                              <Typography variant="body2" sx={{ color: '#aaa', fontSize: '0.8rem' }}>Patrón:</Typography>
-                              <Select
-                                value={exercise.patronMovimiento || ""}
-                                onChange={(e) => handlePatternMovementChange(e, index)}
-                                size="small"
-                                fullWidth
-                                sx={{ mb: 1 }}
-                              >
-                                {allMovementPatterns.map((pattern, idx) => (
-                                  <MenuItem key={idx} value={pattern}>{pattern}</MenuItem>
-                                ))}
-                              </Select>
-                            </Grid>
-                            
-                            <Grid item xs={6}>
-                              <Typography variant="body2" sx={{ color: '#aaa', fontSize: '0.8rem' }}>Método:</Typography>
-                              <Select
-                                value={exercise.metodo || "Standard"}
-                                onChange={(e) => handleMethodChange(e, index)}
-                                size="small"
-                                fullWidth
-                                sx={{ mb: 1 }}
-                              >
-                                {methodOptions.map((opt, idx) => (
-                                  <MenuItem key={idx} value={opt}>{opt}</MenuItem>
-                                ))}
-                              </Select>
-                            </Grid>
-                            
-                            <Grid item xs={6}>
-                              <Typography variant="body2" sx={{ color: '#aaa', fontSize: '0.8rem' }}>Enfoque:</Typography>
-                              <Select
-                                value={exercise.enfoque}
-                                onChange={(e) => handleExerciseChange(e, index)}
-                                size="small"
-                                fullWidth
-                                sx={{ mb: 1 }}
-                              >
-                                {enfoqueOptions.map((opt, idx) => (
-                                  <MenuItem key={idx} value={opt}>{opt}</MenuItem>
-                                ))}
-                              </Select>
-                            </Grid>
-                            
-                            <Grid item xs={6}>
-                              <Typography variant="body2" sx={{ color: '#aaa', fontSize: '0.8rem' }}>Series:</Typography>
-                              <Select
-                                value={exercise.series}
-                                onChange={(e) => handleSeriesChange(e, index)}
-                                size="small"
-                                fullWidth
-                                sx={{ mb: 1 }}
-                              >
-                                {[...Array(8)].map((_, i) => (
-                                  <MenuItem key={i} value={i+1}>{i+1}</MenuItem>
-                                ))}
-                              </Select>
-                            </Grid>
-                            
-                            <Grid item xs={6}>
-                              <Typography variant="body2" sx={{ color: '#aaa', fontSize: '0.8rem' }}>Descanso (seg):</Typography>
-                              <Select
-                                value={exercise.rest}
-                                onChange={(e) => handleRestChange(e, index)}
-                                size="small"
-                                fullWidth
-                                sx={{ mb: 1 }}
-                              >
-                                <MenuItem value={30}>30</MenuItem>
-                                <MenuItem value={60}>60</MenuItem>
-                                <MenuItem value={90}>90</MenuItem>
-                                <MenuItem value={120}>120</MenuItem>
-                                <MenuItem value={180}>180</MenuItem>
-                              </Select>
-                            </Grid>
-                            
-                            <Grid item xs={12}>
-                              <Typography variant="body2" sx={{ color: '#aaa', fontSize: '0.8rem' }}>
-                                Equipamiento: <span style={{ color: 'white' }}>{exercise.equipmentUsed}</span>
-                              </Typography>
-                            </Grid>
-                          </Grid>
-                        </CardContent>
-                      </Card>
-                    </Grid>
-                  ))}
-                </Grid>
-              </Box>
-            ))}
-            
-            {/* Popover para detalles del ejercicio */}
-            <Popover
-              open={open}
-              anchorEl={anchorEl}
-              onClose={handlePopoverClose}
-              anchorOrigin={{
-                vertical: 'center',
-                horizontal: 'center',
-              }}
-              transformOrigin={{
-                vertical: 'center',
-                horizontal: 'center',
-              }}
-            >
-              {popoverExercise && (
-                <Card className="exercise-popover-card">
-                  {popoverExercise.preview && (
-                    <CardMedia
-                      component="img"
-                      className="exercise-image"
-                      image={popoverExercise.preview}
-                      alt={popoverExercise.nombreEjercicio}
-                    />
-                  )}
-                  <CardContent>
-                    <Typography variant="h6" component="div" className="exercise-details-title">
-                      {popoverExercise.nombreEjercicio}
-                    </Typography>
-                    <Typography variant="body2" className="exercise-details-text">
-                      <span className="exercise-details-label">Grupo Muscular:</span> {popoverExercise.seleccionMuscular}
-                    </Typography>
-                    <Typography variant="body2" className="exercise-details-text">
-                      <span className="exercise-details-label">Patrón de Movimiento:</span> {popoverExercise.patronMovimiento}
-                    </Typography>
-                    <Typography variant="body2" className="exercise-details-text">
-                      <span className="exercise-details-label">Equipamiento:</span> {popoverExercise.equipmentUsed}
-                    </Typography>
-                    <Typography variant="body2" className="exercise-details-text">
-                      <span className="exercise-details-label">Enfoque:</span> {popoverExercise.enfoque}
-                    </Typography>
-                    <Typography variant="body2" className="exercise-details-text">
-                      <span className="exercise-details-label">Series:</span> {popoverExercise.series}
-                    </Typography>
-                    <Typography variant="body2" className="exercise-details-text">
-                      <span className="exercise-details-label">Descanso:</span> {popoverExercise.rest} segundos
-                    </Typography>
-                  </CardContent>
-                </Card>
-              )}
-            </Popover>
-          </Paper>
-        )}
-      </Box>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Typography variant="h4" component="h1" gutterBottom align="center">
+        Diseñador de Plan de Entrenamiento
+      </Typography>
+      
+      <TrainingPlanForm
+        formData={formData}
+        handleChange={handleChange}
+        handleCustomMuscleChange={handleCustomMuscleChange}
+        handleEquipmentChange={handleEquipmentChange}
+        selectAllEquipment={selectAllEquipment}
+        generatePlan={generatePlan}
+        savePlan={savePlan}
+        generatingPlan={generatingPlan}
+        muscleOptions={muscleOptions}
+        customMuscleOptions={customMuscleOptions}
+        equipmentOptions={equipmentOptions}
+      />
+      
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
+      
+      {message && (
+        <Alert severity="success" sx={{ mb: 2 }}>
+          {message}
+        </Alert>
+      )}
+      
+      <TrainingPlanDisplay
+        formData={formData}
+        groupExercisesBySession={groupExercisesBySession}
+        handleExerciseChange={handleExerciseChange}
+        handlePatternMovementChange={handlePatternMovementChange}
+        handleMethodChange={handleMethodChange}
+        handleSeriesChange={handleSeriesChange}
+        handleRestChange={handleRestChange}
+        handlePopoverOpen={handlePopoverOpen}
+        handleAlternativesOpen={handleAlternativesOpen}
+        open={open}
+        anchorEl={anchorEl}
+        handlePopoverClose={handlePopoverClose}
+        popoverExercise={popoverExercise}
+        alternativesAnchorEl={alternativesAnchorEl}
+        handleAlternativesClose={handleAlternativesClose}
+        alternativeExercises={alternativeExercises}
+        handleSelectAlternative={handleSelectAlternative}
+        enfoqueOptions={enfoqueOptions}
+        allMovementPatterns={allMovementPatterns}
+        methodOptions={methodOptions}
+      />
     </Container>
   );
 };
