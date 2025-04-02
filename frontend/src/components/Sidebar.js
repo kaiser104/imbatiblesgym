@@ -18,7 +18,6 @@ import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import PersonIcon from '@mui/icons-material/Person';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import BarChartIcon from '@mui/icons-material/BarChart';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import './Sidebar.css';
@@ -211,12 +210,8 @@ const Sidebar = ({ open, toggleSidebar }) => {
       path: '/gestion-usuarios',
       roles: ['super-administrador', 'gimnasio', 'entrenador'],
       className: 'admin-link'
-    },
-    { 
-      text: 'Estadísticas', 
-      icon: <BarChartIcon />, 
-      path: '/statistics' 
     }
+    // Se eliminó el elemento de Estadísticas
   ];
   
   // Filtrar elementos del menú según el rol del usuario
