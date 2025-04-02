@@ -103,21 +103,7 @@ const TrainingPlanDisplay = ({
                         </Typography>
                         
                         <Grid container spacing={2}>
-                          <Grid item xs={12}>
-                            <FormControl fullWidth size="small" margin="dense">
-                              <InputLabel>Enfoque</InputLabel>
-                              <Select
-                                value={exercise.enfoque}
-                                onChange={(e) => handleExerciseChange(e, globalIndex)}
-                                label="Enfoque"
-                              >
-                                {enfoqueOptions.map((option) => (
-                                  <MenuItem key={option} value={option}>{option}</MenuItem>
-                                ))}
-                              </Select>
-                            </FormControl>
-                          </Grid>
-                          
+                          {/* Eliminamos el selector de enfoque */}
                           <Grid item xs={12}>
                             <FormControl fullWidth size="small" margin="dense">
                               <InputLabel>Patrón de Movimiento</InputLabel>
@@ -127,7 +113,9 @@ const TrainingPlanDisplay = ({
                                 label="Patrón de Movimiento"
                               >
                                 {allMovementPatterns.map((pattern) => (
-                                  <MenuItem key={pattern} value={pattern}>{pattern}</MenuItem>
+                                  <MenuItem key={pattern} value={pattern}>
+                                    {pattern}
+                                  </MenuItem>
                                 ))}
                               </Select>
                             </FormControl>
@@ -168,11 +156,13 @@ const TrainingPlanDisplay = ({
                                 onChange={(e) => handleRestChange(e, globalIndex)}
                                 label="Descanso (seg)"
                               >
-                                <MenuItem value="30-60">30-60 seg</MenuItem>
-                                <MenuItem value="60-90">60-90 seg</MenuItem>
-                                <MenuItem value="90-120">90-120 seg</MenuItem>
-                                <MenuItem value="120-180">2-3 min</MenuItem>
-                                <MenuItem value="180-240">3-4 min</MenuItem>
+                                {/* Añadimos una sugerencia basada en el objetivo fitness */}
+                                <MenuItem value={45}>45 {formData.fitnessObjective === 'conditioning' && '(Recomendado)'}</MenuItem>
+                                <MenuItem value={60}>60</MenuItem>
+                                <MenuItem value={90}>90 {formData.fitnessObjective === 'muscleMass' && '(Recomendado)'}</MenuItem>
+                                <MenuItem value={120}>120</MenuItem>
+                                <MenuItem value={180}>180 {formData.fitnessObjective === 'strength' && '(Recomendado)'}</MenuItem>
+                                <MenuItem value={240}>240</MenuItem>
                               </Select>
                             </FormControl>
                           </Grid>

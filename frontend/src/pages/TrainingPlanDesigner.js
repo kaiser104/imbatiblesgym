@@ -299,6 +299,9 @@ const TrainingPlanDesigner = () => {
   };
   
   // Función para generar el plan de entrenamiento
+  // ... existing code ...
+  
+  // Modificar la función generatePlan para eliminar la propiedad enfoque
   const generatePlan = async () => {
     try {
       setGeneratingPlan(true);
@@ -452,7 +455,6 @@ const TrainingPlanDesigner = () => {
               sessionNumber: weekSession,
               exerciseNumber: i + 1,
               patronMovimiento: pattern,
-              enfoque: isMulti ? 'Multiarticular' : 'Monoarticular',
               nombreEjercicio: selectedExercise ? selectedExercise.nombre : `Ejercicio para ${pattern}`,
               seleccionMuscular: formData.muscleSelection,
               series: defaultSeries,
@@ -550,7 +552,6 @@ const TrainingPlanDesigner = () => {
           // Generar ejercicios para cada patrón
           for (let i = 0; i < sessionPatterns.length; i++) {
             const pattern = sessionPatterns[i];
-            const isMulti = i < multi;
             
             // Buscar ejercicios disponibles para este patrón
             const availableExercises = getExercisesByMovementPattern(pattern);
@@ -565,7 +566,6 @@ const TrainingPlanDesigner = () => {
               sessionNumber: session,
               exerciseNumber: i + 1,
               patronMovimiento: pattern,
-              enfoque: isMulti ? 'Multiarticular' : 'Monoarticular',
               nombreEjercicio: selectedExercise ? selectedExercise.nombre : `Ejercicio para ${pattern}`,
               seleccionMuscular: formData.muscleSelection,
               series: defaultSeries,
@@ -786,6 +786,7 @@ const TrainingPlanDesigner = () => {
         <TrainingPlanDisplay 
           formData={formData}
           groupExercisesBySession={groupExercisesBySession}
+          // Seguimos pasando handleExerciseChange aunque esté vacía para evitar errores
           handleExerciseChange={handleExerciseChange}
           handlePatternMovementChange={handlePatternMovementChange}
           handleMethodChange={handleMethodChange}
@@ -801,6 +802,7 @@ const TrainingPlanDesigner = () => {
           handleAlternativesClose={handleAlternativesClose}
           alternativeExercises={alternativeExercises}
           handleSelectAlternative={handleSelectAlternative}
+          // Seguimos pasando enfoqueOptions aunque no se use para evitar errores
           enfoqueOptions={enfoqueOptions}
           allMovementPatterns={allMovementPatterns}
           methodOptions={methodOptions}
