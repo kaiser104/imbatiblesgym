@@ -189,6 +189,10 @@ const TrainingPlanDesigner = () => {
     setPopoverExercise(null);
   };
   
+  // Añadir estados para el filtro de equipo
+  const [equipmentFilter, setEquipmentFilter] = useState('');
+  const [filteredAlternatives, setFilteredAlternatives] = useState([]);
+  
   const handleAlternativesOpen = (event, exercise, index) => {
     setAlternativesAnchorEl(event.currentTarget);
     setSelectedExerciseIndex(index);
@@ -200,8 +204,64 @@ const TrainingPlanDesigner = () => {
     );
     
     setAlternativeExercises(alternatives);
+    setFilteredAlternatives(alternatives); // Inicialmente mostrar todos
+    setEquipmentFilter(''); // Resetear filtro
   };
   
+  const handleEquipmentFilterChange = (e) => {
+    const value = e.target.value;
+    setEquipmentFilter(value);
+    
+    if (value) {
+      setFilteredAlternatives(alternativeExercises.filter(ex => 
+        ex.equipo === value
+      ));
+    } else {
+      setFilteredAlternatives(alternativeExercises);
+    }
+  };
+  
+  // Eliminar la redeclaración de handleSelectExerciseOption y reemplazar la implementación existente
+  // con esta versión mejorada que actualiza ejercicios en modo control
+  // ...
+  // Keep the first implementation (around line 228) which has the enhanced functionality
+  const handleSelectExerciseOption = (exercise, index) => {
+    const newPlan = [...formData.trainingPlan];
+    const currentExercise = newPlan[index];
+    
+    // Actualizar el ejercicio seleccionado
+    newPlan[index].nombreEjercicio = exercise.nombre || "";
+    newPlan[index].preview = exercise.previewURL || "";
+    newPlan[index].equipmentUsed = exercise.equipo || "Sin equipo";
+    newPlan[index].exerciseId = exercise.id;
+    
+    // Si estamos en modo control, actualizar todos los ejercicios relacionados
+    if (formData.prioritizacion === 'control') {
+      const sessionNumber = currentExercise.sessionNumber;
+      const exerciseNumber = currentExercise.exerciseNumber;
+      const weeklyFrequency = parseInt(formData.frequency, 10);
+      
+      // Buscar todos los ejercicios con el mismo número de ejercicio en las sesiones correspondientes
+      newPlan.forEach((ex, idx) => {
+        // Si es el mismo ejercicio en otra semana (mismo día de la semana)
+        if (idx !== index && 
+            ex.exerciseNumber === exerciseNumber && 
+            (ex.sessionNumber - sessionNumber) % weeklyFrequency === 0) {
+          
+          newPlan[idx].nombreEjercicio = exercise.nombre || "";
+          newPlan[idx].preview = exercise.previewURL || "";
+          newPlan[idx].equipmentUsed = exercise.equipo || "Sin equipo";
+          newPlan[idx].exerciseId = exercise.id;
+        }
+      });
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      trainingPlan: newPlan
+    }));
+  };
+
   const handleAlternativesClose = () => {
     setAlternativesAnchorEl(null);
     setSelectedExerciseIndex(null);
@@ -299,9 +359,6 @@ const TrainingPlanDesigner = () => {
   };
   
   // Función para generar el plan de entrenamiento
-  // ... existing code ...
-  
-  // Modificar la función generatePlan para eliminar la propiedad enfoque
   const generatePlan = async () => {
     try {
       setGeneratingPlan(true);
@@ -699,19 +756,20 @@ const TrainingPlanDesigner = () => {
     }));
   };
   
-  const handleSelectExerciseOption = (exercise, index) => {
-    const newPlan = [...formData.trainingPlan];
-    
-    newPlan[index].nombreEjercicio = exercise.nombre || "";
-    newPlan[index].preview = exercise.previewURL || "";
-    newPlan[index].equipmentUsed = exercise.equipo || "Sin equipo";
-    newPlan[index].exerciseId = exercise.id;
-    
-    setFormData(prev => ({
-      ...prev,
-      trainingPlan: newPlan
-    }));
-  };
+  // Delete this second declaration of handleSelectExerciseOption
+  // const handleSelectExerciseOption = (exercise, index) => {
+  //   const newPlan = [...formData.trainingPlan];
+  //   
+  //   newPlan[index].nombreEjercicio = exercise.nombre || "";
+  //   newPlan[index].preview = exercise.previewURL || "";
+  //   newPlan[index].equipmentUsed = exercise.equipo || "Sin equipo";
+  //   newPlan[index].exerciseId = exercise.id;
+  //   
+  //   setFormData(prev => ({
+  //     ...prev,
+  //     trainingPlan: newPlan
+  //   }));
+  // };
   
   // Función para agrupar ejercicios por sesión
   const groupExercisesBySession = () => {
@@ -806,6 +864,10 @@ const TrainingPlanDesigner = () => {
           enfoqueOptions={enfoqueOptions}
           allMovementPatterns={allMovementPatterns}
           methodOptions={methodOptions}
+          equipmentFilter={equipmentFilter}
+          handleEquipmentFilterChange={handleEquipmentFilterChange}
+          filteredAlternatives={filteredAlternatives}
+          equipmentOptions={equipmentOptions}
         />
       )}
     </Container>

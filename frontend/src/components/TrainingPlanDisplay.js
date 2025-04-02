@@ -22,12 +22,19 @@ import {
   ListItemText,
   IconButton,
   Divider,
-  Paper
+  Paper,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  ListItemAvatar,
+  Avatar,
+  Menu
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import EditIcon from '@mui/icons-material/Edit';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import InfoIcon from '@mui/icons-material/Info';
+import CloseIcon from '@mui/icons-material/Close';
 
 const TrainingPlanDisplay = ({
   formData,
@@ -49,7 +56,11 @@ const TrainingPlanDisplay = ({
   handleSelectAlternative,
   enfoqueOptions,
   allMovementPatterns,
-  methodOptions
+  methodOptions,
+  equipmentFilter,
+  handleEquipmentFilterChange,
+  filteredAlternatives,
+  equipmentOptions
 }) => {
   const sessions = groupExercisesBySession();
   
@@ -80,7 +91,13 @@ const TrainingPlanDisplay = ({
                 const globalIndex = formData.trainingPlan.indexOf(exercise);
                 return (
                   <Grid item xs={12} md={6} lg={4} key={`${exercise.sessionNumber}-${exercise.exerciseNumber}`}>
-                    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                    <Card sx={{ 
+                      height: '100%', 
+                      display: 'flex', 
+                      flexDirection: 'column',
+                      maxWidth: '300px', 
+                      margin: '0 auto' 
+                    }}>
                       {exercise.preview && (
                         <CardMedia
                           component="img"
@@ -103,7 +120,6 @@ const TrainingPlanDisplay = ({
                         </Typography>
                         
                         <Grid container spacing={2}>
-                          {/* Eliminamos el selector de enfoque */}
                           <Grid item xs={12}>
                             <FormControl fullWidth size="small" margin="dense">
                               <InputLabel>Patrón de Movimiento</InputLabel>
@@ -156,12 +172,13 @@ const TrainingPlanDisplay = ({
                                 onChange={(e) => handleRestChange(e, globalIndex)}
                                 label="Descanso (seg)"
                               >
-                                {/* Añadimos una sugerencia basada en el objetivo fitness */}
-                                <MenuItem value={45}>45 {formData.fitnessObjective === 'conditioning' && '(Recomendado)'}</MenuItem>
+                                <MenuItem value={15}>15</MenuItem>
+                                <MenuItem value={30}>30</MenuItem>
+                                <MenuItem value={45}>45</MenuItem>
                                 <MenuItem value={60}>60</MenuItem>
-                                <MenuItem value={90}>90 {formData.fitnessObjective === 'muscleMass' && '(Recomendado)'}</MenuItem>
+                                <MenuItem value={90}>90</MenuItem>
                                 <MenuItem value={120}>120</MenuItem>
-                                <MenuItem value={180}>180 {formData.fitnessObjective === 'strength' && '(Recomendado)'}</MenuItem>
+                                <MenuItem value={180}>180</MenuItem>
                                 <MenuItem value={240}>240</MenuItem>
                               </Select>
                             </FormControl>
@@ -229,63 +246,74 @@ const TrainingPlanDisplay = ({
         )}
       </Popover>
       
-      {/* Popover para ejercicios alternativos */}
-      <Popover
+      {/* Diálogo para ejercicios alternativos */}
+      <Dialog
         open={Boolean(alternativesAnchorEl)}
-        anchorEl={alternativesAnchorEl}
         onClose={handleAlternativesClose}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'center',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'center',
-        }}
+        maxWidth="md"
+        fullWidth
       >
-        <Box sx={{ p: 2, maxWidth: 300, maxHeight: 400, overflow: 'auto' }}>
-          <Typography variant="h6" gutterBottom>
-            Ejercicios Alternativos
-          </Typography>
-          <Divider sx={{ mb: 1 }} />
-          
-          {alternativeExercises.length === 0 ? (
-            <Typography variant="body2">
-              No hay ejercicios alternativos disponibles para este patrón de movimiento.
-            </Typography>
-          ) : (
-            <List>
-              {alternativeExercises.map((exercise) => (
-                <ListItem 
-                  key={exercise.id}
-                  button
-                  onClick={() => handleSelectAlternative(exercise)}
-                  sx={{ 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    alignItems: 'flex-start',
-                    borderBottom: '1px solid #eee'
-                  }}
+        <DialogTitle>
+          Seleccionar ejercicio alternativo
+          <IconButton
+            aria-label="close"
+            onClick={handleAlternativesClose}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ mb: 2 }}>
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel>Filtrar por equipo</InputLabel>
+              <Select
+                value={equipmentFilter || ''}
+                onChange={handleEquipmentFilterChange}
+                label="Filtrar por equipo"
+              >
+                <MenuItem value="">Todos</MenuItem>
+                {equipmentOptions && equipmentOptions.map(eq => (
+                  <MenuItem key={eq} value={eq}>{eq}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+          <Grid container spacing={2}>
+            {filteredAlternatives && filteredAlternatives.map((exercise, idx) => (
+              <Grid item xs={12} sm={6} md={4} key={idx}>
+                <Card sx={{ 
+                  display: 'flex', 
+                  flexDirection: 'column',
+                  height: '100%',
+                  cursor: 'pointer'
+                }} 
+                onClick={() => handleSelectAlternative(exercise)}
                 >
-                  <ListItemText 
-                    primary={exercise.nombre} 
-                    secondary={`Equipo: ${exercise.equipo}`}
+                  <CardMedia
+                    component="img"
+                    height="140"
+                    image={exercise.previewURL || '/placeholder.jpg'}
+                    alt={exercise.nombre}
                   />
-                  {exercise.previewURL && (
-                    <Box sx={{ width: '100%', mt: 1 }}>
-                      <img 
-                        src={exercise.previewURL} 
-                        alt={exercise.nombre}
-                        style={{ width: '100%', height: 'auto', maxHeight: 100, objectFit: 'contain' }}
-                      />
-                    </Box>
-                  )}
-                </ListItem>
-              ))}
-            </List>
-          )}
-        </Box>
-      </Popover>
+                  <CardContent>
+                    <Typography variant="body2" component="div">
+                      {exercise.nombre}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {exercise.equipo}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 };
