@@ -74,14 +74,15 @@ const TrainingPlanDesigner = () => {
   const [formData, setFormData] = useState({
     fitnessObjective: 'muscleMass',
     prioritizacion: 'diversidad',
-    duration: '3',
+    duration: '1',
     frequency: '3',
     timeAvailable: '60',
-    muscleSelection: 'Superior, Inferior, Cuerpo completo',
+    muscleSelection: 'Cuerpo completo',
     customMuscles: [],
     equipment: [],
     planName: '',
-    trainingPlan: []
+    trainingPlan: [],
+    trainingDays: [] // Add this to initialize the trainingDays array
   });
   
   // Handlers para el formulario
@@ -134,6 +135,49 @@ const TrainingPlanDesigner = () => {
     }));
   };
   
+  // Añadir esta nueva función para manejar los cambios en las características de los días
+  const handleDayCharacteristicChange = (event, dayIndex, characteristic) => {
+    const checked = event.target.checked;
+    
+    setFormData(prevData => {
+      const updatedTrainingDays = [...(prevData.trainingDays || [])];
+      
+      // Inicializar el día si no existe
+      if (!updatedTrainingDays[dayIndex]) {
+        updatedTrainingDays[dayIndex] = { characteristics: [] };
+      }
+      
+      // Inicializar el array de características si no existe
+      if (!updatedTrainingDays[dayIndex].characteristics) {
+        updatedTrainingDays[dayIndex].characteristics = [];
+      }
+      
+      // Añadir o eliminar la característica
+      if (checked) {
+        if (!updatedTrainingDays[dayIndex].characteristics.includes(characteristic)) {
+          updatedTrainingDays[dayIndex].characteristics.push(characteristic);
+        }
+      } else {
+        updatedTrainingDays[dayIndex].characteristics = updatedTrainingDays[dayIndex].characteristics.filter(
+          c => c !== characteristic
+        );
+      }
+      
+      return {
+        ...prevData,
+        trainingDays: updatedTrainingDays
+      };
+    });
+  };
+  
+  // Añadir esta función para actualizar el orden de los días
+  const handleUpdateTrainingDays = (updatedDays) => {
+    setFormData(prev => ({
+      ...prev,
+      trainingDays: updatedDays
+    }));
+  };
+  
   // Handlers para el popover y menú de alternativas
   const handlePopoverOpen = (event, exercise) => {
     setAnchorEl(event.currentTarget);
@@ -164,11 +208,11 @@ const TrainingPlanDesigner = () => {
   };
   
   const handleSelectAlternative = (exercise) => {
-    handleSelectExerciseOption(exercise, formData.trainingPlan.indexOf(popoverExercise));
+    handleSelectExerciseOption(exercise, selectedExerciseIndex);
     handleAlternativesClose();
   };
   
-  // Funciones para generar el plan
+  // Función para generar el plan
   const getExercisesCountByObjectiveTime = (objective, time) => {
     const timeInt = parseInt(time, 10);
     
@@ -267,32 +311,29 @@ const TrainingPlanDesigner = () => {
         return;
       }
       
-      // Determinar los patrones de movimiento según la selección de músculos
-      let selectedPatterns = [];
-      
-      if (formData.muscleSelection === 'Personalizado') {
-        if (formData.customMuscles.length === 0) {
-          setError("Por favor, selecciona al menos un grupo muscular personalizado");
-          setGeneratingPlan(false);
-          return;
-        }
-        
-        formData.customMuscles.forEach(muscle => {
-          if (movementPatternMapping[muscle]) {
-            selectedPatterns = [...selectedPatterns, ...movementPatternMapping[muscle]];
-          }
-        });
-      } else {
-        const muscleGroups = formData.muscleSelection.split(', ');
-        muscleGroups.forEach(muscle => {
-          if (movementPatternMapping[muscle]) {
-            selectedPatterns = [...selectedPatterns, ...movementPatternMapping[muscle]];
-          }
-        });
+      // Verificar que se hayan configurado los días de entrenamiento
+      if (!formData.trainingDays || formData.trainingDays.length === 0) {
+        setError("Por favor, configura las características de los días de entrenamiento");
+        setGeneratingPlan(false);
+        return;
       }
       
-      // Eliminar duplicados
-      selectedPatterns = [...new Set(selectedPatterns)];
+      // Mapeo de características a patrones de movimiento
+      const characteristicToPatterns = {
+        'push': ['Horizontal Push', 'Upward Push'],
+        'pull': ['Horizontal Pull', 'Upward Pull', 'Downward Pull'],
+        'legs': ['Double Leg Push', 'Single Leg Push', 'Bent Leg Hip Extension', 'Straight Leg Hip Extension'],
+        'upper': ['Horizontal Push', 'Upward Push', 'Horizontal Pull', 'Upward Pull', 'Downward Pull', 'Auxiliary'],
+        'lower': ['Double Leg Push', 'Single Leg Push', 'Bent Leg Hip Extension', 'Straight Leg Hip Extension'],
+        'fullBody': allMovementPatterns,
+        'hipDominant': ['Bent Leg Hip Extension', 'Straight Leg Hip Extension'],
+        'kneeDominant': ['Double Leg Push', 'Single Leg Push'],
+        'core': ['Core Stability'],
+        'explosive': ['Explosive'],
+        'mobility': ['Mobility'],
+        'cardio': ['Cardio'],
+        'auxiliary': ['Auxiliary']
+      };
       
       // Calcular número de sesiones totales
       const monthsCount = parseInt(formData.duration, 10);
@@ -309,249 +350,237 @@ const TrainingPlanDesigner = () => {
       const newPlan = [];
       
       // Determinar series y descanso según objetivo
-      let defaultSeries = 3;
-      if (formData.fitnessObjective === 'muscleMass') defaultSeries = 4;
-      if (formData.fitnessObjective === 'strength') defaultSeries = 5;
+      const defaultSeries = formData.fitnessObjective === 'strength' ? 5 : 
+                           formData.fitnessObjective === 'muscleMass' ? 4 : 3;
       
       const defaultRest = getRecommendedRest();
       
       // Generar ejercicios para cada sesión
       if (formData.prioritizacion === 'control') {
-        // Modo control: repetir ejercicios cada semana durante 4 semanas
+        // Modo control: mismos ejercicios cada semana
         const sessionsPerWeek = weeklyFrequency;
         const weeksPerCycle = 4; // Ciclo de 4 semanas
-        const totalCycles = Math.ceil(totalSessions / (sessionsPerWeek * weeksPerCycle));
         
-        // Generar ejercicios para el primer ciclo (4 semanas)
-        for (let cycle = 0; cycle < totalCycles; cycle++) {
-          // Generar ejercicios para la primera semana de cada ciclo
-          for (let weekSession = 1; weekSession <= sessionsPerWeek; weekSession++) {
-            let sessionPatterns = [...selectedPatterns];
-            
-            // Mezclar patrones para variedad (solo al inicio de cada ciclo)
-            sessionPatterns.sort(() => Math.random() - 0.5);
-            
-            // Asegurarse de que hay suficientes patrones
-            while (sessionPatterns.length < total) {
-              sessionPatterns.push(sessionPatterns[Math.floor(Math.random() * sessionPatterns.length)]);
-            }
-            
-            // Limitar a la cantidad necesaria
-            sessionPatterns = sessionPatterns.slice(0, total);
-            
-            // Generar ejercicios para esta sesión
-            const sessionExercises = [];
-            for (let i = 0; i < total; i++) {
-              const enfoque = i < multi ? 'Multiarticular' : 'Monoarticular';
-              const pattern = sessionPatterns[i];
-              
-              // Obtener ejercicios disponibles para este patrón
-              let availableExercises = getExercisesByMovementPattern(pattern);
-              
-              // Filtrar por equipamiento disponible
-              availableExercises = availableExercises.filter(ex => {
-                if (!ex.equipo) return true;
-                if (typeof ex.equipo === 'string') {
-                  return formData.equipment.includes(ex.equipo) || ex.equipo === 'Sin equipo';
-                }
-                if (Array.isArray(ex.equipo)) {
-                  return ex.equipo.some(eq => formData.equipment.includes(eq)) || ex.equipo.includes('Sin equipo');
-                }
-                return false;
-              });
-              
-              // Si no hay ejercicios disponibles, usar cualquier otro patrón
-              if (availableExercises.length === 0) {
-                for (const altPattern of selectedPatterns) {
-                  availableExercises = getExercisesByMovementPattern(altPattern).filter(ex => {
-                    if (!ex.equipo) return true;
-                    if (typeof ex.equipo === 'string') {
-                      return formData.equipment.includes(ex.equipo) || ex.equipo === 'Sin equipo';
-                    }
-                    if (Array.isArray(ex.equipo)) {
-                      return ex.equipo.some(eq => formData.equipment.includes(eq)) || ex.equipo.includes('Sin equipo');
-                    }
-                    return false;
-                  });
-                  
-                  if (availableExercises.length > 0) break;
-                }
-              }
-              
-              // Si aún no hay ejercicios, usar cualquiera
-              if (availableExercises.length === 0) {
-                availableExercises = allExercises.filter(ex => {
-                  if (!ex.equipo) return true;
-                  if (typeof ex.equipo === 'string') {
-                    return formData.equipment.includes(ex.equipo) || ex.equipo === 'Sin equipo';
-                  }
-                  if (Array.isArray(ex.equipo)) {
-                    return ex.equipo.some(eq => formData.equipment.includes(eq)) || ex.equipo.includes('Sin equipo');
-                  }
-                  return false;
-                });
-              }
-              
-              // Seleccionar un ejercicio aleatorio
-              const selectedExercise = availableExercises[Math.floor(Math.random() * availableExercises.length)];
-              
-              // Determinar método según objetivo
-              let method = 'Standard';
-              if (formData.fitnessObjective === 'muscleMass') {
-                const methods = ['Standard', 'Superset', 'Drop Set', 'Rest-Pause'];
-                method = 'Standard'; // Set default to Standard instead of random
-              } else if (formData.fitnessObjective === 'strength') {
-                const methods = ['Standard', 'Pyramid'];
-                method = 'Standard'; // Set default to Standard instead of random
-              } else { // conditioning
-                const methods = ['AMRAP', 'EMOM', 'Tabata', 'Circuit'];
-                method = 'Standard'; // Set default to Standard instead of random
-              }
-              
-              // Crear el ejercicio base para esta posición en la semana
-              const baseExercise = {
-                exerciseNumber: i + 1,
-                nombreEjercicio: selectedExercise?.nombre || "Ejercicio no disponible",
-                seleccionMuscular: selectedExercise?.mainMuscle || pattern,
-                patronMovimiento: pattern,
-                equipmentUsed: selectedExercise?.equipo || "Sin equipo",
-                enfoque: enfoque,
-                series: defaultSeries,
-                rest: defaultRest,
-                metodo: method,
-                preview: selectedExercise?.previewURL || "",
-                exerciseId: selectedExercise?.id || ""
-              };
-              
-              // Añadir este ejercicio a todas las semanas del ciclo
-              for (let week = 0; week < weeksPerCycle; week++) {
-                // Calcular el número de sesión global
-                const sessionNumber = cycle * (sessionsPerWeek * weeksPerCycle) + week * sessionsPerWeek + weekSession;
-                
-                // Solo añadir si está dentro del rango total de sesiones
-                if (sessionNumber <= totalSessions) {
-                  sessionExercises.push({
-                    ...baseExercise,
-                    sessionNumber: sessionNumber
-                  });
-                }
-              }
-            }
-            
-            // Añadir ejercicios de la sesión al plan
-            newPlan.push(...sessionExercises);
+        // Generar ejercicios para la primera semana
+        for (let weekSession = 1; weekSession <= sessionsPerWeek; weekSession++) {
+          // Obtener las características del día actual
+          const dayIndex = (weekSession - 1) % formData.trainingDays.length;
+          const dayCharacteristics = formData.trainingDays[dayIndex]?.characteristics || [];
+          
+          if (dayCharacteristics.length === 0) {
+            continue; // Saltar días sin características
           }
-        }
-      } else {
-        // Modo diversidad (código original)
-        for (let session = 1; session <= totalSessions; session++) {
-          let sessionPatterns = [...selectedPatterns];
+          
+          // Obtener patrones de movimiento basados en las características del día
+          let dayPatterns = [];
+          dayCharacteristics.forEach(characteristic => {
+            if (characteristicToPatterns[characteristic]) {
+              dayPatterns = [...dayPatterns, ...characteristicToPatterns[characteristic]];
+            }
+          });
+          
+          // Eliminar duplicados
+          dayPatterns = [...new Set(dayPatterns)];
+          
+          // Si no hay patrones, usar todos los patrones disponibles
+          if (dayPatterns.length === 0) {
+            dayPatterns = [...allMovementPatterns];
+          }
           
           // Mezclar patrones para variedad
-          sessionPatterns.sort(() => Math.random() - 0.5);
+          const shuffledPatterns = [...dayPatterns].sort(() => Math.random() - 0.5);
           
           // Asegurarse de que hay suficientes patrones
+          while (shuffledPatterns.length < total) {
+            shuffledPatterns.push(shuffledPatterns[Math.floor(Math.random() * shuffledPatterns.length)]);
+          }
+          
+          // Distribuir ejercicios equitativamente entre las características
+          const exercisesPerCharacteristic = Math.floor(total / dayCharacteristics.length);
+          let remainingExercises = total % dayCharacteristics.length;
+          
+          let sessionPatterns = [];
+          
+          // Distribuir ejercicios por característica
+          for (const characteristic of dayCharacteristics) {
+            const patterns = characteristicToPatterns[characteristic] || [];
+            if (patterns.length > 0) {
+              const shuffledCharPatterns = [...patterns].sort(() => Math.random() - 0.5);
+              const exercisesToAdd = exercisesPerCharacteristic + (remainingExercises > 0 ? 1 : 0);
+              
+              // Asegurarse de que hay suficientes patrones para esta característica
+              let characteristicPatterns = [];
+              while (characteristicPatterns.length < exercisesToAdd) {
+                characteristicPatterns = [
+                  ...characteristicPatterns,
+                  ...shuffledCharPatterns.slice(0, Math.min(exercisesToAdd - characteristicPatterns.length, shuffledCharPatterns.length))
+                ];
+              }
+              
+              sessionPatterns = [...sessionPatterns, ...characteristicPatterns.slice(0, exercisesToAdd)];
+              
+              if (remainingExercises > 0) {
+                remainingExercises--;
+              }
+            }
+          }
+          
+          // Si no se pudieron distribuir todos los ejercicios, completar con patrones aleatorios
           while (sessionPatterns.length < total) {
-            sessionPatterns.push(sessionPatterns[Math.floor(Math.random() * sessionPatterns.length)]);
+            sessionPatterns.push(shuffledPatterns[Math.floor(Math.random() * shuffledPatterns.length)]);
           }
           
           // Limitar a la cantidad necesaria
           sessionPatterns = sessionPatterns.slice(0, total);
           
-          // Asignar enfoque (multi o aislamiento) a cada patrón
-          const sessionExercises = [];
-          for (let i = 0; i < total; i++) {
-            const enfoque = i < multi ? 'Multiarticular' : 'Monoarticular';
+          // Generar ejercicios para cada patrón
+          for (let i = 0; i < sessionPatterns.length; i++) {
             const pattern = sessionPatterns[i];
+            const isMulti = i < multi;
             
-            // Obtener ejercicios disponibles para este patrón
-            let availableExercises = getExercisesByMovementPattern(pattern);
+            // Buscar ejercicios disponibles para este patrón
+            const availableExercises = getExercisesByMovementPattern(pattern);
+            let selectedExercise = null;
             
-            // Filtrar por equipamiento disponible
-            availableExercises = availableExercises.filter(ex => {
-              if (!ex.equipo) return true;
-              if (typeof ex.equipo === 'string') {
-                return formData.equipment.includes(ex.equipo) || ex.equipo === 'Sin equipo';
-              }
-              if (Array.isArray(ex.equipo)) {
-                return ex.equipo.some(eq => formData.equipment.includes(eq)) || ex.equipo.includes('Sin equipo');
-              }
-              return false;
-            });
-            
-            // Si no hay ejercicios disponibles, usar cualquier otro patrón
-            if (availableExercises.length === 0) {
-              for (const altPattern of selectedPatterns) {
-                availableExercises = getExercisesByMovementPattern(altPattern).filter(ex => {
-                  if (!ex.equipo) return true;
-                  if (typeof ex.equipo === 'string') {
-                    return formData.equipment.includes(ex.equipo) || ex.equipo === 'Sin equipo';
-                  }
-                  if (Array.isArray(ex.equipo)) {
-                    return ex.equipo.some(eq => formData.equipment.includes(eq)) || ex.equipo.includes('Sin equipo');
-                  }
-                  return false;
-                });
-                
-                if (availableExercises.length > 0) break;
-              }
+            if (availableExercises.length > 0) {
+              // Seleccionar un ejercicio aleatorio
+              selectedExercise = availableExercises[Math.floor(Math.random() * availableExercises.length)];
             }
             
-            // Si aún no hay ejercicios, usar cualquiera
-            if (availableExercises.length === 0) {
-              availableExercises = allExercises.filter(ex => {
-                if (!ex.equipo) return true;
-                if (typeof ex.equipo === 'string') {
-                  return formData.equipment.includes(ex.equipo) || ex.equipo === 'Sin equipo';
-                }
-                if (Array.isArray(ex.equipo)) {
-                  return ex.equipo.some(eq => formData.equipment.includes(eq)) || ex.equipo.includes('Sin equipo');
-                }
-                return false;
-              });
-            }
-            
-            // Seleccionar un ejercicio aleatorio
-            const selectedExercise = availableExercises[Math.floor(Math.random() * availableExercises.length)];
-            
-            // Determinar método según objetivo
-            let method = 'Standard';
-            if (formData.fitnessObjective === 'muscleMass') {
-              const methods = ['Standard', 'Superset', 'Drop Set', 'Rest-Pause'];
-              method = 'Standard'; // Set default to Standard instead of random
-            } else if (formData.fitnessObjective === 'strength') {
-              const methods = ['Standard', 'Pyramid'];
-              method = 'Standard'; // Set default to Standard instead of random
-            } else { // conditioning
-              const methods = ['AMRAP', 'EMOM', 'Tabata', 'Circuit'];
-              method = 'Standard'; // Set default to Standard instead of random
-            }
-            
-            // Añadir ejercicio al plan
-            sessionExercises.push({
-              sessionNumber: session,
+            // Crear ejercicio base para este patrón
+            const baseExercise = {
+              sessionNumber: weekSession,
               exerciseNumber: i + 1,
-              nombreEjercicio: selectedExercise?.nombre || "Ejercicio no disponible",
-              seleccionMuscular: selectedExercise?.mainMuscle || pattern,
               patronMovimiento: pattern,
-              equipmentUsed: selectedExercise?.equipo || "Sin equipo",
-              enfoque: enfoque,
+              enfoque: isMulti ? 'Multiarticular' : 'Monoarticular',
+              nombreEjercicio: selectedExercise ? selectedExercise.nombre : `Ejercicio para ${pattern}`,
+              seleccionMuscular: formData.muscleSelection,
               series: defaultSeries,
               rest: defaultRest,
-              metodo: method,
-              preview: selectedExercise?.previewURL || "",
-              exerciseId: selectedExercise?.id || ""
-            });
+              metodo: 'Standard',
+              equipmentUsed: selectedExercise ? selectedExercise.equipo : 'Peso Corporal',
+              preview: selectedExercise ? selectedExercise.previewURL : '',
+              exerciseId: selectedExercise ? selectedExercise.id : '',
+              dayCharacteristics: dayCharacteristics // Guardar las características del día
+            };
+            
+            // Añadir este ejercicio para todas las semanas del plan
+            for (let session = weekSession; session <= totalSessions; session += sessionsPerWeek) {
+              newPlan.push({
+                ...baseExercise,
+                sessionNumber: session
+              });
+            }
+          }
+        }
+      } else {
+        // Modo diversidad: ejercicios diferentes cada semana
+        for (let session = 1; session <= totalSessions; session++) {
+          // Obtener las características del día actual
+          const weekSession = ((session - 1) % weeklyFrequency) + 1;
+          const dayIndex = (weekSession - 1) % formData.trainingDays.length;
+          const dayCharacteristics = formData.trainingDays[dayIndex]?.characteristics || [];
+          
+          if (dayCharacteristics.length === 0) {
+            continue; // Saltar días sin características
           }
           
-          // Añadir ejercicios de la sesión al plan
-          newPlan.push(...sessionExercises);
+          // Obtener patrones de movimiento basados en las características del día
+          let dayPatterns = [];
+          dayCharacteristics.forEach(characteristic => {
+            if (characteristicToPatterns[characteristic]) {
+              dayPatterns = [...dayPatterns, ...characteristicToPatterns[characteristic]];
+            }
+          });
+          
+          // Eliminar duplicados
+          dayPatterns = [...new Set(dayPatterns)];
+          
+          // Si no hay patrones, usar todos los patrones disponibles
+          if (dayPatterns.length === 0) {
+            dayPatterns = [...allMovementPatterns];
+          }
+          
+          // Mezclar patrones para variedad
+          const shuffledPatterns = [...dayPatterns].sort(() => Math.random() - 0.5);
+          
+          // Asegurarse de que hay suficientes patrones
+          while (shuffledPatterns.length < total) {
+            shuffledPatterns.push(shuffledPatterns[Math.floor(Math.random() * shuffledPatterns.length)]);
+          }
+          
+          // Distribuir ejercicios equitativamente entre las características
+          const exercisesPerCharacteristic = Math.floor(total / dayCharacteristics.length);
+          let remainingExercises = total % dayCharacteristics.length;
+          
+          let sessionPatterns = [];
+          
+          // Distribuir ejercicios por característica
+          for (const characteristic of dayCharacteristics) {
+            const patterns = characteristicToPatterns[characteristic] || [];
+            if (patterns.length > 0) {
+              const shuffledCharPatterns = [...patterns].sort(() => Math.random() - 0.5);
+              const exercisesToAdd = exercisesPerCharacteristic + (remainingExercises > 0 ? 1 : 0);
+              
+              // Asegurarse de que hay suficientes patrones para esta característica
+              let characteristicPatterns = [];
+              while (characteristicPatterns.length < exercisesToAdd) {
+                characteristicPatterns = [
+                  ...characteristicPatterns,
+                  ...shuffledCharPatterns.slice(0, Math.min(exercisesToAdd - characteristicPatterns.length, shuffledCharPatterns.length))
+                ];
+              }
+              
+              sessionPatterns = [...sessionPatterns, ...characteristicPatterns.slice(0, exercisesToAdd)];
+              
+              if (remainingExercises > 0) {
+                remainingExercises--;
+              }
+            }
+          }
+          
+          // Si no se pudieron distribuir todos los ejercicios, completar con patrones aleatorios
+          while (sessionPatterns.length < total) {
+            sessionPatterns.push(shuffledPatterns[Math.floor(Math.random() * shuffledPatterns.length)]);
+          }
+          
+          // Limitar a la cantidad necesaria
+          sessionPatterns = sessionPatterns.slice(0, total);
+          
+          // Generar ejercicios para cada patrón
+          for (let i = 0; i < sessionPatterns.length; i++) {
+            const pattern = sessionPatterns[i];
+            const isMulti = i < multi;
+            
+            // Buscar ejercicios disponibles para este patrón
+            const availableExercises = getExercisesByMovementPattern(pattern);
+            let selectedExercise = null;
+            
+            if (availableExercises.length > 0) {
+              // Seleccionar un ejercicio aleatorio
+              selectedExercise = availableExercises[Math.floor(Math.random() * availableExercises.length)];
+            }
+            
+            newPlan.push({
+              sessionNumber: session,
+              exerciseNumber: i + 1,
+              patronMovimiento: pattern,
+              enfoque: isMulti ? 'Multiarticular' : 'Monoarticular',
+              nombreEjercicio: selectedExercise ? selectedExercise.nombre : `Ejercicio para ${pattern}`,
+              seleccionMuscular: formData.muscleSelection,
+              series: defaultSeries,
+              rest: defaultRest,
+              metodo: 'Standard',
+              equipmentUsed: selectedExercise ? selectedExercise.equipo : 'Peso Corporal',
+              preview: selectedExercise ? selectedExercise.previewURL : '',
+              exerciseId: selectedExercise ? selectedExercise.id : '',
+              dayCharacteristics: dayCharacteristics // Guardar las características del día
+            });
+          }
         }
       }
       
-      // Ordenar el plan por número de sesión
-      newPlan.sort((a, b) => a.sessionNumber - b.sessionNumber || a.exerciseNumber - b.exerciseNumber);
-      
+      // Actualizar el plan de entrenamiento
       setFormData(prev => ({
         ...prev,
         trainingPlan: newPlan
@@ -566,247 +595,29 @@ const TrainingPlanDesigner = () => {
     }
   };
   
-  // Handlers para modificar ejercicios
-  const handleExerciseChange = (e, index) => {
-    const { value } = e.target;
-    const newPlan = [...formData.trainingPlan];
-    const currentExercise = newPlan[index];
-    newPlan[index].enfoque = value;
-    
-    if (formData.prioritizacion === 'control') {
-      const sessionNumber = currentExercise.sessionNumber;
-      const exerciseNumber = currentExercise.exerciseNumber;
-      const weeklyFrequency = parseInt(formData.frequency, 10);
-      
-      newPlan.forEach((ex, i) => {
-        if (i !== index &&
-            ex.exerciseNumber === exerciseNumber &&
-            (ex.sessionNumber - sessionNumber) % weeklyFrequency === 0 &&
-            ex.sessionNumber > sessionNumber) {
-          ex.enfoque = value;
-        }
-      });
-    }
-    
-    setFormData(prev => ({
-      ...prev,
-      trainingPlan: newPlan
-    }));
-  };
-  
-  const handlePatternMovementChange = (e, index) => {
-    const { value } = e.target;
-    const newPlan = [...formData.trainingPlan];
-    const currentExercise = newPlan[index];
-    newPlan[index].patronMovimiento = value;
-    
-    if (formData.prioritizacion === 'control') {
-      const sessionNumber = currentExercise.sessionNumber;
-      const exerciseNumber = currentExercise.exerciseNumber;
-      const weeklyFrequency = parseInt(formData.frequency, 10);
-      
-      newPlan.forEach((ex, i) => {
-        if (i !== index &&
-            ex.exerciseNumber === exerciseNumber &&
-            (ex.sessionNumber - sessionNumber) % weeklyFrequency === 0 &&
-            ex.sessionNumber > sessionNumber) {
-          ex.patronMovimiento = value;
-        }
-      });
-    }
-    
-    setFormData(prev => ({
-      ...prev,
-      trainingPlan: newPlan
-    }));
-  };
-  
-  const handleSeriesChange = (e, index) => {
-    const { value } = e.target;
-    const newPlan = [...formData.trainingPlan];
-    const currentExercise = newPlan[index];
-    newPlan[index].series = value;
-    
-    if (formData.prioritizacion === 'control') {
-      const sessionNumber = currentExercise.sessionNumber;
-      const exerciseNumber = currentExercise.exerciseNumber;
-      const weeklyFrequency = parseInt(formData.frequency, 10);
-      
-      newPlan.forEach((ex, i) => {
-        if (i !== index &&
-            ex.exerciseNumber === exerciseNumber &&
-            (ex.sessionNumber - sessionNumber) % weeklyFrequency === 0 &&
-            ex.sessionNumber > sessionNumber) {
-          ex.series = value;
-        }
-      });
-    }
-    
-    setFormData(prev => ({
-      ...prev,
-      trainingPlan: newPlan
-    }));
-  };
-  
-  const handleRestChange = (e, index) => {
-    const { value } = e.target;
-    const newPlan = [...formData.trainingPlan];
-    const currentExercise = newPlan[index];
-    newPlan[index].rest = value;
-    
-    if (formData.prioritizacion === 'control') {
-      const sessionNumber = currentExercise.sessionNumber;
-      const exerciseNumber = currentExercise.exerciseNumber;
-      const weeklyFrequency = parseInt(formData.frequency, 10);
-      
-      newPlan.forEach((ex, i) => {
-        if (i !== index &&
-            ex.exerciseNumber === exerciseNumber &&
-            (ex.sessionNumber - sessionNumber) % weeklyFrequency === 0 &&
-            ex.sessionNumber > sessionNumber) {
-          ex.rest = value;
-        }
-      });
-    }
-    
-    setFormData(prev => ({
-      ...prev,
-      trainingPlan: newPlan
-    }));
-  };
-
-  const handleExerciseNameChange = (e, index) => {
-    const { value } = e.target;
-    const newPlan = [...formData.trainingPlan];
-    const currentExercise = newPlan[index];
-    newPlan[index].nombreEjercicio = value;
-    
-    if (formData.prioritizacion === 'control') {
-      const sessionNumber = currentExercise.sessionNumber;
-      const exerciseNumber = currentExercise.exerciseNumber;
-      const weeklyFrequency = parseInt(formData.frequency, 10);
-      
-      newPlan.forEach((ex, i) => {
-        if (i !== index &&
-            ex.exerciseNumber === exerciseNumber &&
-            (ex.sessionNumber - sessionNumber) % weeklyFrequency === 0 &&
-            ex.sessionNumber > sessionNumber) {
-          ex.nombreEjercicio = value;
-        }
-      });
-    }
-    
-    setFormData(prev => ({
-      ...prev,
-      trainingPlan: newPlan
-    }));
-  };
-
-  const handleMuscleGroupChange = (e, index) => {
-    const { value } = e.target;
-    const newPlan = [...formData.trainingPlan];
-    const currentExercise = newPlan[index];
-    newPlan[index].seleccionMuscular = value;
-    
-    if (formData.prioritizacion === 'control') {
-      const sessionNumber = currentExercise.sessionNumber;
-      const exerciseNumber = currentExercise.exerciseNumber;
-      const weeklyFrequency = parseInt(formData.frequency, 10);
-      
-      newPlan.forEach((ex, i) => {
-        if (i !== index &&
-            ex.exerciseNumber === exerciseNumber &&
-            (ex.sessionNumber - sessionNumber) % weeklyFrequency === 0 &&
-            ex.sessionNumber > sessionNumber) {
-          ex.seleccionMuscular = value;
-        }
-      });
-    }
-    
-    setFormData(prev => ({
-      ...prev,
-      trainingPlan: newPlan
-    }));
-  };
-
-  const handleMethodChange = (e, index) => {
-    const { value } = e.target;
-    const newPlan = [...formData.trainingPlan];
-    const currentExercise = newPlan[index];
-    newPlan[index].metodo = value;
-    
-    if (formData.prioritizacion === 'control') {
-      const sessionNumber = currentExercise.sessionNumber;
-      const exerciseNumber = currentExercise.exerciseNumber;
-      const weeklyFrequency = parseInt(formData.frequency, 10);
-      
-      newPlan.forEach((ex, i) => {
-        if (i !== index &&
-            ex.exerciseNumber === exerciseNumber &&
-            (ex.sessionNumber - sessionNumber) % weeklyFrequency === 0 &&
-            ex.sessionNumber > sessionNumber) {
-          ex.metodo = value;
-        }
-      });
-    }
-    
-    setFormData(prev => ({
-      ...prev,
-      trainingPlan: newPlan
-    }));
-  };
-  
-  // Función para seleccionar un ejercicio alternativo
-  const handleSelectExerciseOption = (exercise, index) => {
-    const newPlan = [...formData.trainingPlan];
-    const currentExercise = newPlan[index];
-    
-    newPlan[index].nombreEjercicio = exercise.nombre || "";
-    newPlan[index].preview = exercise.previewURL || "";
-    newPlan[index].equipmentUsed = exercise.equipo || "Sin equipo";
-    newPlan[index].exerciseId = exercise.id;
-    
-    if (formData.prioritizacion === 'control') {
-      const sessionNumber = currentExercise.sessionNumber;
-      const exerciseNumber = currentExercise.exerciseNumber;
-      const weeklyFrequency = parseInt(formData.frequency, 10);
-      
-      newPlan.forEach((ex, i) => {
-        if (i !== index &&
-            ex.exerciseNumber === exerciseNumber &&
-            (ex.sessionNumber - sessionNumber) % weeklyFrequency === 0 &&
-            ex.sessionNumber > sessionNumber) {
-          ex.nombreEjercicio = exercise.nombre || "";
-          ex.preview = exercise.previewURL || "";
-          ex.equipmentUsed = exercise.equipo || "Sin equipo";
-          ex.exerciseId = exercise.id;
-        }
-      });
-    }
-    
-    setFormData(prev => ({
-      ...prev,
-      trainingPlan: newPlan
-    }));
-  };
-  
-  // Guardar plan en Firebase
+  // Función para guardar el plan de entrenamiento
   const savePlan = async () => {
     try {
-      if (!formData.planName.trim()) {
-        setError("Por favor, ingresa un nombre para el plan");
+      if (!currentUser) {
+        setError("Debes iniciar sesión para guardar un plan");
         return;
       }
       
       if (formData.trainingPlan.length === 0) {
-        setError("No hay un plan para guardar. Por favor genera uno primero.");
+        setError("Primero debes generar un plan de entrenamiento");
+        return;
+      }
+      
+      if (!formData.planName.trim()) {
+        setError("Por favor, asigna un nombre al plan");
         return;
       }
       
       setError('');
-      setMessage('');
+      setMessage('Guardando plan...');
       
-      const planData = {
+      // Crear objeto del plan para guardar
+      const planToSave = {
         userId: currentUser.uid,
         name: formData.planName,
         fitnessObjective: formData.fitnessObjective,
@@ -818,10 +629,13 @@ const TrainingPlanDesigner = () => {
         equipment: formData.equipment,
         prioritizacion: formData.prioritizacion,
         trainingPlan: formData.trainingPlan,
-        createdAt: new Date()
+        createdAt: new Date().toISOString()
       };
       
-      await addDoc(collection(db, "trainingPlans"), planData);
+      // Guardar en Firestore
+      const plansCollection = collection(db, "trainingPlans");
+      await addDoc(plansCollection, planToSave);
+      
       setMessage("Plan guardado exitosamente");
     } catch (error) {
       console.error("Error al guardar el plan:", error);
@@ -829,38 +643,116 @@ const TrainingPlanDesigner = () => {
     }
   };
   
-  // Agrupar ejercicios por sesión para mostrarlos
+  // Handlers para editar ejercicios
+  const handleExerciseChange = (e, index) => {
+    const { value } = e.target;
+    const newPlan = [...formData.trainingPlan];
+    newPlan[index].enfoque = value;
+    
+    setFormData(prev => ({
+      ...prev,
+      trainingPlan: newPlan
+    }));
+  };
+  
+  const handlePatternMovementChange = (e, index) => {
+    const { value } = e.target;
+    const newPlan = [...formData.trainingPlan];
+    newPlan[index].patronMovimiento = value;
+    
+    setFormData(prev => ({
+      ...prev,
+      trainingPlan: newPlan
+    }));
+  };
+  
+  const handleMethodChange = (e, index) => {
+    const { value } = e.target;
+    const newPlan = [...formData.trainingPlan];
+    newPlan[index].metodo = value;
+    
+    setFormData(prev => ({
+      ...prev,
+      trainingPlan: newPlan
+    }));
+  };
+  
+  const handleSeriesChange = (e, index) => {
+    const { value } = e.target;
+    const newPlan = [...formData.trainingPlan];
+    newPlan[index].series = value;
+    
+    setFormData(prev => ({
+      ...prev,
+      trainingPlan: newPlan
+    }));
+  };
+  
+  const handleRestChange = (e, index) => {
+    const { value } = e.target;
+    const newPlan = [...formData.trainingPlan];
+    newPlan[index].rest = value;
+    
+    setFormData(prev => ({
+      ...prev,
+      trainingPlan: newPlan
+    }));
+  };
+  
+  const handleSelectExerciseOption = (exercise, index) => {
+    const newPlan = [...formData.trainingPlan];
+    
+    newPlan[index].nombreEjercicio = exercise.nombre || "";
+    newPlan[index].preview = exercise.previewURL || "";
+    newPlan[index].equipmentUsed = exercise.equipo || "Sin equipo";
+    newPlan[index].exerciseId = exercise.id;
+    
+    setFormData(prev => ({
+      ...prev,
+      trainingPlan: newPlan
+    }));
+  };
+  
+  // Función para agrupar ejercicios por sesión
   const groupExercisesBySession = () => {
     const sessions = {};
+    
     formData.trainingPlan.forEach(exercise => {
       const sessionKey = `Sesión ${exercise.sessionNumber}`;
+      
       if (!sessions[sessionKey]) {
         sessions[sessionKey] = [];
       }
+      
       sessions[sessionKey].push(exercise);
     });
-    return sessions;
+    
+    // Ordenar ejercicios dentro de cada sesión por número de ejercicio
+    Object.keys(sessions).forEach(sessionKey => {
+      sessions[sessionKey].sort((a, b) => a.exerciseNumber - b.exerciseNumber);
+    });
+    
+    // Devolver las sesiones ordenadas por número de sesión
+    const orderedSessions = {};
+    Object.keys(sessions)
+      .sort((a, b) => {
+        // Extraer el número de sesión y comparar numéricamente
+        const numA = parseInt(a.replace('Sesión ', ''), 10);
+        const numB = parseInt(b.replace('Sesión ', ''), 10);
+        return numA - numB;
+      })
+      .forEach(key => {
+        orderedSessions[key] = sessions[key];
+      });
+    
+    return orderedSessions;
   };
   
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom align="center">
-        Diseñador de Plan de Entrenamiento
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <Typography variant="h4" gutterBottom>
+        Diseñador de Planes de Entrenamiento
       </Typography>
-      
-      <TrainingPlanForm
-        formData={formData}
-        handleChange={handleChange}
-        handleCustomMuscleChange={handleCustomMuscleChange}
-        handleEquipmentChange={handleEquipmentChange}
-        selectAllEquipment={selectAllEquipment}
-        generatePlan={generatePlan}
-        savePlan={savePlan}
-        generatingPlan={generatingPlan}
-        muscleOptions={muscleOptions}
-        customMuscleOptions={customMuscleOptions}
-        equipmentOptions={equipmentOptions}
-      />
       
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
@@ -874,28 +766,46 @@ const TrainingPlanDesigner = () => {
         </Alert>
       )}
       
-      <TrainingPlanDisplay
+      <TrainingPlanForm
         formData={formData}
-        groupExercisesBySession={groupExercisesBySession}
-        handleExerciseChange={handleExerciseChange}
-        handlePatternMovementChange={handlePatternMovementChange}
-        handleMethodChange={handleMethodChange}
-        handleSeriesChange={handleSeriesChange}
-        handleRestChange={handleRestChange}
-        handlePopoverOpen={handlePopoverOpen}
-        handleAlternativesOpen={handleAlternativesOpen}
-        open={open}
-        anchorEl={anchorEl}
-        handlePopoverClose={handlePopoverClose}
-        popoverExercise={popoverExercise}
-        alternativesAnchorEl={alternativesAnchorEl}
-        handleAlternativesClose={handleAlternativesClose}
-        alternativeExercises={alternativeExercises}
-        handleSelectAlternative={handleSelectAlternative}
-        enfoqueOptions={enfoqueOptions}
-        allMovementPatterns={allMovementPatterns}
-        methodOptions={methodOptions}
+        handleChange={handleChange}
+        handleCustomMuscleChange={handleCustomMuscleChange}
+        handleEquipmentChange={handleEquipmentChange}
+        selectAllEquipment={selectAllEquipment}
+        generatePlan={generatePlan}
+        savePlan={savePlan}
+        generatingPlan={generatingPlan}
+        muscleOptions={muscleOptions}
+        customMuscleOptions={customMuscleOptions}
+        equipmentOptions={equipmentOptions}
+        handleDayCharacteristicChange={handleDayCharacteristicChange}
+        handleUpdateTrainingDays={handleUpdateTrainingDays}
       />
+      
+      {formData.trainingPlan.length > 0 && (
+        <TrainingPlanDisplay 
+          formData={formData}
+          groupExercisesBySession={groupExercisesBySession}
+          handleExerciseChange={handleExerciseChange}
+          handlePatternMovementChange={handlePatternMovementChange}
+          handleMethodChange={handleMethodChange}
+          handleSeriesChange={handleSeriesChange}
+          handleRestChange={handleRestChange}
+          handlePopoverOpen={handlePopoverOpen}
+          handleAlternativesOpen={handleAlternativesOpen}
+          open={open}
+          anchorEl={anchorEl}
+          handlePopoverClose={handlePopoverClose}
+          popoverExercise={popoverExercise}
+          alternativesAnchorEl={alternativesAnchorEl}
+          handleAlternativesClose={handleAlternativesClose}
+          alternativeExercises={alternativeExercises}
+          handleSelectAlternative={handleSelectAlternative}
+          enfoqueOptions={enfoqueOptions}
+          allMovementPatterns={allMovementPatterns}
+          methodOptions={methodOptions}
+        />
+      )}
     </Container>
   );
 };

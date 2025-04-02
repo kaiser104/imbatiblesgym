@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -168,18 +168,11 @@ const TrainingPlanDisplay = ({
                                 onChange={(e) => handleRestChange(e, globalIndex)}
                                 label="Descanso (seg)"
                               >
-                                {/* Opciones de descanso por rangos */}
-                                <MenuItem value={15}>15 seg</MenuItem>
-                                <MenuItem value={30}>30 seg</MenuItem>
-                                <MenuItem value={45}>45 seg</MenuItem>
-                                <MenuItem value={60}>60 seg</MenuItem>
-                                <MenuItem value={75}>75 seg</MenuItem>
-                                <MenuItem value={90}>90 seg</MenuItem>
-                                <MenuItem value={120}>2 min</MenuItem>
-                                <MenuItem value={150}>2.5 min</MenuItem>
-                                <MenuItem value={180}>3 min</MenuItem>
-                                <MenuItem value={240}>4 min</MenuItem>
-                                <MenuItem value={300}>5 min</MenuItem>
+                                <MenuItem value="30-60">30-60 seg</MenuItem>
+                                <MenuItem value="60-90">60-90 seg</MenuItem>
+                                <MenuItem value="90-120">90-120 seg</MenuItem>
+                                <MenuItem value="120-180">2-3 min</MenuItem>
+                                <MenuItem value="180-240">3-4 min</MenuItem>
                               </Select>
                             </FormControl>
                           </Grid>
@@ -268,21 +261,35 @@ const TrainingPlanDisplay = ({
           
           {alternativeExercises.length === 0 ? (
             <Typography variant="body2">
-              No hay alternativas disponibles para este patrón de movimiento.
+              No hay ejercicios alternativos disponibles para este patrón de movimiento.
             </Typography>
           ) : (
             <List>
               {alternativeExercises.map((exercise) => (
                 <ListItem 
-                  key={exercise.id} 
-                  button 
+                  key={exercise.id}
+                  button
                   onClick={() => handleSelectAlternative(exercise)}
-                  divider
+                  sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'flex-start',
+                    borderBottom: '1px solid #eee'
+                  }}
                 >
                   <ListItemText 
                     primary={exercise.nombre} 
-                    secondary={`Equipo: ${exercise.equipo}`} 
+                    secondary={`Equipo: ${exercise.equipo}`}
                   />
+                  {exercise.previewURL && (
+                    <Box sx={{ width: '100%', mt: 1 }}>
+                      <img 
+                        src={exercise.previewURL} 
+                        alt={exercise.nombre}
+                        style={{ width: '100%', height: 'auto', maxHeight: 100, objectFit: 'contain' }}
+                      />
+                    </Box>
+                  )}
                 </ListItem>
               ))}
             </List>

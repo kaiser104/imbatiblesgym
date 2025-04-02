@@ -1,21 +1,27 @@
 .training-plan-container {
-  background-color: #1a1a1a;
-  color: #fff;
+  background-color: #000000;
+  color: #FFFFFF;
   min-height: 100vh;
+  font-family: 'Rajdhani', sans-serif;
+  padding: 20px;
 }
 
 .page-title {
   color: #BBFF00;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
   margin-bottom: 1.5rem;
   text-align: center;
 }
 
 .form-container, .results-container {
-  background-color: #222;
+  background-color: #121212;
   padding: 1.5rem;
   margin-bottom: 2rem;
   border-radius: 8px;
+  border: 1px solid rgba(187, 255, 0, 0.3);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
 }
 
 .form-section-label {
@@ -24,6 +30,8 @@
   margin-bottom: 0.5rem;
   display: flex;
   align-items: center;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 .form-control-group {
@@ -31,88 +39,136 @@
 }
 
 .action-button {
-  padding: 0.75rem 1.5rem;
-  font-weight: 600;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  border: none;
   border-radius: 4px;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
 }
 
 .generate-button {
   background-color: #BBFF00;
-  color: #000;
+  color: #000000;
 }
 
 .generate-button:hover {
-  background-color: #a0d800;
+  background-color: #CCFF33;
+  box-shadow: 0 0 15px rgba(187, 255, 0, 0.7);
 }
 
 .save-button {
-  background-color: #00a0ff;
-  color: #fff;
+  background-color: transparent;
+  border: 1px solid #BBFF00;
+  color: #BBFF00;
 }
 
 .save-button:hover {
-  background-color: #0080cc;
+  background-color: rgba(187, 255, 0, 0.2);
+  box-shadow: 0 0 10px rgba(187, 255, 0, 0.5);
 }
 
 .status-alert {
   margin-top: 1rem;
+  padding: 0.5rem;
+  border-radius: 4px;
 }
 
 .success-alert {
-  background-color: rgba(0, 200, 83, 0.1);
-  color: #00c853;
+  background-color: rgba(187, 255, 0, 0.1);
+  color: #BBFF00;
+  border: 1px solid rgba(187, 255, 0, 0.3);
+  font-weight: 600;
 }
 
 .error-alert {
-  background-color: rgba(255, 82, 82, 0.1);
-  color: #ff5252;
+  background-color: rgba(255, 85, 51, 0.1);
+  color: #FF5533;
+  border: 1px solid rgba(255, 85, 51, 0.3);
+  font-weight: 600;
 }
 
 .results-title {
   color: #BBFF00;
-  font-weight: 600;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
   margin-bottom: 1.5rem;
   text-align: center;
 }
 
 .session-container {
   margin-bottom: 2rem;
+  border: 1px solid rgba(187, 255, 0, 0.3);
+  border-radius: 8px;
+  padding: 1rem;
+  background-color: #121212;
+}
+
+.exercise-card {
+  border: 1px solid rgba(187, 255, 0, 0.3);
+  border-radius: 8px;
+  padding: 0.8rem;
+  text-align: center;
+  background-color: #121212;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.exercise-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(187, 255, 0, 0.2);
 }
 
 .exercise-thumbnail {
+  max-width: 100%;
   border-radius: 4px;
-  background-color: #333;
+  border: 1px solid rgba(187, 255, 0, 0.2);
 }
 
 /* Estilos para el botón de cambio de ejercicio */
 .change-exercise-button {
-  color: #00a0ff;
-  margin-left: 5px;
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  background-color: #BBFF00;
+  color: #000000;
+  border: none;
+  border-radius: 4px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
 }
 
 .change-exercise-button:hover {
-  color: #0080cc;
-  transform: scale(1.1);
+  background-color: #CCFF33;
+  box-shadow: 0 0 15px rgba(187, 255, 0, 0.7);
 }
 
 /* Estilos para el menú de ejercicios alternativos */
 .exercise-alternatives-menu {
   max-height: 300px;
   overflow-y: auto;
-  background-color: #2a2a2a;
-  border: 1px solid #444;
+  background-color: #121212;
+  border: 1px solid rgba(187, 255, 0, 0.3);
+  border-radius: 4px;
 }
 
 .exercise-alternative-item {
   display: flex;
   align-items: center;
   padding: 8px;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid rgba(187, 255, 0, 0.2);
   cursor: pointer;
 }
 
 .exercise-alternative-item:hover {
-  background-color: #333;
+  background-color: rgba(187, 255, 0, 0.1);
 }
 
 .exercise-alternative-thumbnail {
@@ -121,6 +177,7 @@
   object-fit: cover;
   margin-right: 10px;
   border-radius: 4px;
+  border: 1px solid rgba(187, 255, 0, 0.2);
 }
 
 .exercise-alternative-info {
@@ -129,12 +186,34 @@
 
 .exercise-alternative-name {
   font-weight: 600;
+  color: #BBFF00;
   margin-bottom: 4px;
 }
 
 .exercise-alternative-details {
   font-size: 0.8rem;
   color: #aaa;
+}
+
+/* Estilos para los inputs y selects */
+.MuiInputBase-root {
+  background-color: #121212;
+  border: 1px solid rgba(187, 255, 0, 0.5);
+  color: #FFFFFF;
+  font-family: 'Rajdhani', sans-serif;
+}
+
+.MuiInputBase-root:focus-within {
+  border-color: #BBFF00;
+  box-shadow: 0 0 5px rgba(187, 255, 0, 0.3);
+}
+
+.MuiInputLabel-root {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.MuiInputLabel-root.Mui-focused {
+  color: #BBFF00;
 }
 
 /* Responsive adjustments */
