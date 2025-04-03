@@ -2,9 +2,11 @@
 import React, { useEffect, useState } from 'react';
 import { collection, getDocs, addDoc } from 'firebase/firestore';
 import { ref, listAll, getDownloadURL } from 'firebase/storage';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { db, storage } from '../firebase';
 import './ExerciseManager.css';
+import { Typography, Button } from '@mui/material'; // Añadir esta importación
+import AddIcon from '@mui/icons-material/Add';
 
 // --- UTILIDADES ---
 
@@ -49,6 +51,7 @@ const assignEquipment = (fileName) => {
 // Opciones para el menú desplegable de categoría de movimiento
 const movementCategoryOptions = [
   "", // opción vacía (Todas)
+  "None", // Opción "Ninguno" por defecto
   "Bent Leg Hip Extension",
   "Cardio",
   "Double Leg Push",
@@ -85,9 +88,34 @@ const muscleOptions = [
   "Antebrazos"
 ];
 
+// Opciones para el menú desplegable de equipamiento
+const equipmentOptions = [
+  "",
+  "Trineo", 
+  "Suspensión", 
+  "Rodillo de espuma", 
+  "Polea", 
+  "Peso Corporal",
+  "Fit ball", 
+  "Mancuernas", 
+  "Landmine", 
+  "Kettlebell", 
+  "Disco",
+  "Cuerda de batida", 
+  "Chaleco con peso", 
+  "Bolsa de arena", 
+  "Bola de lacrosse",
+  "Barra", 
+  "Power band", 
+  "Balón medicinal", 
+  "Máquinas", 
+  "Bandas elásticas"
+];
+
 // --- FIN DE UTILIDADES ---
 
 const ExerciseManager = () => {
+  const navigate = useNavigate();
   // Estados para la Biblioteca (Firestore)
   const [exercises, setExercises] = useState([]);
   const [filteredExercises, setFilteredExercises] = useState([]);
@@ -99,6 +127,11 @@ const ExerciseManager = () => {
     mainMuscle: '',
     equipment: ''
   });
+
+  // Función para navegar a la página de subir ejercicio
+  const handleNavigateToUpload = () => {
+    navigate('/upload-exercise');
+  };
 
   // Estados para la Importación (Storage)
   const [categories, setCategories] = useState([]);
@@ -325,74 +358,115 @@ const ExerciseManager = () => {
   // --- FIN NUEVA FUNCIÓN ---
 
   // Renderizar la sección de Biblioteca (FireStore)
-  const renderLibrary = () => (
-    <div className="library-section">
-      <h2>Biblioteca de Ejercicios</h2>
-      <div className="filter-container">
-        <input
-          type="text"
-          placeholder="Buscar por nombre..."
-          name="name"
-          value={filters.name}
-          onChange={handleFilterChange}
-        />
-        <select
-          name="movementCategory"
-          value={filters.movementCategory}
-          onChange={handleFilterChange}
-        >
-          {movementCategoryOptions.map(option => (
-            <option key={option} value={option}>{option || "Todas"}</option>
-          ))}
-        </select>
-        <select
-          name="mainMuscle"
-          value={filters.mainMuscle}
-          onChange={handleFilterChange}
-        >
-          {muscleOptions.map(option => (
-            <option key={option} value={option}>{option || "Todos"}</option>
-          ))}
-        </select>
-        <input
-          type="text"
-          placeholder="Filtrar por equipamiento..."
-          name="equipment"
-          value={filters.equipment}
-          onChange={handleFilterChange}
-        />
-        <div className="filter-buttons">
-          <button onClick={applyFilters}>Aplicar Filtros</button>
-          <button onClick={resetFilters}>Reiniciar Filtros</button>
+  // Modificar la parte donde se renderizan los filtros en la función renderLibrary
+  const renderLibrary = () => {
+    return (
+      <div className="library-content">
+        <h3>BIBLIOTECA DE EJERCICIOS</h3>
+        
+        <div className="filters-container">
+          <div className="filter-item">
+            <label htmlFor="name">Name</label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              value={filters.name}
+              onChange={handleFilterChange}
+              placeholder="Search by name..."
+              className="filter-input"
+            />
+          </div>
+          
+          <div className="filter-item">
+            <label htmlFor="movementCategory">Movement Pattern</label>
+            <select
+              id="movementCategory"
+              name="movementCategory"
+              value={filters.movementCategory}
+              onChange={handleFilterChange}
+              className="filter-select"
+            >
+              {movementCategoryOptions.map((option, index) => (
+                <option key={index} value={option}>
+                  {option === "" ? "All" : option === "None" ? "None" : option}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="filter-item">
+            <label htmlFor="mainMuscle">Main Muscle</label>
+            <select
+              id="mainMuscle"
+              name="mainMuscle"
+              value={filters.mainMuscle}
+              onChange={handleFilterChange}
+              className="filter-select"
+            >
+              {muscleOptions.map((option, index) => (
+                <option key={index} value={option}>
+                  {option === "" ? "All" : option}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="filter-item">
+            <label htmlFor="equipment">Equipment</label>
+            <select
+              id="equipment"
+              name="equipment"
+              value={filters.equipment}
+              onChange={handleFilterChange}
+              className="filter-select"
+            >
+              {equipmentOptions.map((option, index) => (
+                <option key={index} value={option}>
+                  {option === "" ? "All" : option}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="filter-buttons">
+            <button onClick={applyFilters} className="apply-filters-button">
+              Apply Filters
+            </button>
+            <button onClick={resetFilters} className="reset-filters-button">
+              Reset Filters
+            </button>
+          </div>
         </div>
+        
+        {loadingExercises ? (
+          <p>Cargando ejercicios...</p>
+        ) : libraryError ? (
+          <p style={{ color: "red" }}>{libraryError}</p>
+        ) : filteredExercises.length === 0 ? (
+          <p>Usa los filtros para buscar ejercicios en la biblioteca.</p>
+        ) : (
+          <div className="exercise-grid">
+            {filteredExercises.map(ex => (
+              <div key={ex.id} className="exercise-card">
+                {ex.fileURL ? (
+                  <img src={ex.fileURL} alt={ex.name} className="exercise-image" />
+                ) : (
+                  <div className="no-image">No hay imagen disponible</div>
+                )}
+                <h3>{ex.name}</h3>
+                <p><strong>Músculo principal:</strong> {ex.mainMuscle}</p>
+                {ex.secondaryMuscle && <p><strong>Músculo secundario:</strong> {ex.secondaryMuscle}</p>}
+                <p><strong>Categoría:</strong> {ex.movementCategory}</p>
+                <p><strong>Equipamiento:</strong> {ex.equipment}</p>
+                <Link to={`/edit/${ex.id}`} className="edit-button">Editar</Link>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-      {loadingExercises ? (
-        <p>Cargando ejercicios...</p>
-      ) : libraryError ? (
-        <p style={{ color: "red" }}>{libraryError}</p>
-      ) : filteredExercises.length === 0 ? (
-        <p>Usa los filtros para buscar ejercicios en la biblioteca.</p>
-      ) : (
-        <div className="exercise-grid">
-          {filteredExercises.map(ex => (
-            <div key={ex.id} className="exercise-card">
-              {ex.fileURL ? (
-                <img src={ex.fileURL} alt={ex.name} className="exercise-image" />
-              ) : (
-                <div className="no-image">No hay imagen disponible</div>
-              )}
-              <h3>{ex.name}</h3>
-              <p><strong>Músculo principal:</strong> {ex.mainMuscle}</p>
-              {ex.secondaryMuscle && <p><strong>Músculo secundario:</strong> {ex.secondaryMuscle}</p>}
-              <p><strong>Categoría:</strong> {ex.movementCategory}</p>
-              <p><strong>Equipamiento:</strong> {ex.equipment}</p>
-              <Link to={`/edit/${ex.id}`} className="edit-button">Editar</Link>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+    );
+  };
 
   // Renderizar la sección de Importación (Storage)
   const renderImport = () => (
@@ -523,19 +597,41 @@ const ExerciseManager = () => {
   );
 
   return (
-    <div className="exercise-manager">
-      <div className="tabs">
-        <button className={activeTab === 'library' ? 'active' : ''} onClick={() => setActiveTab('library')}>
-          Biblioteca
-        </button>
-        <button className={activeTab === 'import' ? 'active' : ''} onClick={() => setActiveTab('import')}>
-          Importar Ejercicios
-        </button>
+    <div className="exercise-manager-container">
+      <div className="exercise-manager">
+        <div className="exercise-manager-header">
+          <Typography variant="h4" component="h2">Exercise Library</Typography>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            startIcon={<AddIcon />} 
+            onClick={handleNavigateToUpload}
+            className="add-exercise-button"
+          >
+            Add New Exercise
+          </Button>
+        </div>
+        
+        <div className="tabs">
+          <button 
+            className={activeTab === 'library' ? 'active' : ''} 
+            onClick={() => setActiveTab('library')}
+          >
+            Library
+          </button>
+          <button 
+            className={activeTab === 'import' ? 'active' : ''} 
+            onClick={() => setActiveTab('import')}
+          >
+            Import
+          </button>
+        </div>
+        
+        {/* Render the content based on active tab */}
+        {activeTab === 'library' ? renderLibrary() : renderImport()}
       </div>
-      {activeTab === 'library' ? renderLibrary() : renderImport()}
     </div>
   );
-
 };
 
 export default ExerciseManager;

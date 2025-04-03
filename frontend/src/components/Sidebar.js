@@ -161,32 +161,28 @@ const Sidebar = ({ open, toggleSidebar }) => {
       path: '/' 
     },
     { 
-      text: 'Diseñador de Entrenamientos', 
+      text: 'Training Plan Designer', 
       icon: <FitnessCenterIcon />, 
       path: '/training-plan-designer' 
     },
     { 
-      text: 'Perfil de Usuario', 
+      text: 'User Profile', 
       icon: <PersonIcon />, 
       path: '/profile' 
     },
     { 
-      text: 'Biblioteca de Ejercicios', 
+      text: 'Library', // Cambiado de "Biblioteca de Ejercicios" a "Library"
       icon: <MenuBookIcon />, 
       path: '/exercise-manager' 
     },
+    // Se eliminó la opción "Subir Ejercicio"
     { 
-      text: 'Subir Ejercicio', 
-      icon: <CloudUploadIcon />, 
-      path: '/upload-exercise' 
-    },
-    { 
-      text: 'Gimnasios', 
+      text: 'Gyms', // Cambiado de "Gimnasios" a "Gyms"
       icon: <LocationOnIcon />, 
       path: '/gimnasios' 
     },
     { 
-      text: 'Entrenadores', 
+      text: 'Trainers', // Cambiado de "Entrenadores" a "Trainers"
       icon: <PeopleIcon />, 
       path: '/entrenadores' 
     },
@@ -197,14 +193,14 @@ const Sidebar = ({ open, toggleSidebar }) => {
     },
     // Nuevo elemento para Gestión de Salas (solo visible para gimnasios)
     { 
-      text: 'Gestión de Salas', 
+      text: 'Room Management', // Cambiado de "Gestión de Salas" a "Room Management"
       icon: <RoomIcon />, 
       path: '/rooms-management',
       roles: ['gimnasio'] // Solo visible para usuarios con rol de gimnasio
     },
     // Nuevo elemento para Gestión de Usuarios
     {
-      text: 'Gestión de Usuarios',
+      text: 'User Management', // Cambiado de "Gestión de Usuarios" a "User Management"
       icon: userRole === 'super-administrador' ? <AdminPanelSettings /> : 
             userRole === 'gimnasio' ? <PeopleAlt /> : <ManageAccounts />,
       path: '/gestion-usuarios',

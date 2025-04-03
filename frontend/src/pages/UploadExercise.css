@@ -260,3 +260,19 @@
   color: #BBFF00;
   border: 1px solid rgba(187, 255, 0, 0.5);
   font-family: 'Rajdhani', sans-serif;}
+
+/* Add this to your existing CSS */
+.back-button {
+  background-color: transparent !important;
+  color: #BBFF00 !important;
+  border: 1px solid #BBFF00 !important;
+  font-family: 'Rajdhani', sans-serif !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  transition: all 0.3s ease !important;
+}
+
+.back-button:hover {
+  background-color: rgba(187, 255, 0, 0.1) !important;
+  box-shadow: 0 0 10px rgba(187, 255, 0, 0.3) !important;
+}

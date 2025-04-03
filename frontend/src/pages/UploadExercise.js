@@ -17,10 +17,19 @@ import InfoIcon from '@mui/icons-material/Info';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import CategoryIcon from '@mui/icons-material/Category';
 import SaveIcon from '@mui/icons-material/Save';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { useNavigate } from 'react-router-dom';
 
 const db = getFirestore(app);
 
 const UploadExercise = () => {
+  const navigate = useNavigate();
+  
+  // Función para navegar de vuelta a la biblioteca
+  const handleBackToLibrary = () => {
+    navigate('/exercise-manager');
+  };
+  
   const [exerciseData, setExerciseData] = useState({
     name: '',
     mainMuscle: '',
@@ -41,13 +50,13 @@ const UploadExercise = () => {
   const [activeStep, setActiveStep] = useState(0);
 
   // Pasos del formulario
-  const steps = ['Información básica', 'Categorización', 'Archivo GIF'];
+  const steps = ['Basic Information', 'Categorization', 'GIF File'];
 
   // Opciones para los menús desplegables
   const muscleOptions = [
-    'Pectorales', 'Espalda', 'Bíceps', 'Tríceps', 'Deltoides', 
-    'Deltoides posterior', 'Glúteos', 'Abdominales', 'Lumbares', 
-    'Cuádriceps', 'Isquiotibiales', 'Pantorrilla', 'Aductores', 
+    'Pectorales', 'Espalda', 'Bíceps', 'Tríceps', 'Deltoides',
+    'Deltoides posterior', 'Glúteos', 'Abdominales', 'Lumbares',
+    'Cuádriceps', 'Isquiotibiales', 'Pantorrilla', 'Aductores',
     'Abductores', 'Antebrazos', 'Trapecio'
   ];
 
@@ -425,31 +434,24 @@ const UploadExercise = () => {
     setOpenSnackbar(false);
   };
 
+  // Cambiar los títulos y etiquetas a inglés
   return (
-    <Container maxWidth="md" sx={{ mt: 4, mb: 8 }}>
-      <Paper 
-        elevation={3} 
-        sx={{ 
-          p: 4, 
-          borderRadius: 2,
-          background: 'linear-gradient(to bottom,rgba(255, 255, 255, 0.03),rgba(249, 249, 249, 0.16))',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
-        }}
-        className="upload-form-container"
-      >
-        <Typography 
-          variant="h4" 
-          component="h1" 
-          gutterBottom 
-          align="center"
-          className="upload-title"
-          sx={{ 
-            fontWeight: 'bold',
-            mb: 3
-          }}
-        >
-          Subir Nuevo Ejercicio
-        </Typography>
+    <Container maxWidth="md" sx={{ mt: 4, mb: 4 }} className="upload-container">
+      <Paper elevation={3} className="upload-paper">
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Button
+            variant="outlined"
+            startIcon={<ArrowBackIcon />}
+            onClick={handleBackToLibrary}
+            className="back-button"
+          >
+            Back to Library
+          </Button>
+          <Typography variant="h4" component="h1" gutterBottom align="center" className="upload-title">
+            Add New Exercise
+          </Typography>
+          <Box sx={{ width: '100px' }}></Box> {/* Spacer for alignment */}
+        </Box>
         
         <Divider sx={{ mb: 4 }} />
         

@@ -117,7 +117,7 @@ const EditExercise = () => {
 
   if (loading) return (
     <Container sx={{ mt: 4, display: 'flex', justifyContent: 'center' }} className="edit-exercise">
-      <Typography className="loading-text">Cargando ejercicio...</Typography>
+      <Typography className="loading-text">Loading exercise...</Typography>
     </Container>
   );
 
@@ -125,7 +125,7 @@ const EditExercise = () => {
     <Container maxWidth="md" sx={{ mt: 4, mb: 4 }} className="edit-exercise-container">
       <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }} className="edit-form-paper">
         <Typography variant="h4" component="h1" gutterBottom align="center" className="edit-title">
-          Editar Ejercicio
+          Edit Exercise
         </Typography>
         
         {exerciseData.fileURL && (
@@ -293,7 +293,7 @@ const EditExercise = () => {
                 className="edit-form-button"
                 sx={{ mt: 3 }}
               >
-                Actualizar Ejercicio
+                Update Exercise
               </Button>
             </Grid>
           </Grid>
