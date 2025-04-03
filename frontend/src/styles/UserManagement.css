@@ -1,0 +1,33 @@
+/* Estilos para los formularios de registro */
+.dialog-title {
+  background-color: #1e1e1e;
+  color: #fff;
+}
+
+.add-user-button {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Estilos para las tarjetas de usuario */
+.user-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  background-color: #1e1e1e;
+  color: #fff;
+  border: 1px solid #333;
+}
+
+.user-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Estilos para dispositivos móviles */
+@media (max-width: 600px) {
+  .add-user-button {
+    bottom: 1rem;
+    right: 1rem;
+  }
+}

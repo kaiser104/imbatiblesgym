@@ -282,7 +282,8 @@ function Entrenadores() {
         role: 'entrenador',
         registradoPor: registradoPor,
         fechaCreacion: serverTimestamp(),
-        gimnasioId: gimnasioInfo ? gimnasioInfo.id : null // Asociar directamente con el gimnasio
+        gimnasioId: gimnasioInfo ? gimnasioInfo.id : null, // Asociar directamente con el gimnasio
+        gimnasio: gimnasioInfo ? gimnasioInfo.id : null // Añadir también el campo gimnasio para compatibilidad
       });
       
       // Agregar el nuevo entrenador a la lista local
@@ -338,12 +339,52 @@ function Entrenadores() {
           setIsSuperAdmin(isSuperAdminUser);
         }
         
+        // Verificar si el usuario es un gimnasio
+        const gymRef = collection(db, 'gimnasios');
+        const gymQuery = query(gymRef, where('adminUid', '==', currentUser.uid));
+        const gymSnapshot = await getDocs(gymQuery);
+        
+        let isGym = !gymSnapshot.empty;
+        
         // Consulta para obtener entrenadores
         let entrenadoresQuery;
         
         if (isSuperAdminUser) {
           // Super-admin ve todos los entrenadores
           entrenadoresQuery = collection(db, 'entrenadores');
+        } else if (isGym) {
+          // Gimnasio ve entrenadores que ha registrado o que tienen su ID
+          const gymId = gymSnapshot.docs[0].id;
+          
+          // Primero intentamos con registradoPor.uid
+          entrenadoresQuery = query(
+            collection(db, 'entrenadores'),
+            where('registradoPor.uid', '==', currentUser.uid)
+          );
+          
+          const entrenadoresSnapshot = await getDocs(entrenadoresQuery);
+          let entrenadoresData = entrenadoresSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          
+          // Si no hay resultados, intentamos con gimnasioId
+          if (entrenadoresData.length === 0) {
+            entrenadoresQuery = query(
+              collection(db, 'entrenadores'),
+              where('gimnasioId', '==', gymId)
+            );
+            
+            const gimnasioIdSnapshot = await getDocs(entrenadoresQuery);
+            entrenadoresData = gimnasioIdSnapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            }));
+          }
+          
+          setEntrenadores(entrenadoresData);
+          setLoadingEntrenadores(false);
+          return;
         } else {
           // Usuario normal ve solo los entrenadores que ha creado
           entrenadoresQuery = query(

@@ -273,169 +273,146 @@ const Trainees = () => {
     setSelectedEntrenador(e.target.value);
   };
 
+  // Añadir función de validación del formulario
+  const validateForm = () => {
+    const errors = {};
+    
+    // Validar campos requeridos
+    if (!formData.nombre.trim()) errors.nombre = "El nombre es requerido";
+    if (!formData.correo.trim()) errors.correo = "El correo es requerido";
+    else if (!/\S+@\S+\.\S+/.test(formData.correo)) errors.correo = "Correo electrónico inválido";
+    
+    if (!formData.whatsapp.trim()) errors.whatsapp = "El WhatsApp es requerido";
+    if (!formData.genero) errors.genero = "El género es requerido";
+    if (!formData.fechaNacimiento) errors.fechaNacimiento = "La fecha de nacimiento es requerida";
+    if (!formData.password.trim()) errors.password = "La contraseña es requerida";
+    else if (formData.password.length < 6) errors.password = "La contraseña debe tener al menos 6 caracteres";
+    
+    if (!formData.altura) errors.altura = "La altura es requerida";
+    if (!formData.peso) errors.peso = "El peso es requerido";
+    
+    // Validar que los campos numéricos sean números válidos
+    if (formData.altura && isNaN(Number(formData.altura))) errors.altura = "La altura debe ser un número";
+    if (formData.peso && isNaN(Number(formData.peso))) errors.peso = "El peso debe ser un número";
+    if (formData.experiencia && isNaN(Number(formData.experiencia))) errors.experiencia = "La experiencia debe ser un número";
+    
+    // Para administradores, validar que se haya seleccionado al menos un gimnasio o entrenador
+    if (userType === 'admin' && !selectedGimnasio && !selectedEntrenador) {
+      errors.asociacion = "Debe seleccionar al menos un gimnasio o entrenador";
+    }
+    
+    return errors;
+  };
+
   // Handle form submission
+  // Modificar la función de registro para incluir la información del entrenador o gimnasio
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validar formulario
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+    
     setRegistrando(true);
     
     try {
-      // Validate form
-      const validationErrors = {};
-      
-      if (!formData.nombre) validationErrors.nombre = 'El nombre es requerido';
-      if (!formData.correo) validationErrors.correo = 'El correo es requerido';
-      if (!formData.whatsapp) validationErrors.whatsapp = 'El WhatsApp es requerido';
-      if (!formData.fechaNacimiento) validationErrors.fechaNacimiento = 'La fecha de nacimiento es requerida';
-      if (!formData.genero) validationErrors.genero = 'El género es requerido';
-      if (!formData.password) validationErrors.password = 'La contraseña es requerida';
-      if (!formData.altura) validationErrors.altura = 'La altura es requerida';
-      if (!formData.peso) validationErrors.peso = 'El peso es requerido';
-      
-      if (Object.keys(validationErrors).length > 0) {
-        setErrors(validationErrors);
-        setRegistrando(false);
-        return;
-      }
-
-      console.log("Creando usuario con:", formData.correo, formData.password);
-      
-      // Create user account
+      // Crear usuario en Authentication
       const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        formData.correo,
+        auth, 
+        formData.correo, 
         formData.password
       );
-
-      console.log("Usuario creado:", userCredential.user.uid);
       
-      let photoURL = formData.foto || '';
-
-      // Upload photo if selected
+      // Enviar correo para restablecer contraseña
+      await sendPasswordResetEmail(auth, formData.correo);
+      
+      // Subir foto si existe
+      let photoURL = '';
       if (selectedFile) {
-        try {
-          const storageRef = ref(storage, `trainees/${userCredential.user.uid}`);
-          await uploadBytes(storageRef, selectedFile);
-          photoURL = await getDownloadURL(storageRef);
-          console.log("Foto subida:", photoURL);
-        } catch (uploadError) {
-          console.error("Error al subir la foto:", uploadError);
-          // Continuamos con el proceso aunque falle la subida de la foto
-        }
+        const storageRef = ref(storage, `profile_photos/${userCredential.user.uid}`);
+        await uploadBytes(storageRef, selectedFile);
+        photoURL = await getDownloadURL(storageRef);
       }
-
-      // Prepare trainee data - asegurándonos de que todos los campos sean válidos
+      
+      // Preparar datos del trainee
       const traineeData = {
-        nombre: formData.nombre || '',
-        correo: formData.correo || '',
-        whatsapp: formData.whatsapp || '',
-        // Usamos null en lugar de undefined para fechaNacimiento
-        fechaNacimiento: null,
-        genero: formData.genero || '',
-        altura: formData.altura || '',
-        peso: formData.peso || '',
-        experiencia: formData.experiencia || '',
-        foto: photoURL,
+        nombre: formData.nombre,
+        email: formData.correo,
+        whatsapp: formData.whatsapp,
+        fechaNacimiento: formData.fechaNacimiento,
+        genero: formData.genero,
+        altura: formData.altura,
+        peso: formData.peso,
+        experiencia: formData.experiencia,
+        photoURL: photoURL,
         uid: userCredential.user.uid,
-        createdAt: serverTimestamp(),
-        role: 'trainee',
-        // Añadir información de quién registró al trainee
+        fechaRegistro: serverTimestamp(),
+        // Información de quien lo registra
         registradoPor: {
           uid: currentUser.uid,
           email: currentUser.email,
-          tipo: userType,
           fecha: serverTimestamp()
         }
       };
-
-      console.log("Tipo de usuario:", userType);
       
-      // Add associations based on user type
+      // Asignar gimnasio y/o entrenador según corresponda
       if (userType === 'gimnasio') {
         traineeData.gimnasioId = selectedGimnasio;
-        
-        // Obtener el nombre del gimnasio para incluirlo en el registro
-        const gimnasioDoc = gimnasios.find(g => g.id === selectedGimnasio);
-        if (gimnasioDoc) {
-          traineeData.registradoPor.nombreGimnasio = gimnasioDoc.nombre;
-        }
+        traineeData.gimnasio = selectedGimnasio;
       } else if (userType === 'entrenador') {
-        // Usar el ID del entrenador actual
-        if (entrenadores && entrenadores.length > 0) {
-          const entrenadorDoc = entrenadores[0]; // El primer entrenador en la lista (debería ser el actual)
-          if (entrenadorDoc) {
-            traineeData.entrenadorId = entrenadorDoc.id;
-            traineeData.registradoPor.nombreEntrenador = entrenadorDoc.nombre;
-            console.log("Asociando trainee con entrenador:", entrenadorDoc.id, entrenadorDoc.nombre);
-          } else {
-            console.error("No se encontró información del entrenador actual");
-          }
-        } else {
-          console.error("No hay entrenadores disponibles");
-        }
+        traineeData.entrenadorId = selectedEntrenador;
+        traineeData.entrenador = selectedEntrenador;
       } else if (userType === 'admin') {
         if (selectedGimnasio) {
           traineeData.gimnasioId = selectedGimnasio;
-          // Obtener el nombre del gimnasio
-          const gimnasioDoc = gimnasios.find(g => g.id === selectedGimnasio);
-          if (gimnasioDoc) {
-            traineeData.registradoPor.nombreGimnasio = gimnasioDoc.nombre;
-          }
+          traineeData.gimnasio = selectedGimnasio;
         }
         if (selectedEntrenador) {
           traineeData.entrenadorId = selectedEntrenador;
-          // Obtener el nombre del entrenador
-          const entrenadorDoc = entrenadores.find(e => e.id === selectedEntrenador);
-          if (entrenadorDoc) {
-            traineeData.registradoPor.nombreEntrenador = entrenadorDoc.nombre;
-          }
+          traineeData.entrenador = selectedEntrenador;
         }
       }
-
-      console.log("Guardando trainee en Firestore:", traineeData);
       
-      try {
-        // Save trainee to Firestore
-        const docRef = await addDoc(collection(db, 'trainees'), traineeData);
-        console.log("Trainee guardado con ID:", docRef.id);
-  
-        // Close modal and refresh list
-        handleCloseModal();
-        
-        // Reload trainees list
-        if (userType === 'entrenador' && entrenadores && entrenadores.length > 0) {
-          const entrenadorDoc = entrenadores[0];
-          if (entrenadorDoc) {
-            const traineesQuery = query(
-              collection(db, 'trainees'),
-              where('entrenadorId', '==', entrenadorDoc.id)
-            );
-            const traineesSnapshot = await getDocs(traineesQuery);
-            setTrainees(traineesSnapshot.docs.map(doc => ({
-              id: doc.id,
-              ...doc.data()
-            })));
-          }
-        } else {
-          // Código existente para recargar trainees
-          const traineesQuery = query(collection(db, 'trainees'));
-          const traineesSnapshot = await getDocs(traineesQuery);
-          setTrainees(traineesSnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          })));
-        }
-      } catch (firestoreError) {
-        console.error("Error al guardar en Firestore:", firestoreError);
-        throw firestoreError;
-      }
-
+      // Guardar en Firestore
+      await addDoc(collection(db, 'trainees'), traineeData);
+      
+      // Cerrar modal y resetear formulario
+      setOpenModal(false);
+      resetForm();
+      
+      // Recargar la lista de trainees
+      fetchTrainees();
+      
+      alert('Trainee registrado con éxito. Se ha enviado un correo para establecer la contraseña.');
+      
     } catch (error) {
       console.error("Error al registrar trainee:", error);
-      setError("Error al registrar trainee: " + error.message);
-      alert("Error al registrar trainee: " + error.message);
+      setError(error.message);
     } finally {
       setRegistrando(false);
     }
+  };
+
+  // Función para resetear el formulario
+  const resetForm = () => {
+    setFormData({
+      nombre: '',
+      correo: '',
+      whatsapp: '',
+      fechaNacimiento: null,
+      genero: '',
+      password: '',
+      altura: '',
+      peso: '',
+      experiencia: '',
+      foto: ''
+    });
+    setSelectedFile(null);
+    setFileName('');
+    setErrors({});
   };
 
   // Añade estos console.log para depuración
