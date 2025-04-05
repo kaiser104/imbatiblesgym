@@ -1,93 +1,4 @@
-/* Estilos para la página de Entrenadores */
-.entrenadores-container {
-  padding: 20px;
-}
-
-.entrenador-card {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  border: 1px solid rgba(187, 255, 0, 0.2);
-  background-color: #121212;
-}
-
-.entrenador-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(187, 255, 0, 0.2);
-}
-
-.entrenador-nombre {
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 600;
-  color: #BBFF00;
-}
-
-.entrenador-especialidad {
-  font-family: 'Roboto', sans-serif;
-  color: #BBFF00;
-  opacity: 0.8;
-}
-
-.entrenador-descripcion {
-  font-family: 'Roboto', sans-serif;
-  color: #FFFFFF;
-}
-
-.entrenador-certificacion {
-  border-color: #BBFF00;
-  color: #BBFF00;
-}
-
-.entrenador-rating {
-  background-color: rgba(0, 0, 0, 0.7);
-  border-bottom: 2px solid #BBFF00;
-}
-
-.entrenador-button {
-  background-color: #BBFF00;
-  color: #000000;
-  font-weight: bold;
-  transition: all 0.3s ease;
-}
-
-.entrenador-button:hover {
-  background-color: #CCFF33;
-  box-shadow: 0 0 15px rgba(187, 255, 0, 0.7);
-}
-
-.entrenador-social-icon {
-  color: #BBFF00;
-  transition: transform 0.2s ease;
-}
-
-.entrenador-social-icon:hover {
-  transform: scale(1.2);
-  color: #CCFF33;
-}
-
-.page-title {
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 700;
-  color: #BBFF00;
-  margin-bottom: 30px;
-  text-transform: uppercase;
-  border-bottom: 2px solid #BBFF00;
-  padding-bottom: 10px;
-  display: inline-block;
-}
-
-/* Estilos para el botón de agregar entrenador */
-.add-entrenador-button {
-  background-color: #BBFF00 !important;
-  color: #000000 !important;
-  transition: all 0.3s ease;
-}
-
-.add-entrenador-button:hover {
-  background-color: #CCFF33 !important;
-  box-shadow: 0 0 15px rgba(187, 255, 0, 0.7) !important;
-  transform: rotate(90deg);
-}
-
-/* Estilos para el diálogo */
+/* Estilos para el formulario de entrenador */
 .dialog-title {
   background-color: #121212;
   color: #BBFF00 !important;
@@ -189,14 +100,6 @@
 
 .specialty-select .MuiMenuItem-root.Mui-selected {
   background-color: rgba(187, 255, 0, 0.2);
-}
-
-/* Estilos para el chip de "Registrado por" */
-.registered-by-chip {
-  background-color: rgba(187, 255, 0, 0.1) !important;
-  color: #BBFF00 !important;
-  border: 1px solid rgba(187, 255, 0, 0.3) !important;
-  margin-top: 16px !important;
 }
 
 /* Estilos para los mensajes de error */

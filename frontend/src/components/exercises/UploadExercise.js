@@ -1,9 +1,9 @@
 // frontend/src/pages/UploadExercise.js
 import React, { useState } from 'react';
-import { storage } from '../firebase';
+import { storage } from '../../firebase';
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { getFirestore, collection, addDoc } from "firebase/firestore";
-import { app } from '../firebase';
+import { app } from '../../firebase';
 import './UploadExercise.css'; // Importar el archivo CSS
 import { 
   Container, Typography, Box, TextField, Button, 

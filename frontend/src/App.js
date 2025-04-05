@@ -12,14 +12,15 @@ import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import Footer from './components/Footer';
 import ExerciseManager from './pages/ExerciseManager';
-import UploadExercise from './pages/UploadExercise';
+import UploadExercise from './components/exercises/UploadExercise';
 import Gimnasios from './pages/Gimnasios';
 import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import Entrenadores from './pages/Entrenadores';
+// Eliminar esta importación
+// import Entrenadores from './pages/Entrenadores';
 import PrivateRoute from './components/PrivateRoute';
-import Trainees from './pages/Trainees';
+// import Trainees from './pages/Trainees';
 import Profile from './pages/Profile';
 import UserManagement from './pages/UserManagement';
 
@@ -72,8 +73,8 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-        {isAuthenticated && <Header toggleSidebar={toggleSidebar} />}
+      <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', paddingTop: '64px' }}>
+        {isAuthenticated && <Header toggleSidebar={toggleSidebar} sx={{ position: 'fixed', top: 0, width: '100%', zIndex: 1100 }} />}
         <Box sx={{ display: 'flex', flex: 1 }}>
           {isAuthenticated && <Sidebar open={sidebarOpen} toggleSidebar={toggleSidebar} userRole={userRole} />}
           <Box 
@@ -81,45 +82,28 @@ function App() {
             sx={{ 
               flexGrow: 1, 
               p: 3,
-              marginLeft: isAuthenticated && sidebarOpen ? '240px' : 0,
-              marginTop: '64px',
-              transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+              marginLeft: sidebarOpen ? '240px' : '0',
+              transition: 'margin-left 0.3s ease'
             }}
           >
             <Routes>
-              <Route path="/" element={
-                <ProtectedRoute isAuthenticated={isAuthenticated}>
-                  <Dashboard />
-                </ProtectedRoute>
-              } />
+              {/* Eliminar esta ruta */}
+              {/* <Route path="/entrenadores" element={<PrivateRoute><Entrenadores /></PrivateRoute>} /> */}
+              
+              {/* Mantener todas las demás rutas */}
+              <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+              <Route path="/training-plan-designer" element={<PrivateRoute><TrainingPlanDesigner /></PrivateRoute>} />
+              <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
+              <Route path="/exercise-manager" element={<PrivateRoute><ExerciseManager /></PrivateRoute>} />
+              <Route path="/upload-exercise" element={<PrivateRoute><UploadExercise /></PrivateRoute>} />
+              <Route path="/gimnasios" element={<PrivateRoute><Gimnasios /></PrivateRoute>} />
+              {/* Elimina o comenta esta ruta */}
+              {/* <Route path="/trainees" element={<Trainees />} /> */}
+              
+              {/* Mantener todas las demás rutas */}
+              <Route path="/gestion-usuarios" element={<PrivateRoute><UserManagement /></PrivateRoute>} />
+              <Route path="/rooms-management" element={<PrivateRoute><RoomManagement /></PrivateRoute>} />
               <Route path="/login" element={<Login />} />
-              <Route path="/gimnasios" element={
-                <PrivateRoute>
-                  <Gimnasios />
-                </PrivateRoute>
-              } />
-              <Route path="/entrenadores" element={
-                <PrivateRoute>
-                  <Entrenadores />
-                </PrivateRoute>
-              } />
-              <Route path="/training-plan-designer" element={<TrainingPlanDesigner />} />
-              <Route path="/exercise-manager" element={<ExerciseManager />} />
-              <Route path="/upload-exercise" element={<UploadExercise />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/statistics" element={<div>Estadísticas</div>} />
-              <Route path="/trainees" element={
-                <PrivateRoute>
-                  <Trainees />
-                </PrivateRoute>
-              } />
-              {/* Nueva ruta para la gestión de salas */}
-              <Route path="/rooms-management" element={
-                <PrivateRoute>
-                  <RoomManagement userId={userId} userType={userRole} />
-                </PrivateRoute>
-              } />
-              <Route path="/gestion-usuarios" element={<UserManagement />} />
             </Routes>
           </Box>
         </Box>

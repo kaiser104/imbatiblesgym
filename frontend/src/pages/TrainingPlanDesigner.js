@@ -3,8 +3,8 @@ import { Container, Typography, Alert } from '@mui/material';
 import { collection, getDocs, addDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
-import TrainingPlanForm from '../components/TrainingPlanForm';
-import TrainingPlanDisplay from '../components/TrainingPlanDisplay';
+import TrainingPlanForm from '../components/TrainingDesigner/TrainingPlanForm';
+import TrainingPlanDisplay from '../components/TrainingDesigner/TrainingPlanDisplay';
 
 const TrainingPlanDesigner = () => {
   const { currentUser } = useAuth();

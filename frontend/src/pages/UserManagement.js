@@ -4,13 +4,17 @@ import { db } from '../firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import {
   Container, Typography, Box, TextField, Tabs, Tab, FormControl, InputLabel,
-  Select, MenuItem, InputAdornment, CircularProgress, Alert
+  Select, MenuItem, InputAdornment, CircularProgress, Alert, Button
 } from '@mui/material';
-import { Search, Refresh } from '@mui/icons-material';
+import { Search, Refresh, Add } from '@mui/icons-material';
 
 // Importar los componentes secundarios
 import UsersList from '../components/users/UsersList';
 import MembershipManager from '../components/users/MembershipManager';
+import EntrenadorForm from '../components/forms/EntrenadorForm';
+// Importar el formulario de trainees
+import TraineeForm from '../components/forms/TraineeForm';
+import './UserManagement.css';
 
 function UserManagement() {
   const { currentUser } = useAuth();
@@ -26,7 +30,11 @@ function UserManagement() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [openMembershipDialog, setOpenMembershipDialog] = useState(false);
   const [openPauseDialog, setOpenPauseDialog] = useState(false);
-
+  // Nuevo estado para controlar el diálogo de creación de entrenador
+  const [openEntrenadorForm, setOpenEntrenadorForm] = useState(false);
+  // Nuevo estado para controlar el diálogo de creación de trainee
+  const [openTraineeForm, setOpenTraineeForm] = useState(false);
+  
   // Determinar tipo de usuario al cargar
   useEffect(() => {
     if (!currentUser) {
@@ -421,6 +429,50 @@ function UserManagement() {
               </FormControl>
             )}
             
+            {/* Botón para añadir entrenador - solo visible para gimnasios en la pestaña de entrenadores */}
+            {userType === 'gimnasio' && tabValue === 0 && (
+              <Button 
+                variant="contained" 
+                startIcon={<Add />}
+                onClick={() => setOpenEntrenadorForm(true)}
+                className="add-button"
+                sx={{ 
+                  backgroundColor: '#BBFF00', 
+                  color: '#000000',
+                  fontWeight: 'bold',
+                  '&:hover': {
+                    backgroundColor: '#CCFF33',
+                    boxShadow: '0 0 15px rgba(187, 255, 0, 0.7)'
+                  }
+                }}
+              >
+                Nuevo Entrenador
+              </Button>
+            )}
+            
+            {/* Botón para añadir trainee - visible para gimnasios y entrenadores en la pestaña de trainees */}
+            {((userType === 'gimnasio' && tabValue === 1) || 
+              (userType === 'entrenador') || 
+              (userType === 'super-administrador' && tabValue === 2)) && (
+              <Button 
+                variant="contained" 
+                startIcon={<Add />}
+                onClick={() => setOpenTraineeForm(true)}
+                className="add-button"
+                sx={{ 
+                  backgroundColor: '#BBFF00', 
+                  color: '#000000',
+                  fontWeight: 'bold',
+                  '&:hover': {
+                    backgroundColor: '#CCFF33',
+                    boxShadow: '0 0 15px rgba(187, 255, 0, 0.7)'
+                  }
+                }}
+              >
+                Nuevo Trainee
+              </Button>
+            )}
+            
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <Refresh 
                 sx={{ 
@@ -454,6 +506,28 @@ function UserManagement() {
             setUsers={setUsers}
             userDetails={userDetails}
           />
+          
+          {/* Añadir el formulario de entrenador */}
+          <EntrenadorForm 
+            open={openEntrenadorForm} 
+            onClose={() => setOpenEntrenadorForm(false)}
+            onSuccess={handleEntrenadorCreated}
+          />
+          
+          {/* Añadir el formulario de trainee */}
+          <TraineeForm
+            open={openTraineeForm}
+            onClose={() => setOpenTraineeForm(false)}
+            onSuccess={() => {
+              // Recargar la lista de usuarios
+              window.location.reload();
+            }}
+            userType={userType}
+            gimnasios={users.filter(user => user.userType === 'gimnasio')}
+            entrenadores={users.filter(user => user.userType === 'entrenador')}
+            selectedGimnasio={userType === 'gimnasio' ? userDetails?.id : ''}
+            selectedEntrenador={userType === 'entrenador' ? userDetails?.id : ''}
+          />
         </>
       )}
     </Container>
@@ -461,3 +535,11 @@ function UserManagement() {
 }
 
 export default UserManagement;
+
+// Función para manejar la creación exitosa de un entrenador
+const handleEntrenadorCreated = () => {
+  // Recargar la página para mostrar el nuevo entrenador
+  window.location.reload();
+};
+
+// Remove these functions that are outside the component

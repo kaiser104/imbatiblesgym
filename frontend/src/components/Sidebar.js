@@ -181,16 +181,7 @@ const Sidebar = ({ open, toggleSidebar }) => {
       icon: <LocationOnIcon />, 
       path: '/gimnasios' 
     },
-    { 
-      text: 'Trainers', // Cambiado de "Entrenadores" a "Trainers"
-      icon: <PeopleIcon />, 
-      path: '/entrenadores' 
-    },
-    { 
-      text: 'Trainees', 
-      icon: <SchoolIcon />, 
-      path: '/trainees' 
-    },
+    // Se eliminó el elemento de Trainees
     // Nuevo elemento para Gestión de Salas (solo visible para gimnasios)
     { 
       text: 'Room Management', // Cambiado de "Gestión de Salas" a "Room Management"
@@ -286,31 +277,44 @@ const Sidebar = ({ open, toggleSidebar }) => {
             
             return (
               <ListItem 
+                button 
                 key={item.text}
-                button
                 onClick={() => navigate(item.path)}
+                className={`sidebar-item ${isActive ? 'active' : ''} ${item.className || ''}`}
                 sx={{
-                  color: location.pathname === item.path ? '#BBFF00' : '#FFFFFF',
-                  '&:hover': {
-                    backgroundColor: 'rgba(187, 255, 0, 0.1)',
+                  borderRadius: '8px',
+                  mb: 0.5,
+                  position: 'relative',
+                  '&.active': {
+                    backgroundColor: 'rgba(187, 255, 0, 0.15)',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      left: 0,
+                      top: 0,
+                      bottom: 0,
+                      width: '4px',
+                      backgroundColor: '#BBFF00',
+                      borderRadius: '0 4px 4px 0'
+                    }
                   },
-                  ...(item.className && { 
-                    backgroundColor: item.className === 'admin-link' ? 'rgba(187, 255, 0, 0.1)' : 'transparent',
-                    borderLeft: item.className === 'admin-link' ? '3px solid #BBFF00' : 'none'
-                  })
+                  '&:hover': {
+                    backgroundColor: 'rgba(187, 255, 0, 0.08)'
+                  }
                 }}
               >
-                <ListItemIcon 
-                  sx={{ 
-                    color: location.pathname === item.path ? '#BBFF00' : '#FFFFFF',
-                    ...(userRole === 'super-administrador' && item.path === '/gestion-usuarios' && { color: '#BBFF00' }),
-                    ...(userRole === 'gimnasio' && item.path === '/gestion-usuarios' && { color: '#3f51b5' }),
-                    ...(userRole === 'entrenador' && item.path === '/gestion-usuarios' && { color: '#f50057' })
-                  }}
-                >
+                <ListItemIcon sx={{ color: isActive ? '#BBFF00' : '#FFFFFF', minWidth: '40px' }}>
                   {item.icon}
                 </ListItemIcon>
-                <ListItemText primary={item.text} />
+                <ListItemText 
+                  primary={item.text} 
+                  sx={{ 
+                    '& .MuiTypography-root': { 
+                      fontWeight: isActive ? 600 : 400,
+                      color: isActive ? '#BBFF00' : '#FFFFFF'
+                    } 
+                  }}
+                />
                 {item.path === '/gestion-usuarios' && userRole !== 'super-administrador' && (
                   <span className="notification-badge">Nuevo</span>
                 )}

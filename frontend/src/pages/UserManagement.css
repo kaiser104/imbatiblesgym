@@ -117,3 +117,18 @@
     width: 100%;
   }
 }
+
+/* Estilos para el botón de añadir entrenador */
+.add-button {
+  margin-left: auto !important;
+  background-color: #BBFF00 !important;
+  color: #000000 !important;
+  font-weight: bold !important;
+  transition: all 0.3s ease !important;
+}
+
+.add-button:hover {
+  background-color: #CCFF33 !important;
+  box-shadow: 0 0 15px rgba(187, 255, 0, 0.7) !important;
+  transform: translateY(-2px) !important;
+}
