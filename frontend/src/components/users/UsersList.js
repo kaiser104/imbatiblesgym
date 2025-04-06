@@ -1,22 +1,27 @@
 import React from 'react';
 import {
   Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, 
-  TableRow, Paper, Chip, Avatar, Button
+  TableRow, Paper, Chip, Avatar, Button, Tooltip
 } from '@mui/material';
 import {
   Edit, CheckCircle, Block, Warning, LocationOn, AccessTime, WhatsApp
 } from '@mui/icons-material';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
+// Importar el archivo CSS
+import './UsersList.css';
 
-function UsersList({ 
+// In your UsersList component, update the props to include the new handlers
+const UsersList = ({ 
   filteredUsers, 
   handleOpenMembershipDialog, 
   handleOpenPauseDialog, 
-  handleUsersUpdate,
-  users,
-  userDetails
-}) {
+  handleUsersUpdate, 
+  users, 
+  userDetails,
+  handleOpenEntrenadorEditForm,
+  handleOpenTraineeEditForm
+}) => {
   
   // Cancelar membresía
   const handleCancelMembership = async (user, membershipId) => {
@@ -276,92 +281,114 @@ function UsersList({
               <TableCell>
                 <Box className="action-buttons" sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   {user.userType === 'trainee' && (
-                    <Button
-                      variant="contained"
-                      size="small"
-                      onClick={() => handleOpenMembershipDialog(user)}
-                      className="membership-button"
-                      sx={{ 
-                        backgroundColor: '#BBFF00', 
-                        color: '#000000',
-                        '&:hover': {
-                          backgroundColor: '#CCFF33',
-                        }
-                      }}
-                    >
-                      {user.activeMembership ? 'Renovar' : 'Activar membresía'}
-                    </Button>
+                    <Tooltip title={user.activeMembership ? "Renovar membresía existente" : "Activar nueva membresía"} arrow placement="left">
+                      <Button
+                        variant="contained"
+                        size="small"
+                        onClick={() => handleOpenMembershipDialog(user)}
+                        className="membership-button"
+                        sx={{ 
+                          backgroundColor: '#BBFF00', 
+                          color: '#000000',
+                          '&:hover': {
+                            backgroundColor: '#CCFF33',
+                          }
+                        }}
+                      >
+                        {user.activeMembership ? 'Renovar' : 'Activar membresía'}
+                      </Button>
+                    </Tooltip>
                   )}
+                  
                   {user.userType === 'trainee' && user.activeMembership && user.activeMembership.estado === 'activa' && (
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => handleOpenPauseDialog(user)}
-                      className="pause-membership-button"
-                      sx={{ 
-                        borderColor: '#ff9800', 
-                        color: '#ff9800',
-                        '&:hover': {
-                          borderColor: '#f57c00',
-                          backgroundColor: 'rgba(255, 152, 0, 0.1)',
-                        }
-                      }}
-                    >
-                      Pausar membresía
-                    </Button>
+                    <Tooltip title="Pausar temporalmente la membresía" arrow placement="left">
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => handleOpenPauseDialog(user)}
+                        className="pause-membership-button"
+                        sx={{ 
+                          borderColor: '#ff9800', 
+                          color: '#ff9800',
+                          '&:hover': {
+                            borderColor: '#f57c00',
+                            backgroundColor: 'rgba(255, 152, 0, 0.1)',
+                          }
+                        }}
+                      >
+                        Pausar membresía
+                      </Button>
+                    </Tooltip>
                   )}
+                  
                   {user.userType === 'trainee' && user.activeMembership && user.activeMembership.estado === 'pausada' && (
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => handleReactivateMembership(user, user.activeMembership.id)}
-                      className="reactivate-membership-button"
-                      sx={{ 
-                        borderColor: '#4caf50', 
-                        color: '#4caf50',
-                        '&:hover': {
-                          borderColor: '#388e3c',
-                          backgroundColor: 'rgba(76, 175, 80, 0.1)',
-                        }
-                      }}
-                    >
-                      Reactivar membresía
-                    </Button>
+                    <Tooltip title="Reactivar la membresía pausada" arrow placement="left">
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => handleReactivateMembership(user, user.activeMembership.id)}
+                        className="reactivate-membership-button"
+                        sx={{ 
+                          borderColor: '#4caf50', 
+                          color: '#4caf50',
+                          '&:hover': {
+                            borderColor: '#388e3c',
+                            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                          }
+                        }}
+                      >
+                        Reactivar membresía
+                      </Button>
+                    </Tooltip>
                   )}
+                  
                   {user.userType === 'trainee' && user.activeMembership && (
+                    <Tooltip title="Cancelar membresía actual" arrow placement="left">
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => handleCancelMembership(user, user.activeMembership.id)}
+                        className="cancel-membership-button"
+                        sx={{ 
+                          borderColor: '#f44336', 
+                          color: '#f44336',
+                          '&:hover': {
+                            borderColor: '#d32f2f',
+                            backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                          }
+                        }}
+                      >
+                        Cancelar membresía
+                      </Button>
+                    </Tooltip>
+                  )}
+                  
+                  {/* Botón de editar mejorado */}
+                  <Tooltip title={`Editar información de ${user.userType === 'entrenador' ? 'entrenador' : 'trainee'}`} arrow placement="left">
                     <Button
                       variant="outlined"
                       size="small"
-                      onClick={() => handleCancelMembership(user, user.activeMembership.id)}
-                      className="cancel-membership-button"
+                      startIcon={<Edit />}
+                      onClick={() => {
+                        if (user.userType === 'entrenador') {
+                          handleOpenEntrenadorEditForm(user.id);
+                        } else if (user.userType === 'trainee') {
+                          handleOpenTraineeEditForm(user.id);
+                        }
+                      }}
+                      className="edit-user-button"
                       sx={{ 
-                        borderColor: '#f44336', 
-                        color: '#f44336',
+                        borderColor: '#BBFF00', 
+                        color: '#BBFF00',
                         '&:hover': {
-                          borderColor: '#d32f2f',
-                          backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                          borderColor: '#CCFF33',
+                          backgroundColor: 'rgba(187, 255, 0, 0.1)',
                         }
                       }}
                     >
-                      Cancelar membresía
+                      Editar
                     </Button>
-                  )}
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    startIcon={<Edit />}
-                    className="edit-user-button"
-                    sx={{ 
-                      borderColor: '#BBFF00', 
-                      color: '#BBFF00',
-                      '&:hover': {
-                        borderColor: '#CCFF33',
-                        backgroundColor: 'rgba(187, 255, 0, 0.1)',
-                      }
-                    }}
-                  >
-                    Editar
-                  </Button>
+                  </Tooltip>
                 </Box>
               </TableCell>
             </TableRow>

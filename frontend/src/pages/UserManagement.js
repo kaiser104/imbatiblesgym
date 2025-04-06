@@ -14,6 +14,9 @@ import MembershipManager from '../components/users/MembershipManager';
 import EntrenadorForm from '../components/forms/EntrenadorForm';
 // Importar el formulario de trainees
 import TraineeForm from '../components/forms/TraineeForm';
+// Importar los formularios de edición
+import EntrenadorEditForm from '../components/forms/EntrenadorEditForm';
+import TraineeEditForm from '../components/forms/TraineeEditForm';
 import './UserManagement.css';
 
 function UserManagement() {
@@ -34,6 +37,41 @@ function UserManagement() {
   const [openEntrenadorForm, setOpenEntrenadorForm] = useState(false);
   // Nuevo estado para controlar el diálogo de creación de trainee
   const [openTraineeForm, setOpenTraineeForm] = useState(false);
+  // Estados para los formularios de edición
+  const [openEntrenadorEditForm, setOpenEntrenadorEditForm] = useState(false);
+  const [openTraineeEditForm, setOpenTraineeEditForm] = useState(false);
+  const [selectedEntrenadorId, setSelectedEntrenadorId] = useState(null);
+  const [selectedTraineeId, setSelectedTraineeId] = useState(null);
+  
+  // Función para manejar la creación exitosa de un entrenador
+  const handleEntrenadorCreated = () => {
+    // Recargar la página para mostrar el nuevo entrenador
+    window.location.reload();
+  };
+
+  // Función para abrir el formulario de edición de entrenador
+  const handleOpenEntrenadorEditForm = (entrenadorId) => {
+    setSelectedEntrenadorId(entrenadorId);
+    setOpenEntrenadorEditForm(true);
+  };
+
+  // Función para abrir el formulario de edición de trainee
+  const handleOpenTraineeEditForm = (traineeId) => {
+    setSelectedTraineeId(traineeId);
+    setOpenTraineeEditForm(true);
+  };
+
+  // Función para manejar la actualización exitosa de un entrenador
+  const handleEntrenadorUpdated = () => {
+    // Recargar la lista de usuarios
+    window.location.reload();
+  };
+
+  // Función para manejar la actualización exitosa de un trainee
+  const handleTraineeUpdated = () => {
+    // Recargar la lista de usuarios
+    window.location.reload();
+  };
   
   // Determinar tipo de usuario al cargar
   useEffect(() => {
@@ -493,6 +531,8 @@ function UserManagement() {
             handleUsersUpdate={handleUsersUpdate}
             users={users}
             userDetails={userDetails}
+            handleOpenEntrenadorEditForm={handleOpenEntrenadorEditForm}
+            handleOpenTraineeEditForm={handleOpenTraineeEditForm}
           />
           
           {/* Componente de gestión de membresías */}
@@ -528,6 +568,21 @@ function UserManagement() {
             selectedGimnasio={userType === 'gimnasio' ? userDetails?.id : ''}
             selectedEntrenador={userType === 'entrenador' ? userDetails?.id : ''}
           />
+          
+          {/* Añadir los formularios de edición */}
+          <EntrenadorEditForm 
+            open={openEntrenadorEditForm} 
+            onClose={() => setOpenEntrenadorEditForm(false)}
+            entrenadorId={selectedEntrenadorId}
+            onSuccess={handleEntrenadorUpdated}
+          />
+          
+          <TraineeEditForm
+            open={openTraineeEditForm}
+            onClose={() => setOpenTraineeEditForm(false)}
+            traineeId={selectedTraineeId}
+            onSuccess={handleTraineeUpdated}
+          />
         </>
       )}
     </Container>
@@ -535,11 +590,3 @@ function UserManagement() {
 }
 
 export default UserManagement;
-
-// Función para manejar la creación exitosa de un entrenador
-const handleEntrenadorCreated = () => {
-  // Recargar la página para mostrar el nuevo entrenador
-  window.location.reload();
-};
-
-// Remove these functions that are outside the component

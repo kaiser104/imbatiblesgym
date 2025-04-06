@@ -1,0 +1,122 @@
+/* Estilos para la tabla de usuarios */
+.users-table {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  margin-top: 20px;
+}
+
+/* Estilos para las filas de la tabla */
+.user-row {
+  transition: background-color 0.2s ease;
+}
+
+.user-row:hover {
+  background-color: rgba(187, 255, 0, 0.05) !important;
+}
+
+/* Estilos para los avatares de usuario */
+.user-avatar {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.user-avatar:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 15px rgba(187, 255, 0, 0.5);
+}
+
+/* Estilos para los chips de tipo de usuario */
+.user-type-chip {
+  font-weight: bold;
+  transition: transform 0.2s ease;
+}
+
+.user-type-chip:hover {
+  transform: translateY(-2px);
+}
+
+/* Estilos para los chips de membresía */
+.membership-chip {
+  font-weight: bold;
+  transition: transform 0.2s ease;
+}
+
+.membership-chip:hover {
+  transform: translateY(-2px);
+}
+
+/* Estilos para los botones de acción */
+.action-buttons {
+  transition: opacity 0.3s ease;
+}
+
+.action-buttons button {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  margin-bottom: 8px;
+  width: 100%;
+}
+
+.action-buttons button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Estilos específicos para el botón de editar */
+.edit-user-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.edit-user-button::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(187, 255, 0, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.edit-user-button:hover::after {
+  left: 100%;
+}
+
+/* Estilos para los botones de membresía */
+.membership-button {
+  font-weight: bold !important;
+}
+
+.pause-membership-button, 
+.reactivate-membership-button, 
+.cancel-membership-button {
+  font-weight: 500 !important;
+}
+
+/* Animación para chips de membresía por vencer */
+.membership-chip.expiring {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Estilos para la información de membresía */
+.membership-dates {
+  font-size: 0.85rem;
+  margin-top: 4px;
+}
+
+.membership-type {
+  font-weight: bold;
+  margin-top: 2px;
+}

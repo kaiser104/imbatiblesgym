@@ -24,8 +24,7 @@ import PrivateRoute from './components/PrivateRoute';
 import Profile from './pages/Profile';
 import UserManagement from './pages/UserManagement';
 
-// Importar el componente RoomManagement
-import RoomManagement from './components/gym/RoomManagement';
+// Eliminando la línea de comentario sobre RoomManagement
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -102,7 +101,7 @@ function App() {
               
               {/* Mantener todas las demás rutas */}
               <Route path="/gestion-usuarios" element={<PrivateRoute><UserManagement /></PrivateRoute>} />
-              <Route path="/rooms-management" element={<PrivateRoute><RoomManagement /></PrivateRoute>} />
+              {/* Eliminando la ruta de RoomManagement */}
               <Route path="/login" element={<Login />} />
             </Routes>
           </Box>
