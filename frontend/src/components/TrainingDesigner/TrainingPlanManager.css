@@ -1,0 +1,87 @@
+.training-plan-manager {
+  background-color: #000000;
+  color: #FFFFFF;
+  min-height: 100vh;
+  font-family: 'Rajdhani', sans-serif;
+  padding: 20px;
+}
+
+.page-title {
+  color: #BBFF00;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.plan-card {
+  background-color: #121212;
+  border: 1px solid rgba(187, 255, 0, 0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.plan-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+}
+
+.plan-title {
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+.plan-objective-chip {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.plan-detail-icon {
+  color: #BBFF00;
+}
+
+.plan-action-button {
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.plan-action-button:hover {
+  background-color: rgba(187, 255, 0, 0.1);
+}
+
+.dialog-title {
+  background-color: #121212;
+  color: #BBFF00;
+  border-bottom: 1px solid rgba(187, 255, 0, 0.3);
+}
+
+.exercise-list-item {
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.exercise-list-item:hover {
+  background-color: rgba(187, 255, 0, 0.05) !important;
+}
+
+.exercise-chip {
+  background-color: rgba(187, 255, 0, 0.2);
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+.session-accordion {
+  background-color: #121212;
+  border: 1px solid rgba(187, 255, 0, 0.1);
+  margin-bottom: 1rem;
+}
+
+.session-accordion-summary {
+  border-bottom: 1px solid rgba(187, 255, 0, 0.2);
+}
+
+.session-accordion-summary .MuiAccordionSummary-expandIcon {
+  color: #BBFF00;
+}

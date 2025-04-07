@@ -197,8 +197,14 @@ const Sidebar = ({ open, toggleSidebar }) => {
       path: '/gestion-usuarios',
       roles: ['super-administrador', 'gimnasio', 'entrenador'],
       className: 'admin-link'
-    }
+    },
     // Se eliminó el elemento de Estadísticas
+    // Nuevo elemento para Mis Planes
+    {
+      text: 'Mis Planes',
+      icon: <FitnessCenterIcon />,
+      path: '/training-plans'
+    },
   ];
   
   // Filtrar elementos del menú según el rol del usuario

@@ -26,6 +26,9 @@ import UserManagement from './pages/UserManagement';
 
 // Eliminando la línea de comentario sobre RoomManagement
 
+// Add this import at the top with your other imports
+import TrainingPlanManager from './components/TrainingDesigner/TrainingPlanManager';
+
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -103,6 +106,11 @@ function App() {
               <Route path="/gestion-usuarios" element={<PrivateRoute><UserManagement /></PrivateRoute>} />
               {/* Eliminando la ruta de RoomManagement */}
               <Route path="/login" element={<Login />} />
+              <Route path="/training-plans" element={
+                <ProtectedRoute>
+                  <TrainingPlanManager />
+                </ProtectedRoute>
+              } />
             </Routes>
           </Box>
         </Box>
