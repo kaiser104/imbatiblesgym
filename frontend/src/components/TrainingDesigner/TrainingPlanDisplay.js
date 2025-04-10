@@ -35,7 +35,10 @@ import EditIcon from '@mui/icons-material/Edit';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import InfoIcon from '@mui/icons-material/Info';
 import CloseIcon from '@mui/icons-material/Close';
+// Import AddIcon at the top of the file with the other imports
+import AddIcon from '@mui/icons-material/Add';
 
+// Update the props to include addNewWeek
 const TrainingPlanDisplay = ({
   formData,
   groupExercisesBySession,
@@ -60,7 +63,8 @@ const TrainingPlanDisplay = ({
   equipmentFilter,
   handleEquipmentFilterChange,
   filteredAlternatives,
-  equipmentOptions
+  equipmentOptions,
+  addNewWeek // Nueva prop
 }) => {
   const sessions = groupExercisesBySession();
   
@@ -76,9 +80,20 @@ const TrainingPlanDisplay = ({
   
   return (
     <Box sx={{ mt: 4 }}>
-      <Typography variant="h5" component="h2" gutterBottom>
-        Plan de Entrenamiento: {formData.planName || "Sin nombre"}
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h5" component="h2" gutterBottom>
+          Plan de Entrenamiento: {formData.planName || "Sin nombre"}
+        </Typography>
+        
+        <Button 
+          variant="contained" 
+          color="primary" 
+          startIcon={<AddIcon />}
+          onClick={addNewWeek}
+        >
+          Añadir Semana
+        </Button>
+      </Box>
       
       {Object.keys(sessions).map((sessionKey) => (
         <Accordion key={sessionKey} sx={{ mb: 2 }}>

@@ -131,29 +131,10 @@ const TrainingPlanForm = ({
           </FormControl>
         </Grid>
         
-        {/* Duración */}
-        <Grid item xs={12} md={4}>
-          <FormControl fullWidth>
-            <InputLabel id="duration-label">Duración (meses)</InputLabel>
-            <Select
-              labelId="duration-label"
-              id="duration"
-              name="duration"
-              value={formData.duration}
-              onChange={handleChange}
-              label="Duración (meses)"
-            >
-              <MenuItem value="1">1 mes</MenuItem>
-              <MenuItem value="2">2 meses</MenuItem>
-              <MenuItem value="3">3 meses</MenuItem>
-              <MenuItem value="6">6 meses</MenuItem>
-              <MenuItem value="12">12 meses</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
+        {/* Eliminar el campo de Duración aquí */}
         
         {/* Frecuencia */}
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={6}>
           <FormControl fullWidth>
             <InputLabel id="frequency-label">Frecuencia (sesiones/semana)</InputLabel>
             <Select
@@ -174,7 +155,7 @@ const TrainingPlanForm = ({
         </Grid>
         
         {/* Tiempo disponible */}
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={6}>
           <FormControl fullWidth>
             <InputLabel id="time-available-label">Tiempo disponible (minutos)</InputLabel>
             <Select
