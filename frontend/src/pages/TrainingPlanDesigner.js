@@ -395,7 +395,7 @@ const TrainingPlanDesigner = () => {
         'auxiliary': ['Auxiliary']
       };
       
-      // Calcular número de sesiones totales
+      // Calcular número de sesiones totales para un mes
       const monthsCount = parseInt(formData.duration, 10);
       const weeklyFrequency = parseInt(formData.frequency, 10);
       const totalSessions = monthsCount * 4 * weeklyFrequency; // 4 semanas por mes
@@ -756,20 +756,6 @@ const TrainingPlanDesigner = () => {
     }));
   };
   
-  // Delete this second declaration of handleSelectExerciseOption
-  // const handleSelectExerciseOption = (exercise, index) => {
-  //   const newPlan = [...formData.trainingPlan];
-  //   
-  //   newPlan[index].nombreEjercicio = exercise.nombre || "";
-  //   newPlan[index].preview = exercise.previewURL || "";
-  //   newPlan[index].equipmentUsed = exercise.equipo || "Sin equipo";
-  //   newPlan[index].exerciseId = exercise.id;
-  //   
-  //   setFormData(prev => ({
-  //     ...prev,
-  //     trainingPlan: newPlan
-  //   }));
-  // };
   
   // Función para agrupar ejercicios por sesión
   const groupExercisesBySession = () => {
