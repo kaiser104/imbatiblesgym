@@ -37,6 +37,8 @@ import InfoIcon from '@mui/icons-material/Info';
 import CloseIcon from '@mui/icons-material/Close';
 // Import AddIcon at the top of the file with the other imports
 import AddIcon from '@mui/icons-material/Add';
+// Añadir importación
+import { getLocalExercisePath } from '../../utils/exercisePaths';
 
 // Update the props to include addNewWeek
 const TrainingPlanDisplay = ({
@@ -114,12 +116,16 @@ const TrainingPlanDisplay = ({
                       margin: '0 auto' 
                     }}>
                       {exercise.preview && (
+                        // Modificar componente CardMedia
                         <CardMedia
                           component="img"
                           height="140"
                           image={exercise.preview}
                           alt={exercise.nombreEjercicio}
                           sx={{ objectFit: 'contain', bgcolor: '#f5f5f5' }}
+                          onError={(e) => {
+                            e.target.src = getLocalExercisePath(exercise);
+                          }}
                         />
                       )}
                       <CardContent sx={{ flexGrow: 1 }}>

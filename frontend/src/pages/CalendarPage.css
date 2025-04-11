@@ -1,0 +1,345 @@
+/* src/pages/CalendarPage.css */
+.calendar-page {
+  background-color: #000000;
+  color: #FFFFFF;
+  min-height: 100vh;
+  font-family: 'Rajdhani', sans-serif;
+  padding: 20px;
+}
+
+.calendar-title {
+  color: #BBFF00;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+/* Estilos para el contenedor del calendario */
+.calendar-container {
+  background-color: #121212;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(187, 255, 0, 0.2);
+}
+
+/* Personalización de react-big-calendar */
+.rbc-calendar {
+  font-family: 'Rajdhani', sans-serif !important;
+}
+
+/* Cabecera del calendario */
+.rbc-toolbar {
+  background-color: #1E1E1E;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  border: 1px solid rgba(187, 255, 0, 0.1);
+}
+
+.rbc-toolbar button {
+  color: #FFFFFF;
+  background-color: #121212;
+  border: 1px solid rgba(187, 255, 0, 0.3);
+  border-radius: 4px;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+
+.rbc-toolbar button:hover {
+  background-color: rgba(187, 255, 0, 0.1);
+  box-shadow: 0 0 10px rgba(187, 255, 0, 0.3);
+}
+
+.rbc-toolbar button.rbc-active {
+  background-color: rgba(187, 255, 0, 0.2);
+  color: #BBFF00;
+  box-shadow: 0 0 8px rgba(187, 255, 0, 0.4);
+}
+
+.rbc-toolbar-label {
+  color: #BBFF00;
+  font-weight: 700;
+  font-size: 1.2rem;
+  text-transform: uppercase;
+}
+
+/* Celdas del calendario */
+.rbc-month-view, 
+.rbc-time-view {
+  border: 1px solid rgba(187, 255, 0, 0.2);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.rbc-header {
+  background-color: #1E1E1E;
+  color: #BBFF00;
+  font-weight: 600;
+  padding: 10px 0;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(187, 255, 0, 0.2);
+}
+
+.rbc-day-bg {
+  background-color: #121212;
+  transition: background-color 0.2s ease;
+}
+
+.rbc-day-bg:hover {
+  background-color: rgba(187, 255, 0, 0.05);
+}
+
+.rbc-off-range-bg {
+  background-color: #0A0A0A;
+}
+
+.rbc-today {
+  background-color: rgba(187, 255, 0, 0.1);
+}
+
+/* Eventos */
+.rbc-event {
+  background-color: #BBFF00;
+  color: #000000;
+  border-radius: 4px;
+  border: none;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(187, 255, 0, 0.4);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rbc-event:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(187, 255, 0, 0.6);
+}
+
+.rbc-event-label {
+  font-weight: 700;
+}
+
+/* Vista de tiempo */
+.rbc-time-header {
+  background-color: #1E1E1E;
+}
+
+.rbc-time-content {
+  border-top: 1px solid rgba(187, 255, 0, 0.2);
+}
+
+.rbc-time-slot {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.rbc-current-time-indicator {
+  background-color: #33AAFF;
+  height: 2px;
+}
+
+/* Botones de acción */
+.calendar-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.neon-button {
+  background-color: transparent;
+  color: #BBFF00;
+  border: 1px solid #BBFF00;
+  border-radius: 4px;
+  padding: 10px 20px;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.neon-button:hover {
+  background-color: rgba(187, 255, 0, 0.2);
+  box-shadow: 0 0 10px rgba(187, 255, 0, 0.5);
+}
+
+.neon-button-filled {
+  background-color: #BBFF00;
+  color: #000000;
+  border: none;
+}
+
+.neon-button-filled:hover {
+  background-color: #CCFF33;
+  box-shadow: 0 0 15px rgba(187, 255, 0, 0.7);
+}
+
+/* Estilos para el modal de evento */
+.event-modal {
+  background-color: #121212;
+  border-radius: 8px;
+  border: 1px solid rgba(187, 255, 0, 0.3);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+}
+
+.event-modal-title {
+  color: #BBFF00;
+  font-weight: 700;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(187, 255, 0, 0.2);
+  padding-bottom: 10px;
+}
+
+.event-form-field {
+  margin-bottom: 15px;
+}
+
+.event-form-field label {
+  color: #BBFF00;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.event-form-field input,
+.event-form-field select {
+  background-color: #1E1E1E;
+  color: #FFFFFF;
+  border: 1px solid rgba(187, 255, 0, 0.3);
+  border-radius: 4px;
+  padding: 10px;
+  width: 100%;
+}
+
+.event-form-field input:focus,
+.event-form-field select:focus {
+  border-color: #BBFF00;
+  box-shadow: 0 0 8px rgba(187, 255, 0, 0.4);
+  outline: none;
+}
+
+/* src/pages/CalendarPage.css */
+.calendar-page {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.calendar-title {
+  margin-bottom: 20px !important;
+  color: #BBFF00;
+  text-align: center;
+  font-weight: bold !important;
+  text-shadow: 0 0 10px rgba(187, 255, 0, 0.5);
+}
+
+.calendar-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.calendar-container {
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 20px rgba(187, 255, 0, 0.3);
+}
+
+/* Estilos para los botones neón */
+.neon-button {
+  text-transform: none !important;
+  border-radius: 4px !important;
+  transition: all 0.3s ease !important;
+}
+
+.neon-button-filled {
+  background-color: #BBFF00 !important;
+  color: #000000 !important;
+  box-shadow: 0 0 10px rgba(187, 255, 0, 0.7) !important;
+}
+
+.neon-button:not(.neon-button-filled) {
+  border: 1px solid #BBFF00 !important;
+  color: #BBFF00 !important;
+}
+
+.neon-button:hover {
+  box-shadow: 0 0 15px rgba(187, 255, 0, 0.9) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* Estilos para el modal */
+.event-modal .MuiPaper-root {
+  background-color: #1a1a1a;
+  border: 1px solid #BBFF00;
+  box-shadow: 0 0 20px rgba(187, 255, 0, 0.3);
+}
+
+.event-modal-title {
+  background-color: #BBFF00;
+  color: #000000 !important;
+  font-weight: bold !important;
+}
+
+.event-form-field {
+  margin-bottom: 16px !important;
+}
+
+/* Estilos para el calendario */
+.rbc-calendar {
+  color: white;
+}
+
+.rbc-toolbar button {
+  color: white;
+}
+
+.rbc-toolbar button.rbc-active {
+  background-color: #BBFF00;
+  color: black;
+}
+
+.rbc-header {
+  background-color: rgba(187, 255, 0, 0.2);
+  padding: 8px 0;
+  font-weight: bold;
+}
+
+.rbc-today {
+  background-color: rgba(187, 255, 0, 0.1);
+}
+
+.rbc-event {
+  padding: 4px 8px !important;
+  font-size: 0.85rem;
+}
+
+.rbc-day-slot .rbc-event {
+  border: none !important;
+}
+
+.rbc-off-range-bg {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.rbc-month-view, .rbc-time-view, .rbc-agenda-view {
+  border: 1px solid rgba(187, 255, 0, 0.3);
+}
+
+.rbc-time-content {
+  border-top: 1px solid rgba(187, 255, 0, 0.3);
+}
+
+.rbc-time-header-content {
+  border-left: 1px solid rgba(187, 255, 0, 0.3);
+}
+
+.rbc-day-bg + .rbc-day-bg,
+.rbc-month-row + .rbc-month-row,
+.rbc-header + .rbc-header {
+  border-color: rgba(187, 255, 0, 0.3);
+}

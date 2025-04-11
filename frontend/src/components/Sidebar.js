@@ -32,6 +32,7 @@ import {
 } from '@mui/icons-material';
 import { auth, db } from '../firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 
 const Sidebar = ({ open, toggleSidebar }) => {
   const navigate = useNavigate();
@@ -159,6 +160,12 @@ const Sidebar = ({ open, toggleSidebar }) => {
       text: 'Dashboard', 
       icon: <DashboardIcon />, 
       path: '/' 
+    },
+    // Add new calendar menu item here
+    { 
+      text: 'Mi Calendario', 
+      icon: <CalendarTodayIcon />, 
+      path: '/mi-calendario' 
     },
     { 
       text: 'Training Plan Designer', 

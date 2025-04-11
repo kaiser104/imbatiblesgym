@@ -28,6 +28,7 @@ import UserManagement from './pages/UserManagement';
 
 // Add this import at the top with your other imports
 import TrainingPlanManager from './components/TrainingDesigner/TrainingPlanManager';
+import CalendarPage from './pages/CalendarPage';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -111,6 +112,7 @@ function App() {
                   <TrainingPlanManager />
                 </ProtectedRoute>
               } />
+              <Route path="/mi-calendario" element={<PrivateRoute><CalendarPage /></PrivateRoute>} />
             </Routes>
           </Box>
         </Box>
